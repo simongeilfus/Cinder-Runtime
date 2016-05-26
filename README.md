@@ -173,10 +173,27 @@ git clone https://github.com/simongeilfus/Cinder-Runtime.git
 ###### Install Libraries
 Then run the ```install.sh``` script to grab and build Cling, Llvm and Clang. This will generate the necessary include and library files in the lib folder.
 ```shell
-cd cinder-runtime
-#you might want to try a xcode-select --install before starting
-#the install script, just to be sure you have everything installed
-sh install.sh
+# First make sure that cmake is properly installed by typing "cmake" in terminal
+$ cmake
+
+# It should output something like this:
+#	Usage
+
+#	  cmake [options] <path-to-source>
+#	  cmake [options] <path-to-existing-build>
+
+#	Specify a source directory to (re-)generate a build system for it in the
+#	current working directory.  Specify an existing build directory to
+#	re-generate its build system.
+
+#	Run 'cmake --help' for more information.
+
+# Then make sure you have the latest command-line tool installed
+$ xcode-select --install
+
+# Go to the Repo directory and launch the install script
+$ cd cinder-runtime
+$ sh install.sh
 ```
 
 ###### Build Cinder as a dynamic library
