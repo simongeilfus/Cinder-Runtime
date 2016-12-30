@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <cinder>
 <block
-	name="Runtime Compiler"
+	name="Cinder-Runtime"
 	id="sg.cinder.runtime"
 	author="Simon Geilfus"
-	summary="Runtime Compiler for Cinder"
-	license="BSD 2-clause"
-	git="https://github.com/simongeilfus/Cinder-RuntimeCompiler.git"
+	summary="Runtime Compiled C++ for Cinder"
+	git="https://github.com/simongeilfus/Cinder-Runtime.git"
 	>	
 	
 	<includePath>include</includePath>
