@@ -46,6 +46,8 @@ public:
 		Options& outputPath( const ci::fs::path &path );
 		//! Enables symbol dumping with dumpbin /EXPORTS
 		Options& dumpSymbols( bool dump = true );
+		//! Enables symbol dumping with dumpbin /EXPORTS
+		Options& forceInclude( const std::string &filename );
 
 	protected:
 		friend class Compiler;
@@ -60,6 +62,7 @@ public:
 		std::vector<ci::fs::path>	mLinkList;
 		std::vector<std::string>	mPpDefinitions;
 		std::vector<std::string>	mIncludes;
+		std::vector<std::string>	mForcedIncludes;
 	};
 	
 	//! Compiles and links the file at path. A callback can be specified to get the compilation results.

@@ -88,6 +88,12 @@ Compiler::Options& Compiler::Options::dumpSymbols( bool dump )
 	return *this;
 }
 
+Compiler::Options& Compiler::Options::forceInclude( const std::string &filename )
+{
+	mForcedIncludes.push_back( filename );
+	return *this;
+}
+
 /*
  Minimal C++ Process Library
  
@@ -795,6 +801,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	if( ! precompiledHeader.empty() ) {// && ! options.mCreatePrecompiledHeader ) {
 		command += " /Yu" + precompiledHeader.stem().string() + ".h"; // Use Precompiled Header
 		command += " /Fp" + pchName;
+	}
+	for( const auto &inc : options.mForcedIncludes ) {
+		command += " /FI " + inc;
 	}
 	//else if( options.mCreatePrecompiledHeader ) {
 	//	command += " /Yc" + precompiledHeader.stem().string() + ".h"; // Create Precompiled Header
