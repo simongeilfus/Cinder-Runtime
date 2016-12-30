@@ -1,29 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <cinder>
 <block
-	name="Cinder-Runtime"
-	id="org.sg.cinder.runtime"
+	name="Runtime Compiler"
+	id="sg.cinder.runtime"
 	author="Simon Geilfus"
-	version="0.1"
-	library="https://root.cern.ch/cling"
-	>
-	<supports os="macosx" />
-	<requires>sg.watchdog</requires>
+	summary="Runtime Compiler for Cinder"
+	license="BSD 2-clause"
+	git="https://github.com/simongeilfus/Cinder-RuntimeCompiler.git"
+	>	
 	
 	<includePath>include</includePath>
-	<includePath>lib/include</includePath>
-	<header>include/runtime_ptr.h</header>
-	<header>include/runtime_app.h</header>
-
-	<platform config="debug">
-  		<dynamicLibrary cinder="true">lib/libcinder_d.dylib</dynamicLibrary>
-	</platform>
-	<platform config="release">
-  		<dynamicLibrary cinder="true">lib/libcinder.dylib</dynamicLibrary>
-	</platform>
-
-	<staticLibrary>lib/lib/libCling.a</staticLibrary>
-	<staticLibrary absolute="true">-lncurses</staticLibrary>
-
+	<headerPattern>include/runtime/*.h</headerPattern>	
+    <sourcePattern>src/runtime/*.cpp</sourcePattern>
+    
 </block>
 </cinder>
