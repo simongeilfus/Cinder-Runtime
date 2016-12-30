@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Blocks">
+      <UniqueIdentifier>{69D2FAC0-0186-47A8-A630-C747028C05E9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime Compiler">
+      <UniqueIdentifier>{AB6E73D8-9164-41E1-B1D8-217186748727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime Compiler\include">
+      <UniqueIdentifier>{5850B2D2-9B10-46DF-81E7-B35D148587C7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime Compiler\src">
+      <UniqueIdentifier>{92E727CA-EE52-4658-849F-77A68D85AC1F}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\CinderCompilerApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\CinderCompilerApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClCompile Include="..\src\Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\Compiler.cpp">
+      <Filter>Blocks\Runtime Compiler\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
+      <Filter>Blocks\Runtime Compiler\src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Test.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Memory.h">
+      <Filter>Blocks\Runtime Compiler\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Module.h">
+      <Filter>Blocks\Runtime Compiler\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Compiler.h">
+      <Filter>Blocks\Runtime Compiler\include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
