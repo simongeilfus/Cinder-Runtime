@@ -14,12 +14,12 @@ using namespace ci;
 
 Test::Test()
 {
-	mFont = Font( "Arial", 35.0f );
+	mFont = Font( "Arial", 45.0f );
 }
 
 void Test::clear() const 
 {
-	ci::gl::clear( ci::ColorA( 1, 0, 0, 1 ) );
+	ci::gl::clear( ci::ColorA( 0, 0, 0, 1 ) );
 }
 void Test::render() const 
 {

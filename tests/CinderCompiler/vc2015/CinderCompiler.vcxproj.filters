@@ -16,13 +16,13 @@
     <Filter Include="Blocks">
       <UniqueIdentifier>{69D2FAC0-0186-47A8-A630-C747028C05E9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Runtime Compiler">
+    <Filter Include="Blocks\Cinder-Runtime">
       <UniqueIdentifier>{AB6E73D8-9164-41E1-B1D8-217186748727}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Runtime Compiler\include">
+    <Filter Include="Blocks\Cinder-Runtime\include">
       <UniqueIdentifier>{5850B2D2-9B10-46DF-81E7-B35D148587C7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Runtime Compiler\src">
+    <Filter Include="Blocks\Cinder-Runtime\src">
       <UniqueIdentifier>{92E727CA-EE52-4658-849F-77A68D85AC1F}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -40,10 +40,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\Compiler.cpp">
-      <Filter>Blocks\Runtime Compiler\src</Filter>
+      <Filter>Blocks\Cinder-Runtime\src</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\Module.cpp">
-      <Filter>Blocks\Runtime Compiler\src</Filter>
+      <Filter>Blocks\Cinder-Runtime\src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -54,13 +54,13 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Memory.h">
-      <Filter>Blocks\Runtime Compiler\include</Filter>
+      <Filter>Blocks\Cinder-Runtime\include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Module.h">
-      <Filter>Blocks\Runtime Compiler\include</Filter>
+      <Filter>Blocks\Cinder-Runtime\include</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Compiler.h">
-      <Filter>Blocks\Runtime Compiler\include</Filter>
+      <Filter>Blocks\Cinder-Runtime\include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
