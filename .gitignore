@@ -17,6 +17,8 @@ build/
 *.VC.opendb
 *.VC.db
 *.opensdf
+*.idb
+*.pdb
 Debug/
 Release/
 Debug_DLL/
