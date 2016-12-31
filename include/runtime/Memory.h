@@ -230,7 +230,7 @@ namespace details {
 							//	inst->update( newPtr );
 							//}
 						if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
-							std::shared_ptr<Test> newPtr;
+							std::shared_ptr<T> newPtr;
 							factoryCreate( &newPtr );
 							if( newPtr ) {
 								inst->update( newPtr );
