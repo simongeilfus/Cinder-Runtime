@@ -831,7 +831,6 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	for( const auto &include : options.mIncludes ) {
 		command += " /I " + include;
 	}
-	command += " /cgthreads4";
 	//command += " /Fd" + pdbName;
 	//command += " /FS";
 	//command += " /Bt";
@@ -867,6 +866,8 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /IMPLIB:" + libName;
 	command += " /PDB:" + pdbName;
 	command += " /INCREMENTAL:NO";
+	command += " /CGTHREADS:8";
+	//command += " /DYNAMICBASE:NO";
 	
 #if ! defined( USE_PCH ) && defined( USE_FAST_LINK )
 	//command += " /DEBUG:FASTLINK";
@@ -882,11 +883,6 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	// additional files to link
 	for( const auto &path : options.mLinkList ) {
 		command += " " + quote( resolvePath( path ).string() );
-	}
-	for( const auto &path : options.mCompileList ) {
-		if( fs::exists( outputPath / ( path.stem().string() + ".obj" ) ) ) {
-			command += " " + quote( ( outputPath / ( path.stem().string() + ".obj" ) ).string() );
-		}
 	}
 	// link the objs created by the app
 	if( options.mLinkAppObjs ) {
