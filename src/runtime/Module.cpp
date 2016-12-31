@@ -166,6 +166,20 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 	if( ! ci::fs::exists( tempFolder / "build" ) ) {
 		ci::fs::create_directory( tempFolder / "build" );
 	}
+	else {
+		// cleanup pdb files in the build folder 
+		if( ci::fs::exists( tempFolder / "build" ) ) {
+			ci::fs::directory_iterator end;
+			for( ci::fs::directory_iterator it( tempFolder / "build" ); it != end; ++it ) {
+				app::console() << it->path() << endl;
+				if( it->path().extension() == ".pdb" ) {
+					try {
+						ci::fs::remove( it->path() );
+					} catch( ... ){}
+				}
+			}
+		}
+	}
 	
 	// find out if it's a cpp/h pair or just a header
 	auto hPath = ci::fs::canonical( path );
