@@ -148,6 +148,7 @@ ModuleManager::~ModuleManager()
 	mModules.clear();
 }
 
+Timer timer;
 
 ModuleRef ModuleManager::add( const ci::fs::path &path )
 {
@@ -181,43 +182,58 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 	// build module
 	auto buildModule = [=]( const std::weak_ptr<Module> &module ) {
-
-		// parse the header file
-		if( ! hPath.empty() ) {
-			std::ifstream inputFile( hPath );
-			std::ofstream outputFile( tempFolder / ( className + ".h" ) );
-		
-			bool reachedPragmaOnce = false;
-			bool addedInclude = false;
-			for( string line; std::getline( inputFile, line ); ) {
-			
-				// add export preprocessor
-				auto classPos = line.find( "class" );
-				if( classPos != string::npos ) {
-					//line.replace( classPos, 5, "class __declspec(dllexport)" );
-				}
-				outputFile << line << endl;
-			}
-
-			// add the factory function
-			outputFile << endl;
+		timer.start();
+		// create the factory source
+		{
+			std::ofstream outputFile( tempFolder / ( className + "Factory.cpp" ) );		
 			outputFile << "#include <memory>" << endl << endl;
-			/*outputFile << "extern \"C\" __declspec(dllexport) void runtimeCreateFactory( std::shared_ptr<" << className << ">* ptr )" << endl;
+			outputFile << "#include \"" << hPath.stem().string() << ".h\"" << endl << endl;
+			outputFile << "extern \"C\" __declspec(dllexport) void __cdecl runtimeCreateFactory( std::shared_ptr<" << className << ">* ptr )" << endl;
 			outputFile << "{" << endl;
 			outputFile << "\t*ptr = std::make_shared<" << className << ">();" << endl;
-			outputFile << "}" << endl;*/
-			outputFile << "std::shared_ptr<" << className << "> __declspec(dllexport) runtimeCreateFactory()" << endl;
+			outputFile << "}" << endl;
+			/*outputFile << "std::shared_ptr<" << className << "> __declspec(dllexport) runtimeCreateFactory()" << endl;
 			outputFile << "{" << endl;
 			outputFile << "\treturn std::make_shared<" << className << ">();" << endl;
-			outputFile << "}" << endl;
+			outputFile << "}" << endl;*/
 			outputFile << endl;
 		}
+		// parse the header file
+		//if( ! hPath.empty() ) {
+		//	std::ifstream inputFile( hPath );
+		//	std::ofstream outputFile( tempFolder / ( className + ".h" ) );
+		//
+		//	bool reachedPragmaOnce = false;
+		//	bool addedInclude = false;
+		//	for( string line; std::getline( inputFile, line ); ) {
+		//	
+		//		// add export preprocessor
+		//		auto classPos = line.find( "class" );
+		//		if( classPos != string::npos ) {
+		//			//line.replace( classPos, 5, "class __declspec(dllexport)" );
+		//		}
+		//		outputFile << line << endl;
+		//	}
+
+		//	// add the factory function
+		//	outputFile << endl;
+		//	outputFile << "#include <memory>" << endl << endl;
+		//	/*outputFile << "extern \"C\" __declspec(dllexport) void runtimeCreateFactory( std::shared_ptr<" << className << ">* ptr )" << endl;
+		//	outputFile << "{" << endl;
+		//	outputFile << "\t*ptr = std::make_shared<" << className << ">();" << endl;
+		//	outputFile << "}" << endl;*/
+		//	outputFile << "std::shared_ptr<" << className << "> __declspec(dllexport) runtimeCreateFactory()" << endl;
+		//	outputFile << "{" << endl;
+		//	outputFile << "\treturn std::make_shared<" << className << ">();" << endl;
+		//	outputFile << "}" << endl;
+		//	outputFile << endl;
+		//}
 
 		// parse the source
 		bool createPch = ! fs::exists( tempFolder / "build" / ( className + "PCH.pch" ) );
 		if( ! cppPath.empty() ) {
 			std::ifstream inputFile( cppPath );
-			std::ofstream sourceFile( tempFolder / ( className + ".cpp" ) );
+			//std::ofstream sourceFile( tempFolder / ( className + ".cpp" ) );
 			std::stringstream pchHeaderStream;
 			std::stringstream pchSourceStream;
 			std::vector<string> pchIncludes;
@@ -225,7 +241,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 			// prepare pch files
 			pchHeaderStream << "#pragma once" << endl << endl;
 			pchSourceStream << "#include \"" << ( className + "PCH.h" ) << "\"" << endl;
-			sourceFile << "#include \"" << ( className + "PCH.h" ) << "\"" << endl;
+			//sourceFile << "#include \"" << ( className + "PCH.h" ) << "\"" << endl;
 		
 			// parse the source file
 			int skippedIncludes = 0;
@@ -236,16 +252,16 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					pchIncludes.push_back( line );
 					// try to keep same number of lines
 					if( skippedIncludes > 0 ) {
-						sourceFile << endl;
+						//sourceFile << endl;
 					}
 					skippedIncludes++;
 				}
 				// otherwise keep the include
 				else if( line.find( "#include" ) != string::npos && line.find( className + ".h" ) != string::npos ) {
-					sourceFile << line << endl;
+					//sourceFile << line << endl;
 				}
 				else {
-					sourceFile << line << endl;
+					//sourceFile << line << endl;
 				}
 			}
 
@@ -279,13 +295,23 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		// compile module
 		if( auto moduleShared = module.lock() ) {
 			moduleShared->unlockHandle();
-		}
+		}/*
 		mCompiler->build( tempFolder / ( className + ".cpp" ), 
 						  Compiler::Options()
 						  .include( tempFolder )
 						  .include( path.parent_path() )
 						  .preprocessorDef( "RT_MODULE_EXPORTS" )
 						  .precompiledHeader( tempFolder / ( className + "PCH.cpp" ), createPch )
+						  .outputPath( tempFolder / "build" )
+						  .dumpSymbols( true )
+						  .verbose( true ), */
+		mCompiler->build( cppPath, 
+						  Compiler::Options()
+						  .include( tempFolder )
+						  .include( path.parent_path() )
+						  .additionalCompileList( { tempFolder / ( className + "Factory.cpp" ) } )
+						  .precompiledHeader( tempFolder / ( className + "PCH.cpp" ), createPch )
+						  .forceInclude( className + "PCH.h" )
 						  .outputPath( tempFolder / "build" )
 						  .verbose( false ), 
 						  [module]( const CompilationResult &results ) {
@@ -296,6 +322,8 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					moduleShared->getCleanupSignal().emit( moduleShared );
 					moduleShared->updateHandle();
 					moduleShared->getChangedSignal().emit( moduleShared );
+					timer.stop();
+					app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 				}
 			}
 		} );	
@@ -307,7 +335,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 	// watch files for changes
 	auto watchPaths = [=]( const ci::fs::path &path ) {
-		static int skip = 2;
+		static int skip = 1;//2;
 		if( ! skip ) {
 			buildModule( module );	
 		}

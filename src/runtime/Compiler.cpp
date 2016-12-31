@@ -26,7 +26,7 @@ using namespace ci;
 namespace runtime {
 
 Compiler::Options::Options()
-: mVerbose( false ), mCreatePrecompiledHeader( false ), mDumpSymbols( true )
+: mVerbose( false ), mCreatePrecompiledHeader( false ), mDumpSymbols( false )
 {
 }
 Compiler::Options& Compiler::Options::precompiledHeader( const ci::fs::path &path, bool create )
@@ -759,7 +759,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 
 	// additional files to compile
 	//_____________________________________________
-	if( options.mCompileList.size() ) {
+	/*if( options.mCompileList.size() ) {
 		command += "cl " + mCompileArgs;
 		// add defines
 		for( const auto &def : options.mPpDefinitions ) {
@@ -779,7 +779,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 			command += " " + quote( resolvePath( path ).string() );
 		}
 		command += "/n";
-	}
+	}*/
 
 	// compile the actual file
 	//_____________________________________________
@@ -816,6 +816,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " " + quote( ( mProjectPath / "src" / "dllmain.cpp" ).string() );
 #endif
 	command += " " + quote( actualPath.string() );
+	for( const auto &path : options.mCompileList ) {
+		command += " " + quote( path.string() );
+	}
 	//command += "\n";
 	
 	// linker

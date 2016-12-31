@@ -77,8 +77,8 @@ namespace details {
 		static Class* get();
 		static ci::fs::path locateSources( const ci::fs::path &path );
 		
-		//typedef void (__cdecl* FactoryPtr)(std::shared_ptr<T>*);
-		typedef std::shared_ptr<T> (*FactoryPtr)(void);
+		typedef void (__cdecl* FactoryPtr)(std::shared_ptr<T>*);
+		//typedef std::shared_ptr<T> (*FactoryPtr)(void);
 		std::map<shared_ptr<T>*,ci::signals::ScopedConnection> mInstancesUpdate;
 		std::map<shared_ptr<T>*,ci::signals::ScopedConnection> mInstancesCleanup;
 		ModuleRef mModule;
@@ -214,7 +214,7 @@ namespace details {
 			// connect to the new module signal
 			Class<T>::get()->mInstancesUpdate[inst] = Class<T>::get()->mModule->getChangedSignal().connect( [inst]( const ModuleRef &module ) {
 				if( auto handle = module->getHandle() ) {
-					std::string factorySymbol = "";
+					/*std::string factorySymbol = "";
 					const auto &symbols = module->getSymbols();
 					for( const auto &symbol : symbols ) {
 						if( ( symbol.first.find( "shared_ptr" ) != std::string::npos
@@ -223,14 +223,20 @@ namespace details {
 							&& symbol.second.find( "runtimeCreateFactory" ) != std::string::npos ) ) {
 							factorySymbol = symbol.second;
 						}
-					}
-					if( ! factorySymbol.empty() ) {
-						if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), factorySymbol.c_str() ) ) {
-							if( std::shared_ptr<Test> newPtr = factoryCreate() ) {
+					}*/
+					//if( ! factorySymbol.empty() ) {
+						//if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), factorySymbol.c_str() ) ) {
+							//if( std::shared_ptr<Test> newPtr = factoryCreate() ) {
+							//	inst->update( newPtr );
+							//}
+						if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
+							std::shared_ptr<Test> newPtr;
+							factoryCreate( &newPtr );
+							if( newPtr ) {
 								inst->update( newPtr );
 							}
 						}
-					}
+					//}
 				}
 			} );
 		}
