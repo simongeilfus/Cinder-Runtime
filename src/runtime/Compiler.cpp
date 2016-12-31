@@ -579,7 +579,7 @@ Compiler::~Compiler()
 		if( fs::exists( path ) ) { 
 			try {
 				fs::remove( path );
-			} catch( ... ) {}
+			} catch( const fs::filesystem_error &error ) {}
 		}
 	}
 }
@@ -717,20 +717,19 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	
 	// try deleting or renaming previous pdb files to prevent errors
 	if( fs::exists( outputPath / ( path.stem().string() + ".pdb" ) ) ) {
-		bool deleted = false;
+		/*bool deleted = false;
 		try {
 			fs::remove( outputPath / ( path.stem().string() + ".pdb" ) );
 			deleted = true;
 		}
-		catch( ... ) {}
-		if( ! deleted ) {
+		catch( const fs::filesystem_error &error ) {}
+		if( ! deleted ) {*/
 			auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".pdb" ) );
 			try {
 				fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
-				//pdbName = newName.string();
 				mTemporaryFiles.push_back( newName );
-			} catch( ... ) {}
-		}
+			} catch( const fs::filesystem_error &error ) {}
+		//}
 	}
 
 	// compile the precompiled-header
