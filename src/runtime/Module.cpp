@@ -171,7 +171,6 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		if( ci::fs::exists( tempFolder / "build" ) ) {
 			ci::fs::directory_iterator end;
 			for( ci::fs::directory_iterator it( tempFolder / "build" ); it != end; ++it ) {
-				app::console() << it->path() << endl;
 				if( it->path().extension() == ".pdb" ) {
 					try {
 						ci::fs::remove( it->path() );
