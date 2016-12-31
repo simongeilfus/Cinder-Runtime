@@ -20,12 +20,8 @@ class CinderCompilerApp : public App {
 	rt::shared_ptr<HeaderOnlyTest> mHeaderOnly;
 };
 
-
 // (compiler) Debug Information Format: Program Database /Zi	
-// (compiler) /MP No tangible benefits
-// (compiler) /FS not really needed / working
 // (linker) /INCREMENTAL:NO as we're changing the .pdb file before building there's no need for this (performing full link anyway)
-// (linker) /OPT:NOLBR
 CinderCompilerApp::CinderCompilerApp()
 {
 	mTest = rt::make_shared<Test>();
