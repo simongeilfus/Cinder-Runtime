@@ -787,7 +787,6 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 		//command += " /Fd" + pdbName;
 		//command += " /FS";
 		//command += " /Gz";
-		command += " /cgthreads4";
 		command += " /Fo" + outputPath.string() + "\\"; 
 		//command += " /Fo" + ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string();
 		command += " /Fp" + pchName;
@@ -795,30 +794,6 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 		command += " " + quote( resolvePath( precompiledHeader ).string() );
 		command += "\n";
 	}
-
-	// additional files to compile
-	//_____________________________________________
-	/*if( options.mCompileList.size() ) {
-		command += "cl " + mCompileArgs;
-		// add defines
-		for( const auto &def : options.mPpDefinitions ) {
-			command += " /D " + def;
-		}
-		// includes
-		for( const auto &include : options.mIncludes ) {
-			command += " /I " + include;
-		}
-		command += " /cgthreads4";
-		//command += " /Fd" + pdbName;
-		if( ! precompiledHeader.empty() ) {
-			command += " /Yu" + precompiledHeader.stem().string() + ".h";; // Precompiled Header
-			command += " /Fp" + pchName;
-		}
-		for( const auto &path : options.mCompileList ) {
-			command += " " + quote( resolvePath( path ).string() );
-		}
-		command += "/n";
-	}*/
 
 	// compile the actual file
 	//_____________________________________________
@@ -836,28 +811,21 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	//command += " /Bt";
 	//command += " /Gz";
 	command += " /Fo" + outputPath.string() + "\\"; 
-	if( ! precompiledHeader.empty() ) {// && ! options.mCreatePrecompiledHeader ) {
-		command += " /Yu" + precompiledHeader.stem().string() + ".h"; // Use Precompiled Header
+	 // Use Precompiled Header
+	if( ! precompiledHeader.empty() ) {
+		command += " /Yu" + precompiledHeader.stem().string() + ".h";
 		command += " /Fp" + pchName;
 	}
+	// forced includes
 	for( const auto &inc : options.mForcedIncludes ) {
 		command += " /FI " + inc;
 	}
-	//else if( options.mCreatePrecompiledHeader ) {
-	//	command += " /Yc" + precompiledHeader.stem().string() + ".h"; // Create Precompiled Header
-	//	command += " /Fp" + pchName;
-	//	command += " " + quote( resolvePath( precompiledHeader ).string() );
-	//	app::console() << "ICI: " << quote( resolvePath( precompiledHeader ).string() ) << endl;
-	//}
-	//command += " /YX /Yl-";
-#if defined( USE_DLL_ENTRY )
-	command += " " + quote( ( mProjectPath / "src" / "dllmain.cpp" ).string() );
-#endif
+	// the actual file to compile
 	command += " " + quote( actualPath.string() );
+	// additional files to compile
 	for( const auto &path : options.mCompileList ) {
 		command += " " + quote( path.string() );
 	}
-	//command += "\n";
 	
 	// linker
 	//_____________________________________________
@@ -867,15 +835,10 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /PDB:" + pdbName;
 	command += " /INCREMENTAL:NO";
 	command += " /CGTHREADS:8";
-	//command += " /DYNAMICBASE:NO";
-	
-#if ! defined( USE_PCH ) && defined( USE_FAST_LINK )
-	//command += " /DEBUG:FASTLINK";
+#if defined( _DEBUG )
+	command += " /DEBUG:FASTLINK";
 #endif
-	command += " /DLL ";// + objName;
-#if defined( USE_DLL_ENTRY )
-	command += " " + quote( ( outputPath / "dllmain.obj" ).string() );
-#endif
+	command += " /DLL ";
 	
 	if( ! precompiledHeader.empty() ) {
 		command += " " + quote( ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string() );
@@ -1046,7 +1009,7 @@ void Compiler::findAppBuildArguments()
 				}
 				// if a link.command log was found get rid of the unecessary compiler arguments
 				if( ! mLinkArgs.empty() ) {
-					mLinkArgs = cleanArguments( mLinkArgs, { "OUT", "PDB", "IMPLIB", "SUBSYSTEM", "INCREMENTAL" }, true );
+					mLinkArgs = cleanArguments( mLinkArgs, { "OUT", "PDB", "IMPLIB", "SUBSYSTEM", "INCREMENTAL", "DEBUG" }, true );
 				}
 			}
 		}
