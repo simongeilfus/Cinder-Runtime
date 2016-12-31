@@ -47,7 +47,7 @@ using namespace ci;
 namespace runtime {
 
 Compiler::Options::Options()
-: mVerbose( false ), mCreatePrecompiledHeader( false ), mDumpSymbols( false )
+: mVerbose( false ), mCreatePrecompiledHeader( false ), mDumpSymbols( false ), mLinkAppObjs( true )
 {
 }
 Compiler::Options& Compiler::Options::precompiledHeader( const ci::fs::path &path, bool create )
@@ -112,6 +112,12 @@ Compiler::Options& Compiler::Options::dumpSymbols( bool dump )
 Compiler::Options& Compiler::Options::forceInclude( const std::string &filename )
 {
 	mForcedIncludes.push_back( filename );
+	return *this;
+}
+
+Compiler::Options& Compiler::Options::linkAppObjs( bool link )
+{
+	mLinkAppObjs = link;
 	return *this;
 }
 
@@ -830,7 +836,6 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	//command += " /FS";
 	//command += " /Bt";
 	//command += " /Gz";
-	command += " /INCREMENTAL:NO";
 	command += " /Fo" + outputPath.string() + "\\"; 
 	if( ! precompiledHeader.empty() ) {// && ! options.mCreatePrecompiledHeader ) {
 		command += " /Yu" + precompiledHeader.stem().string() + ".h"; // Use Precompiled Header
@@ -861,6 +866,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /OUT:" + dllName;
 	command += " /IMPLIB:" + libName;
 	command += " /PDB:" + pdbName;
+	command += " /INCREMENTAL:NO";
 	
 #if ! defined( USE_PCH ) && defined( USE_FAST_LINK )
 	//command += " /DEBUG:FASTLINK";
@@ -880,6 +886,27 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	for( const auto &path : options.mCompileList ) {
 		if( fs::exists( outputPath / ( path.stem().string() + ".obj" ) ) ) {
 			command += " " + quote( ( outputPath / ( path.stem().string() + ".obj" ) ).string() );
+		}
+	}
+	// link the objs created by the app
+	if( options.mLinkAppObjs ) {
+		// ignore the app obj and the built class obj
+		auto appNameUpper = mProjectName + "APP";
+		auto classNameUpper = path.stem().string();
+		std::transform( classNameUpper.begin(), classNameUpper.end(), classNameUpper.begin(), ::toupper );
+		std::transform( appNameUpper.begin(), appNameUpper.end(), appNameUpper.begin(), ::toupper );
+		vector<string> ignoredAppObjs = { classNameUpper + ".OBJ", appNameUpper + ".OBJ" };
+		for( const auto &obj : mAppLinkedObjs ) {
+			bool ignore = false;
+			for( const auto &ignored : ignoredAppObjs ) {
+				if( obj.find( ignored ) != string::npos ) {
+					ignore = true;
+					break;
+				}
+			}
+			if( ! ignore ){
+				command += " " + obj;
+			}
 		}
 	}
 	command += "\n";
@@ -942,7 +969,7 @@ void Compiler::initializeProcess()
 void Compiler::findAppBuildArguments()
 {
 	// Helper to remove unecessary arguments
-	const auto cleanArguments = []( const std::string &command, const std::vector<std::string> &argsToIgnore ) {
+	const auto cleanArguments = [this]( const std::string &command, const std::vector<std::string> &argsToIgnore, bool linkArgs ) {
 		std::string newCommand;
 		std::vector<std::string> args = split( command, "/" );
 		for( size_t i = 0; i < args.size(); ++i ) {
@@ -957,8 +984,22 @@ void Compiler::findAppBuildArguments()
 				// because of the split( command, "/" ), the last line
 				// is likely to contain an unwanted list of files to compile/link
 				if( i == args.size() - 1 ) {
+					// if it's the compiler arguments, ignore that list otherwise, ignore the app .obj and the original class .obj but keep the rest
 					auto firstSpace = args[i].find_first_of( " " );
 					newCommand+= "/" + args[i].substr( 0, firstSpace );
+					if( linkArgs ) {
+						auto objToLink = args[i].substr( firstSpace + 1 );
+						auto resPos = objToLink.find( ".RES" );
+						auto objPos = objToLink.find( ".OBJ" );
+						while( resPos != std::string::npos || objPos != std::string::npos ) {
+							auto nextPos = resPos < objPos ? resPos : objPos;
+							mAppLinkedObjs.push_back( objToLink.substr( 0, nextPos + 4 ) );
+							objToLink = objToLink.substr( nextPos + 4 );
+							resPos = objToLink.find( ".RES" );
+							objPos = objToLink.find( ".OBJ" );
+						}
+						
+					}
 				}
 				else {
 					newCommand += "/" + args[i];
@@ -988,8 +1029,8 @@ void Compiler::findAppBuildArguments()
 				// if a cl.command log was found get rid of the unecessary compiler arguments
 				if( ! mCompileArgs.empty() ){
 					mCompileArgs = cleanArguments( mCompileArgs, 
-					{ "c", "Fd", "Fo", "/INCREMENTAL" //, "Zi", "Gd" // Doesn't play well with precompiled header
-					} );
+					{ "c", "Fd", "Fo" //, "Zi", "Gd" // Doesn't play well with precompiled header
+					}, false );
 				}
 			}
 		}
@@ -1009,7 +1050,7 @@ void Compiler::findAppBuildArguments()
 				}
 				// if a link.command log was found get rid of the unecessary compiler arguments
 				if( ! mLinkArgs.empty() ) {
-					mLinkArgs = cleanArguments( mLinkArgs, { "OUT", "PDB", "IMPLIB", "SUBSYSTEM" } );
+					mLinkArgs = cleanArguments( mLinkArgs, { "OUT", "PDB", "IMPLIB", "SUBSYSTEM", "INCREMENTAL" }, true );
 				}
 			}
 		}
