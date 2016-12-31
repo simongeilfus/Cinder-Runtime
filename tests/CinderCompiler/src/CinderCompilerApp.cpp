@@ -5,6 +5,7 @@
 #include "runtime/Memory.h"
 
 #include "Test.h"
+#include "HeaderOnlyTest.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -16,6 +17,7 @@ class CinderCompilerApp : public App {
 	void draw() override;
 
 	rt::shared_ptr<Test> mTest;
+	rt::shared_ptr<HeaderOnlyTest> mHeaderOnly;
 };
 
 
@@ -27,6 +29,7 @@ class CinderCompilerApp : public App {
 CinderCompilerApp::CinderCompilerApp()
 {
 	mTest = rt::make_shared<Test>();
+	mHeaderOnly = rt::make_shared<HeaderOnlyTest>();
 }
 
 void CinderCompilerApp::draw()
@@ -37,6 +40,10 @@ void CinderCompilerApp::draw()
 	else if( mTest ){
 		mTest->clear();
 		mTest->render();
+	}
+
+	if( mHeaderOnly ) {
+		mHeaderOnly->render();
 	}
 }
 

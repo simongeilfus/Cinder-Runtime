@@ -390,6 +390,7 @@
     <ClInclude Include="..\..\..\include\runtime\Memory.h" />
     <ClInclude Include="..\..\..\include\runtime\Module.h" />
     <ClInclude Include="..\include\Resources.h" />
+    <ClInclude Include="..\src\HeaderOnlyTest.h" />
     <ClInclude Include="..\src\Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

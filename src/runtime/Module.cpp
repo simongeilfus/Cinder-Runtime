@@ -308,26 +308,24 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		// compile module
 		if( auto moduleShared = module.lock() ) {
 			moduleShared->unlockHandle();
-		}/*
-		mCompiler->build( tempFolder / ( className + ".cpp" ), 
-						  Compiler::Options()
-						  .include( tempFolder )
-						  .include( path.parent_path() )
-						  .preprocessorDef( "RT_MODULE_EXPORTS" )
-						  .precompiledHeader( tempFolder / ( className + "PCH.cpp" ), createPch )
-						  .outputPath( tempFolder / "build" )
-						  .dumpSymbols( true )
-						  .verbose( true ), */
-		mCompiler->build( cppPath, 
-						  Compiler::Options()
+		}
+
+		// prepare build options
+		auto buildOptions = Compiler::Options()
 						  .include( tempFolder )
 						  .include( path.parent_path() )
 						  .additionalCompileList( { tempFolder / ( className + "Factory.cpp" ) } )
-						  .precompiledHeader( tempFolder / ( className + "PCH.cpp" ), createPch )
-						  .forceInclude( className + "PCH.h" )
 						  .outputPath( tempFolder / "build" )
-						  .verbose( false ), 
-						  [module]( const CompilationResult &results ) {
+						  .verbose( false );
+
+		// enables precompiled header only on .cpp files for the moment
+		if( ! cppPath.empty() ) {
+			buildOptions.precompiledHeader( tempFolder / ( className + "PCH.cpp" ), createPch );
+			buildOptions.forceInclude( className + "PCH.h" );
+		}
+
+		// start the building process
+		mCompiler->build( ! cppPath.empty() ? cppPath : hPath, buildOptions, [module]( const CompilationResult &results ) {
 
 			if( ! results.hasErrors() ) {
 				if( auto moduleShared = module.lock() ) {
@@ -353,12 +351,13 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 	// watch files for changes
 	auto watchPaths = [=]( const ci::fs::path &path ) {
-		static int skip = 1;//2;
-		if( ! skip ) {
+		static map<fs::path,int> skip;
+		if( ! skip.count( path ) ) skip[path] = 1;
+		if( ! skip[path] ) {
 			buildModule( module );	
 		}
 		else {
-			skip--;
+			skip[path]--;
 		}
 	};
 	if( ! hPath.empty() ) {

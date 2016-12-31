@@ -226,7 +226,7 @@ namespace details {
 					}*/
 					//if( ! factorySymbol.empty() ) {
 						//if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), factorySymbol.c_str() ) ) {
-							//if( std::shared_ptr<Test> newPtr = factoryCreate() ) {
+							//if( std::shared_ptr<T> newPtr = factoryCreate() ) {
 							//	inst->update( newPtr );
 							//}
 						if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {

@@ -62,6 +62,9 @@
     <ClInclude Include="..\..\..\include\runtime\Compiler.h">
       <Filter>Blocks\Cinder-Runtime\include</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\HeaderOnlyTest.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc">
