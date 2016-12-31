@@ -169,7 +169,10 @@ ModuleManager::~ModuleManager()
 	mModules.clear();
 }
 
-//Timer timer;
+#define ENABLE_TIMING
+#if defined( ENABLE_TIMING )
+Timer timer;
+#endif
 
 ModuleRef ModuleManager::add( const ci::fs::path &path )
 {
@@ -216,10 +219,12 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 	// build module
 	auto buildModule = [=]( const std::weak_ptr<Module> &module ) {
-		//timer.start();
+#if defined( ENABLE_TIMING )
+		timer.start();
+#endif
 
 		// create the factory source
-		{
+		if( ! fs::exists( tempFolder / ( className + "Factory.cpp" ) ) ) {
 			// Write the object factory file with an extern "C" function that allow instancing of the class
 			std::ofstream outputFile( tempFolder / ( className + "Factory.cpp" ) );		
 			outputFile << "#include <memory>" << endl << endl;
@@ -288,11 +293,12 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 		// prepare build options
 		auto buildOptions = Compiler::Options()
-						  .include( tempFolder )
-						  .include( path.parent_path() )
-						  .additionalCompileList( { tempFolder / ( className + "Factory.cpp" ) } )
-						  .outputPath( tempFolder / "build" )
-						  .verbose( false );
+			.include( tempFolder )
+			.include( path.parent_path() )
+			.additionalCompileList( { tempFolder / ( className + "Factory.cpp" ) } )
+			.outputPath( tempFolder / "build" )
+			//.linkAppObjs( false )
+			.verbose( true );
 
 		// enables precompiled header only on .cpp files for the moment
 		if( ! cppPath.empty() ) {
@@ -308,8 +314,10 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					moduleShared->setSymbols( results.getSymbols() );
 					moduleShared->getCleanupSignal().emit( moduleShared );
 					moduleShared->updateHandle();
-					//timer.stop();
-					//app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
+#if defined( ENABLE_TIMING )
+					timer.stop();
+					app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
+#endif
 					moduleShared->getChangedSignal().emit( moduleShared );
 				}
 			}
