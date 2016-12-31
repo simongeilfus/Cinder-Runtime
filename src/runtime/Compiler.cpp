@@ -796,6 +796,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	//command += " /FS";
 	//command += " /Bt";
 	//command += " /Gz";
+	command += " /INCREMENTAL:NO";
 	command += " /Fo" + outputPath.string() + "\\"; 
 	if( ! precompiledHeader.empty() ) {// && ! options.mCreatePrecompiledHeader ) {
 		command += " /Yu" + precompiledHeader.stem().string() + ".h"; // Use Precompiled Header
@@ -953,7 +954,7 @@ void Compiler::findAppBuildArguments()
 				// if a cl.command log was found get rid of the unecessary compiler arguments
 				if( ! mCompileArgs.empty() ){
 					mCompileArgs = cleanArguments( mCompileArgs, 
-					{ "c", "Fd", "Fo" //, "Zi", "Gd" // Doesn't play well with precompiled header
+					{ "c", "Fd", "Fo", "/INCREMENTAL" //, "Zi", "Gd" // Doesn't play well with precompiled header
 					} );
 				}
 			}
