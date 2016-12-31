@@ -217,8 +217,10 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 	// build module
 	auto buildModule = [=]( const std::weak_ptr<Module> &module ) {
 		//timer.start();
+
 		// create the factory source
 		{
+			// Write the object factory file with an extern "C" function that allow instancing of the class
 			std::ofstream outputFile( tempFolder / ( className + "Factory.cpp" ) );		
 			outputFile << "#include <memory>" << endl << endl;
 			outputFile << "#include \"" << hPath.stem().string() << ".h\"" << endl << endl;
@@ -226,48 +228,14 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 			outputFile << "{" << endl;
 			outputFile << "\t*ptr = std::make_shared<" << className << ">();" << endl;
 			outputFile << "}" << endl;
-			/*outputFile << "std::shared_ptr<" << className << "> __declspec(dllexport) runtimeCreateFactory()" << endl;
-			outputFile << "{" << endl;
-			outputFile << "\treturn std::make_shared<" << className << ">();" << endl;
-			outputFile << "}" << endl;*/
 			outputFile << endl;
 		}
-		// parse the header file
-		//if( ! hPath.empty() ) {
-		//	std::ifstream inputFile( hPath );
-		//	std::ofstream outputFile( tempFolder / ( className + ".h" ) );
-		//
-		//	bool reachedPragmaOnce = false;
-		//	bool addedInclude = false;
-		//	for( string line; std::getline( inputFile, line ); ) {
-		//	
-		//		// add export preprocessor
-		//		auto classPos = line.find( "class" );
-		//		if( classPos != string::npos ) {
-		//			//line.replace( classPos, 5, "class __declspec(dllexport)" );
-		//		}
-		//		outputFile << line << endl;
-		//	}
-
-		//	// add the factory function
-		//	outputFile << endl;
-		//	outputFile << "#include <memory>" << endl << endl;
-		//	/*outputFile << "extern \"C\" __declspec(dllexport) void runtimeCreateFactory( std::shared_ptr<" << className << ">* ptr )" << endl;
-		//	outputFile << "{" << endl;
-		//	outputFile << "\t*ptr = std::make_shared<" << className << ">();" << endl;
-		//	outputFile << "}" << endl;*/
-		//	outputFile << "std::shared_ptr<" << className << "> __declspec(dllexport) runtimeCreateFactory()" << endl;
-		//	outputFile << "{" << endl;
-		//	outputFile << "\treturn std::make_shared<" << className << ">();" << endl;
-		//	outputFile << "}" << endl;
-		//	outputFile << endl;
-		//}
-
-		// parse the source
+		
+		// parse the source for headers
 		bool createPch = ! fs::exists( tempFolder / "build" / ( className + "PCH.pch" ) );
 		if( ! cppPath.empty() ) {
+
 			std::ifstream inputFile( cppPath );
-			//std::ofstream sourceFile( tempFolder / ( className + ".cpp" ) );
 			std::stringstream pchHeaderStream;
 			std::stringstream pchSourceStream;
 			std::vector<string> pchIncludes;
@@ -275,8 +243,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 			// prepare pch files
 			pchHeaderStream << "#pragma once" << endl << endl;
 			pchSourceStream << "#include \"" << ( className + "PCH.h" ) << "\"" << endl;
-			//sourceFile << "#include \"" << ( className + "PCH.h" ) << "\"" << endl;
-		
+			
 			// parse the source file
 			int skippedIncludes = 0;
 			for( string line; std::getline( inputFile, line ); ) {
@@ -284,18 +251,6 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 				if( line.find( "#include" ) != string::npos && line.find( className + ".h" ) == string::npos ) {
 					pchHeaderStream << line << endl;
 					pchIncludes.push_back( line );
-					// try to keep same number of lines
-					if( skippedIncludes > 0 ) {
-						//sourceFile << endl;
-					}
-					skippedIncludes++;
-				}
-				// otherwise keep the include
-				else if( line.find( "#include" ) != string::npos && line.find( className + ".h" ) != string::npos ) {
-					//sourceFile << line << endl;
-				}
-				else {
-					//sourceFile << line << endl;
 				}
 			}
 
