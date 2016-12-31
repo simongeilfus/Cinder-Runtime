@@ -148,7 +148,7 @@ ModuleManager::~ModuleManager()
 	mModules.clear();
 }
 
-Timer timer;
+//Timer timer;
 
 ModuleRef ModuleManager::add( const ci::fs::path &path )
 {
@@ -195,7 +195,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 
 	// build module
 	auto buildModule = [=]( const std::weak_ptr<Module> &module ) {
-		timer.start();
+		//timer.start();
 		// create the factory source
 		{
 			std::ofstream outputFile( tempFolder / ( className + "Factory.cpp" ) );		
@@ -332,9 +332,9 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					moduleShared->setSymbols( results.getSymbols() );
 					moduleShared->getCleanupSignal().emit( moduleShared );
 					moduleShared->updateHandle();
+					//timer.stop();
+					//app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 					moduleShared->getChangedSignal().emit( moduleShared );
-					timer.stop();
-					app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 				}
 			}
 			else {
