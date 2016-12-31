@@ -569,19 +569,32 @@ Compiler::Compiler()
 
 	// Connect the process redirection to cinder's console
 	mProcessOutputConnection = app::App::get()->getSignalUpdate().connect( bind( &Compiler::parseProcessOutput, this ) );
+
+	// Connect temp files cleanup to the app cleanup
+	app::App::get()->getSignalCleanup().connect( []() {
+		auto appPath = app::getAppPath().parent_path();
+		ci::fs::recursive_directory_iterator end;
+		for( ci::fs::recursive_directory_iterator it( appPath / "RTTemp" ); it != end; ++it ) {
+			if( it->path().extension() == ".pdb" ) {
+				try {
+					ci::fs::remove( it->path() );
+				} catch( const fs::filesystem_error &error ){}
+			}
+		}
+	} );
 }
 
 Compiler::~Compiler()
 {
 	mProcess->terminate();
 	mProcessOutputConnection.disconnect();
-	for( const auto &path : mTemporaryFiles ) {
+	/*for( const auto &path : mTemporaryFiles ) {
 		if( fs::exists( path ) ) { 
 			try {
 				fs::remove( path );
 			} catch( const fs::filesystem_error &error ) {}
 		}
-	}
+	}*/
 }
 
 namespace {
