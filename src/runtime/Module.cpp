@@ -339,6 +339,11 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 				}
 			}
+			else {
+				for( const auto &error : results.getErrors() ) {
+					app::console() << error << endl;
+				}
+			}
 		} );	
 	};
 
