@@ -298,7 +298,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 			.additionalCompileList( { tempFolder / ( className + "Factory.cpp" ) } )
 			.outputPath( tempFolder / "build" )
 			//.linkAppObjs( false )
-			.verbose( true );
+			.verbose( false );
 
 		// enables precompiled header only on .cpp files for the moment
 		if( ! cppPath.empty() ) {

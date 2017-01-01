@@ -586,7 +586,11 @@ Compiler::Compiler()
 {	
 	// get the application name and directory
 	mAppPath		= app::getAppPath().parent_path();
+#ifdef _WIN64
+	mProjectPath	= mAppPath.parent_path().parent_path().parent_path();
+#else
 	mProjectPath	= mAppPath.parent_path().parent_path();
+#endif
 	mProjectName	= mProjectPath.stem().string();
 	
 	// find the compiler/linker arguments and start the process
@@ -917,8 +921,13 @@ void Compiler::initializeProcess()
 {
 	if( fs::exists( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) ) {
 		// create a cmd process with the right environment variables and paths
+#ifdef _WIN64
+		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().string(), true, true );
+		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x64" << endl;
+#else
 		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().string(), true, true );
 		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x86" << endl;
+#endif
 	}
 	else {
 		throw CompilerException( "Failed Initializing Compiler Process" );
@@ -1013,6 +1022,9 @@ void Compiler::findAppBuildArguments()
 				}
 			}
 		}
+	}
+	else {
+		app::console() << "Compiler::findAppBuildArguments can't locate tlog folder" << endl;
 	}
 }
 

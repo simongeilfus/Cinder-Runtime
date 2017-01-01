@@ -175,7 +175,11 @@ namespace details {
 	{
 		auto appPath = ci::app::getAppPath();
 		auto appPathStr = appPath.string();
+#ifdef _WIN64
+		auto projectPath = appPath.parent_path().parent_path().parent_path().parent_path();
+#else
 		auto projectPath = appPath.parent_path().parent_path().parent_path();
+#endif
 		if( ci::fs::is_directory( projectPath ) ) {
 			ci::fs::recursive_directory_iterator dir( projectPath ), endDir;
 			for( ; dir != endDir; ++dir ) {
