@@ -15,8 +15,11 @@ Clone [msw_dll branch](https://github.com/simongeilfus/Cinder/tree/msw_dll) and 
 1. Create new configuration for Debug_DLL and Release_DLL (use "copy setting from" in the configuration manager)
 2. Project Properties / General / Platform Toolset: change to "Visual Studio 2015 (v140)"
 3. Project Properties / C++ / Code Generation: change Runtime Library to /MDd and /MD
-4. Add CINDER_DLL to the Preprocessor Definitions
-5. Project Properties / Build Events / Post-Build Event / Command Line: xcopy /y /d "..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(SolutionDir)$(Configuration)\" (change the first path to be relative to the project)
+4. Project Properties / C++ / Preprocessor / Preprocessor Definitions: Add CINDER_DLL
+5. Project Properties / Linker / Input / Additional Dependencies: Add `glload.lib` and `glloadD.lib`
+6. Project Properties / Build Events / Post-Build Event / Command Line: Paste `xcopy /y /d "..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"` and change the first path to be relative to the project.
+
+
 
 ###### Wrap the class instances you want to be reloadable into a `rt::shared_ptr` object:
 ```c++
