@@ -71,7 +71,7 @@ Module::~Module()
 		try {
 			fs::remove( mTempPath );
 		}
-		catch( const fs::filesystem_error &error ) {
+		catch( const fs::filesystem_error & ) {
 		}
 	}
 }
@@ -96,7 +96,7 @@ void Module::unlockHandle()
 			try {
 				fs::remove( mTempPath );
 			}
-			catch( const fs::filesystem_error &error ) {}
+			catch( const fs::filesystem_error & ) {}
 		}
 
 		// rename the soon to be old module to a temp name
@@ -104,7 +104,7 @@ void Module::unlockHandle()
 		try {
 			fs::rename( mPath, mTempPath );
 		}
-		catch( const fs::filesystem_error &error ) {}
+		catch( const fs::filesystem_error & ) {}
 	}
 }
 
@@ -198,7 +198,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 				if( it->path().extension() == ".pdb" ) {
 					try {
 						ci::fs::remove( it->path() );
-					} catch( const fs::filesystem_error &error ){}
+					} catch( const fs::filesystem_error & ){}
 				}
 			}
 		}

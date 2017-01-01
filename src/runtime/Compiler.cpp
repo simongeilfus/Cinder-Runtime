@@ -609,7 +609,7 @@ Compiler::Compiler()
 			if( it->path().extension() == ".pdb" ) {
 				try {
 					ci::fs::remove( it->path() );
-				} catch( const fs::filesystem_error &error ){}
+				} catch( const fs::filesystem_error & ){}
 			}
 		}
 	} );
@@ -772,7 +772,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 			try {
 				fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
 				mTemporaryFiles.push_back( newName );
-			} catch( const fs::filesystem_error &error ) {}
+			} catch( const fs::filesystem_error & ) {}
 		//}
 	}
 
@@ -840,7 +840,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	for( const auto &path : options.mCompileList ) {
 		command += " " + quote( path.string() );
 	}
-	
+
 	// linker
 	//_____________________________________________
 	command += " /link " + mLinkArgs;
