@@ -791,6 +791,11 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 		//command += " /Fd" + pdbName;
 		//command += " /FS";
 		//command += " /Gz";
+#if ! defined( _DEBUG )
+		command += " /Od";
+#else
+		command += " /Zi";
+#endif	
 		command += " /Fo" + outputPath.string() + "\\"; 
 		//command += " /Fo" + ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string();
 		command += " /Fp" + pchName;
@@ -814,6 +819,11 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	//command += " /FS";
 	//command += " /Bt";
 	//command += " /Gz";
+#if ! defined( _DEBUG )
+	command += " /Od";
+#else
+	command += " /Zi";
+#endif
 	command += " /Fo" + outputPath.string() + "\\"; 
 	 // Use Precompiled Header
 	if( ! precompiledHeader.empty() ) {
@@ -836,10 +846,10 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /link " + mLinkArgs;
 	command += " /OUT:" + dllName;
 	command += " /IMPLIB:" + libName;
-	command += " /PDB:" + pdbName;
 	command += " /INCREMENTAL:NO";
-	command += " /CGTHREADS:8";
+	//command += " /CGTHREADS:8";
 #if defined( _DEBUG )
+	command += " /PDB:" + pdbName;
 	command += " /DEBUG:FASTLINK";
 #endif
 	command += " /DLL ";
@@ -997,7 +1007,18 @@ void Compiler::findAppBuildArguments()
 				// if a cl.command log was found get rid of the unecessary compiler arguments
 				if( ! mCompileArgs.empty() ){
 					mCompileArgs = cleanArguments( mCompileArgs, 
-					{ "c", "Fd", "Fo" //, "Zi", "Gd" // Doesn't play well with precompiled header
+					{ 
+						"c", 
+						"Fd", 
+						"Fo",	
+#if ! defined( _DEBUG )
+						"O1",
+						"O2",
+						"Ox",
+						"GL",
+#endif
+						"ZI",
+						"Zi"
 					}, false );
 				}
 			}
@@ -1018,7 +1039,20 @@ void Compiler::findAppBuildArguments()
 				}
 				// if a link.command log was found get rid of the unecessary compiler arguments
 				if( ! mLinkArgs.empty() ) {
-					mLinkArgs = cleanArguments( mLinkArgs, { "OUT", "PDB", "IMPLIB", "SUBSYSTEM", "INCREMENTAL", "DEBUG" }, true );
+					mLinkArgs = cleanArguments( mLinkArgs, { 
+						"OUT", 
+						"PDB", 
+						"IMPLIB", 
+						"SUBSYSTEM", 
+						"INCREMENTAL", 
+						"MANIFEST",
+						"MANIFESTUAC",
+#if ! defined( _DEBUG )
+						"MAP",
+#else
+						"DEBUG" 
+#endif
+					}, true );
 				}
 			}
 		}
