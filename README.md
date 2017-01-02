@@ -16,8 +16,7 @@ Clone [msw_dll branch](https://github.com/simongeilfus/Cinder/tree/msw_dll) and 
 2. Project Properties / General / Platform Toolset: change to "Visual Studio 2015 (v140)"
 3. Project Properties / C++ / Code Generation: change Runtime Library to /MDd and /MD
 4. Project Properties / C++ / Preprocessor / Preprocessor Definitions: Add CINDER_DLL
-5. Project Properties / Linker / Input / Additional Dependencies: Add `glload.lib` and `glloadD.lib`
-6. Project Properties / Build Events / Post-Build Event / Command Line: Paste `xcopy /y /d "..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"` and change the first path to be relative to the project.
+5. Project Properties / Build Events / Post-Build Event / Command Line: Paste `xcopy /y /d "..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"` and change the first path to be relative to the project.
 
 
 
