@@ -38,7 +38,7 @@
 
 namespace runtime {
 
-#if ! defined( RT_DISABLE_SHARED_POINTERS )
+#if ! defined( RT_DISABLE_SHARED_POINTERS ) && defined( CINDER_DLL )
 
 namespace details {
 	template<typename T> class Class;
