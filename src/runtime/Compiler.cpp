@@ -987,8 +987,19 @@ void Compiler::findAppBuildArguments()
 		return newCommand;
 	};
 
-	//// try to get the compiler and linker commands from vs tlog folder
+	// locate the .tlog folder
 	auto logPath = mAppPath / ( mProjectName + ".tlog" );
+	if( ! fs::exists( logPath ) ) {
+		fs::directory_iterator end;
+		fs::directory_iterator logIt( mAppPath );
+		for( ; logIt != end; ++logIt ) {
+			if( fs::is_directory( logIt->path() ) && logIt->path().extension() == ".tlog" ) {
+				logPath = logIt->path();
+				break;
+			}
+		}
+	}
+	//// try to get the compiler and linker commands from vs tlog folder
 	if( fs::exists( logPath ) ) {
 		// compiler commands
 		if( mCompileArgs.empty() ) {
