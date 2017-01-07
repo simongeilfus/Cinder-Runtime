@@ -1,12 +1,13 @@
 #pragma once
 
 #include "cinder/app/App.h"
+#include "cinder/Log.h"
 
 class HeaderOnlyTest {
 public:
 	HeaderOnlyTest() 
 	{
-		//ci::app::console() << "HeaderOnlyTest constructed" << std::endl;
+		CI_LOG_I( "bang" );
 	}
 	
 	virtual void render() const

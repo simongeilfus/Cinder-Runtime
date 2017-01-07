@@ -40,6 +40,7 @@
 
 #include "cinder/Utilities.h"
 #include "cinder/app/App.h"
+#include "cinder/Log.h"
 
 using namespace std;
 using namespace ci;
@@ -701,7 +702,7 @@ void Compiler::parseProcessOutput()
 		fullOutput += output;
 	}
 	if( mVerbose && ! fullOutput.empty() ) { 
-		app::console() << fullOutput << endl;
+		CI_LOG_I( fullOutput );
 	}
 }
 
@@ -1069,7 +1070,7 @@ void Compiler::findAppBuildArguments()
 		}
 	}
 	else {
-		app::console() << "Compiler::findAppBuildArguments can't locate tlog folder" << endl;
+		CI_LOG_E( "can't locate tlog folder" );
 	}
 }
 

@@ -20,6 +20,7 @@
 */
 
 #include "runtime/Module.h"
+#include "cinder/Log.h"
 #include "Watchdog.h"
 #include <iostream>
 #include <fstream>
@@ -316,14 +317,14 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					moduleShared->updateHandle();
 #if defined( ENABLE_TIMING )
 					timer.stop();
-					app::console() << timer.getSeconds() * 1000.0 << "ms" << endl;
+					CI_LOG_I( timer.getSeconds() * 1000.0 << "ms" );
 #endif
 					moduleShared->getChangedSignal().emit( moduleShared );
 				}
 			}
 			else {
 				for( const auto &error : results.getErrors() ) {
-					app::console() << error << endl;
+					CI_LOG_E( error );
 				}
 			}
 		} );	
