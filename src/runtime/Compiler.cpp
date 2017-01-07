@@ -702,7 +702,7 @@ void Compiler::parseProcessOutput()
 		fullOutput += output;
 	}
 	if( mVerbose && ! fullOutput.empty() ) { 
-		CI_LOG_I( "rt::Compiler command line output: " );
+		CI_LOG_I( "Child Compiler output: " );
 		ci::app::console() << fullOutput << endl;
 	}
 }
