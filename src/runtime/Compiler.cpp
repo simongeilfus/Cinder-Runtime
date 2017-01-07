@@ -587,11 +587,7 @@ Compiler::Compiler()
 {	
 	// get the application name and directory
 	mAppPath		= app::getAppPath().parent_path();
-#ifdef _WIN64
-	mProjectPath	= mAppPath.parent_path().parent_path().parent_path();
-#else
-	mProjectPath	= mAppPath.parent_path().parent_path();
-#endif
+	mProjectPath	= mAppPath.parent_path().parent_path().parent_path().parent_path();
 	mProjectName	= mProjectPath.stem().string();
 	
 	// find the compiler/linker arguments and start the process
