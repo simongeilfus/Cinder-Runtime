@@ -308,7 +308,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		}
 
 		// start the building process
-		mCompiler->build( ! cppPath.empty() ? cppPath : hPath, buildOptions, [module]( const CompilationResult &results ) {
+		mCompiler->build( ! cppPath.empty() ? cppPath : hPath, buildOptions, [module,className]( const CompilationResult &results ) {
 
 			if( ! results.hasErrors() ) {
 				if( auto moduleShared = module.lock() ) {
@@ -323,8 +323,9 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 				}
 			}
 			else {
+				CI_LOG_E( "Error recompiling " << className );
 				for( const auto &error : results.getErrors() ) {
-					CI_LOG_E( error );
+					app::console() << error << endl;
 				}
 			}
 		} );	
