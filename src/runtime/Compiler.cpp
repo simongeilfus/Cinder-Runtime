@@ -929,13 +929,17 @@ void Compiler::initializeProcess()
 {
 	if( fs::exists( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) ) {
 		// create a cmd process with the right environment variables and paths
+		fs::path vcxprojPath = mProjectPath / "vc2015";
+		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", vcxprojPath.string(), true, true );
+
+		string command = quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" );
 #ifdef _WIN64
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().string(), true, true );
-		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x64" << endl;
+		command += " x64";
 #else
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().string(), true, true );
-		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x86" << endl;
+		command += " x86";
 #endif
+
+		mProcess << command << endl;
 	}
 	else {
 		throw CompilerException( "Failed Initializing Compiler Process" );
