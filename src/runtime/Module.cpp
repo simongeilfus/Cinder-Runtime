@@ -324,8 +324,9 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 			}
 			else {
 				CI_LOG_E( "Error recompiling " << className );
-				for( const auto &error : results.getErrors() ) {
-					app::console() << error << endl;
+				for( auto error : results.getErrors() ) {
+					std::transform( error.begin(), error.end(), error.begin(), ::tolower );
+					app::console() << "1>" << error << endl;
 				}
 			}
 		} );	
