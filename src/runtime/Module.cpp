@@ -258,6 +258,10 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 					pchHeaderStream << line << endl;
 					pchIncludes.push_back( line );
 				}
+				// #pragma hdrstop support
+				else if( line.find( "#pragma") != string::npos && line.find( "hdrstop" ) != string::npos ) {
+					break;
+				}
 			}
 
 			// check if the pch header needs to be written for the first time or updated
