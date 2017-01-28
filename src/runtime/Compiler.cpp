@@ -790,13 +790,14 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 		for( const auto &include : options.mIncludes ) {
 			command += " /I " + include;
 		}
-		//command += " /Fd" + pdbName;
-		//command += " /FS";
 		//command += " /Gz";
 #if ! defined( _DEBUG )
 		command += " /Od";
 #else
+		//command += " /FS";
+		//command += " /Z7";
 		command += " /Zi";
+		//command += " /Fd" + pdbName;
 #endif	
 		command += " /Fo" + outputPath.string() + "\\"; 
 		//command += " /Fo" + ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string();
@@ -817,14 +818,15 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	for( const auto &include : options.mIncludes ) {
 		command += " /I " + include;
 	}
-	//command += " /Fd" + pdbName;
-	//command += " /FS";
 	//command += " /Bt";
 	//command += " /Gz";
 #if ! defined( _DEBUG )
 	command += " /Od";
 #else
+	//command += " /FS";
+	//command += " /Z7";
 	command += " /Zi";
+	//command += " /Fd" + pdbName;
 #endif
 	command += " /Fo" + outputPath.string() + "\\"; 
 	 // Use Precompiled Header
@@ -851,7 +853,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /INCREMENTAL:NO";
 	//command += " /CGTHREADS:8";
 #if defined( _DEBUG )
-	command += " /PDB:" + pdbName;
+	//command += " /PDB:" + pdbName;
 	command += " /DEBUG:FASTLINK";
 #endif
 	command += " /DLL ";
