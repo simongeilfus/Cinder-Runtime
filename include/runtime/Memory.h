@@ -239,29 +239,13 @@ namespace details {
 			// connect to the new module signal
 			Class<T>::get()->mInstancesUpdate[inst] = Class<T>::get()->mModule->getChangedSignal().connect( [inst]( const ModuleRef &module ) {
 				if( auto handle = module->getHandle() ) {
-					/*std::string factorySymbol = "";
-					const auto &symbols = module->getSymbols();
-					for( const auto &symbol : symbols ) {
-						if( ( symbol.first.find( "shared_ptr" ) != std::string::npos
-							&& symbol.first.find( "runtimeCreateFactory" ) != std::string::npos ) ||
-							( symbol.second.find( "shared_ptr" ) != std::string::npos
-							&& symbol.second.find( "runtimeCreateFactory" ) != std::string::npos ) ) {
-							factorySymbol = symbol.second;
+					if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
+						std::shared_ptr<T> newPtr;
+						factoryCreate( &newPtr );
+						if( newPtr ) {
+							inst->update( newPtr );
 						}
-					}*/
-					//if( ! factorySymbol.empty() ) {
-						//if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), factorySymbol.c_str() ) ) {
-							//if( std::shared_ptr<T> newPtr = factoryCreate() ) {
-							//	inst->update( newPtr );
-							//}
-						if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
-							std::shared_ptr<T> newPtr;
-							factoryCreate( &newPtr );
-							if( newPtr ) {
-								inst->update( newPtr );
-							}
-						}
-					//}
+					}
 				}
 			} );
 		}
