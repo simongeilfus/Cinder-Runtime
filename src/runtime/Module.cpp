@@ -312,27 +312,8 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		}
 
 		// start the building process
-		mCompiler->build( ! cppPath.empty() ? cppPath : hPath, buildOptions, [module,className]( const CompilationResult &results ) {
-
-			if( ! results.hasErrors() ) {
-				if( auto moduleShared = module.lock() ) {
-					moduleShared->setSymbols( results.getSymbols() );
-					moduleShared->getCleanupSignal().emit( moduleShared );
-					moduleShared->updateHandle();
-#if defined( ENABLE_TIMING )
-					timer.stop();
-					CI_LOG_I( timer.getSeconds() * 1000.0 << "ms" );
-#endif
-					moduleShared->getChangedSignal().emit( moduleShared );
-				}
-			}
-			else {
-				CI_LOG_E( "Error recompiling " << className );
-				for( auto error : results.getErrors() ) {
-					std::transform( error.begin(), error.end(), error.begin(), ::tolower );
-					app::console() << "1>" << error << endl;
-				}
-			}
+		mCompiler->build( ! cppPath.empty() ? cppPath : hPath, buildOptions, [module,className,this]( const CompilationResult &results ) {
+			handleBuild( className, module, results );
 		} );	
 	};
 
@@ -359,6 +340,29 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 	}
 
 	return module;
+}
+
+void ModuleManager::handleBuild( const std::string &className, const std::weak_ptr<Module> &module, const CompilationResult &results )
+{
+	if( ! results.hasErrors() ) {
+		if( auto moduleShared = module.lock() ) {
+			moduleShared->setSymbols( results.getSymbols() );
+			moduleShared->getCleanupSignal().emit( moduleShared );
+			moduleShared->updateHandle();
+#if defined( ENABLE_TIMING )
+			timer.stop();
+			CI_LOG_I( timer.getSeconds() * 1000.0 << "ms" );
+#endif
+			moduleShared->getChangedSignal().emit( moduleShared );
+		}
+	}
+	else {
+		CI_LOG_E( "Error recompiling " << className );
+		for( auto error : results.getErrors() ) {
+			std::transform( error.begin(), error.end(), error.begin(), ::tolower );
+			app::console() << "1>" << error << endl;
+		}
+	}
 }
 
 } // namespace runtime

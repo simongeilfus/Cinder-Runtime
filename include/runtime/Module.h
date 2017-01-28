@@ -87,6 +87,7 @@ public:
 	ModuleRef add( const ci::fs::path &path );
 
 protected:
+	void handleBuild( const std::string &className, const std::weak_ptr<Module> &module, const CompilationResult &results );
 	
 	std::vector<ModuleRef>	mModules;
 	CompilerRef				mCompiler;
