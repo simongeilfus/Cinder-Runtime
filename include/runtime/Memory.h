@@ -109,7 +109,7 @@ template<class T>
 shared_ptr<T>::shared_ptr( const shared_ptr& other )
 : mPtr( other.mPtr )
 {
-	details::Class<T>::registerInstance( this );
+	//details::Class<T>::registerInstance( this );
 }
 
 template<class T>
@@ -124,7 +124,6 @@ shared_ptr<T>::shared_ptr( shared_ptr&& other )
 template<class T>
 shared_ptr<T>& shared_ptr<T>::operator=( const shared_ptr& other )
 {
-	details::Class<T>::registerInstance( this );
 	mPtr = other.mPtr;
 	return *this;
 }
@@ -147,6 +146,8 @@ template<class T>
 void shared_ptr<T>::update( const std::shared_ptr<T> &newInstance )
 {
 	mPtr = newInstance;
+	//details::Class<T>::unregisterInstance( &other );
+	//details::Class<T>::registerInstance( this );
 }
 
 template<typename T>
