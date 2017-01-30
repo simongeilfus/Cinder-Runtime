@@ -96,11 +96,14 @@ namespace details {
 		static void registerInstance( shared_ptr<T>* inst );
 		static Class* get();
 		static ci::fs::path locateSources( const ci::fs::path &path );
+		void handleRelease( const ModuleRef &module );
+		void handleChange( const ModuleRef &module );
 		
 		typedef void (__cdecl* FactoryPtr)(std::shared_ptr<T>*);
-		//typedef std::shared_ptr<T> (*FactoryPtr)(void);
-		std::map<shared_ptr<T>*,ci::signals::ScopedConnection> mInstancesUpdate;
-		std::map<shared_ptr<T>*,ci::signals::ScopedConnection> mInstancesCleanup;
+
+		std::vector<shared_ptr<T>*>		mInstances;
+		ci::signals::ScopedConnection	mInstancesUpdate;
+		ci::signals::ScopedConnection	mInstancesCleanup;
 		ModuleRef mModule;
 	};
 }
@@ -109,45 +112,39 @@ template<class T>
 shared_ptr<T>::shared_ptr( const shared_ptr& other )
 : mPtr( other.mPtr )
 {
-	//details::Class<T>::registerInstance( this );
 }
 
 template<class T>
 shared_ptr<T>::shared_ptr( shared_ptr&& other )
 : mPtr( std::move( other.mPtr ) )
 {
-	// TODO : Do we realy need to unregister in case of a move?
-	details::Class<T>::unregisterInstance( &other );
-	details::Class<T>::registerInstance( this );
 }
 
 template<class T>
 shared_ptr<T>& shared_ptr<T>::operator=( const shared_ptr& other )
 {
 	mPtr = other.mPtr;
-	return *this;
+	return (*this);
 }
 template<class T>
 shared_ptr<T>& shared_ptr<T>::operator=( shared_ptr&& other )
 {
-	details::Class<T>::unregisterInstance( &other );
-	details::Class<T>::registerInstance( this );
 	mPtr = std::move( other.mPtr );
-	return *this;
+	return (*this);
 }
 
 template<class T>
 shared_ptr<T>::~shared_ptr()
 {
-	details::Class<T>::unregisterInstance( this );
+	if( mPtr.use_count() == 1 ) {
+		details::Class<T>::unregisterInstance( this );
+	}
 }
 
 template<class T>
 void shared_ptr<T>::update( const std::shared_ptr<T> &newInstance )
 {
 	mPtr = newInstance;
-	//details::Class<T>::unregisterInstance( &other );
-	//details::Class<T>::registerInstance( this );
 }
 
 template<typename T>
@@ -223,7 +220,40 @@ namespace details {
 				CI_LOG_E( "Can't locate " << className << " source path. Please use rt::shared_ptr<T>::registerClass." );
 			}
 		}
+		// connect to the cleanup signals to allow releasing old pointer before releasing dynamic library
+		c->mInstancesCleanup = c->mModule->getCleanupSignal().connect( std::bind( &Class<T>::handleRelease, c, std::placeholders::_1 ) );
+		// connect to the new module signal
+		c->mInstancesUpdate = c->mModule->getChangedSignal().connect( std::bind( &Class<T>::handleChange, c, std::placeholders::_1 ) );
 	}
+	
+	template<typename T>
+	void Class<T>::handleRelease( const ModuleRef &module )
+	{
+		for( auto instance : mInstances ) {
+			instance->reset();
+		}
+	}
+	
+	template<typename T>
+	void Class<T>::handleChange( const ModuleRef &module )
+	{
+		if( auto handle = module->getHandle() ) {
+			if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
+				std::shared_ptr<T> newPtr;
+				factoryCreate( &newPtr );
+				if( newPtr ) {
+					std::set<std::shared_ptr<T>> pointers;
+					for( auto instance : mInstances ) {
+						if( ! pointers.count( instance->mPtr ) ) {
+							pointers.insert( instance->mPtr );
+							instance->update( newPtr );
+						}
+					}
+				}
+			}
+		}
+	}
+		
 
 	template<typename T>
 	void Class<T>::registerInstance( shared_ptr<T>* inst )
@@ -232,22 +262,7 @@ namespace details {
 			Class<T>::init();
 		}
 		if( Class<T>::isInitialized() ) {
-			// connect to the cleanup signals to allow releasing old pointer before releasing library
-			Class<T>::get()->mInstancesCleanup[inst] = Class<T>::get()->mModule->getCleanupSignal().connect( [inst]( const ModuleRef &module ) {
-				inst->reset();
-			} );
-			// connect to the new module signal
-			Class<T>::get()->mInstancesUpdate[inst] = Class<T>::get()->mModule->getChangedSignal().connect( [inst]( const ModuleRef &module ) {
-				if( auto handle = module->getHandle() ) {
-					if( auto factoryCreate = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "runtimeCreateFactory" ) ) {
-						std::shared_ptr<T> newPtr;
-						factoryCreate( &newPtr );
-						if( newPtr ) {
-							inst->update( newPtr );
-						}
-					}
-				}
-			} );
+			Class<T>::get()->mInstances.push_back( inst );
 		}
 	}
 
@@ -255,12 +270,7 @@ namespace details {
 	void Class<T>::unregisterInstance( shared_ptr<T>* inst )
 	{
 		if( Class<T>::isInitialized() ) {
-			if( get()->mInstancesUpdate.count( inst ) ) {
-				get()->mInstancesUpdate.erase( inst );
-			}
-			if( get()->mInstancesCleanup.count( inst ) ) {
-				get()->mInstancesCleanup.erase( inst );
-			}
+			get()->mInstances.erase( std::remove( get()->mInstances.begin(), get()->mInstances.end(), inst ), get()->mInstances.end() );
 		}
 	}
 
