@@ -47,7 +47,7 @@ namespace details {
 template<class T>
 class shared_ptr {
 public:
-	constexpr shared_ptr() {}
+	constexpr shared_ptr();
 	
 	operator bool() const { return mPtr.operator bool(); }
 	T* operator->() const { return mPtr.operator->(); }
@@ -108,16 +108,25 @@ namespace details {
 	};
 }
 
+	
+template<class T>
+constexpr shared_ptr<T>::shared_ptr() 
+{
+	details::Class<T>::registerInstance( this );	
+}
+
 template<class T>
 shared_ptr<T>::shared_ptr( const shared_ptr& other )
 : mPtr( other.mPtr )
 {
+	details::Class<T>::registerInstance( this );	
 }
 
 template<class T>
 shared_ptr<T>::shared_ptr( shared_ptr&& other )
 : mPtr( std::move( other.mPtr ) )
 {
+	details::Class<T>::registerInstance( this );	
 }
 
 template<class T>
@@ -136,9 +145,7 @@ shared_ptr<T>& shared_ptr<T>::operator=( shared_ptr&& other )
 template<class T>
 shared_ptr<T>::~shared_ptr()
 {
-	if( mPtr.use_count() == 1 ) {
-		details::Class<T>::unregisterInstance( this );
-	}
+	details::Class<T>::unregisterInstance( this );
 }
 
 template<class T>
@@ -229,8 +236,10 @@ namespace details {
 	template<typename T>
 	void Class<T>::handleRelease( const ModuleRef &module )
 	{
-		for( auto instance : mInstances ) {
-			instance->reset();
+		for( const auto &instance : mInstances ) {
+			if( instance ) {
+				instance->reset();
+			}
 		}
 	}
 	
@@ -269,6 +278,9 @@ namespace details {
 	template<typename T>
 	void Class<T>::unregisterInstance( shared_ptr<T>* inst )
 	{
+		if( ! Class<T>::isInitialized() ) {
+			Class<T>::init();
+		}
 		if( Class<T>::isInitialized() ) {
 			get()->mInstances.erase( std::remove( get()->mInstances.begin(), get()->mInstances.end(), inst ), get()->mInstances.end() );
 		}
