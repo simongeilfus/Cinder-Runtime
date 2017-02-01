@@ -587,11 +587,7 @@ Compiler::Compiler()
 {	
 	// get the application name and directory
 	mAppPath		= app::getAppPath().parent_path();
-#ifdef _WIN64
-	mProjectPath	= mAppPath.parent_path().parent_path().parent_path();
-#else
-	mProjectPath	= mAppPath.parent_path().parent_path();
-#endif
+	mProjectPath	= mAppPath.parent_path().parent_path().parent_path().parent_path();
 	mProjectName	= mProjectPath.stem().string();
 	
 	// find the compiler/linker arguments and start the process
@@ -935,13 +931,17 @@ void Compiler::initializeProcess()
 {
 	if( fs::exists( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) ) {
 		// create a cmd process with the right environment variables and paths
+		fs::path vcxprojPath = mProjectPath / "vc2015";
+		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", vcxprojPath.string(), true, true );
+
+		string command = quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" );
 #ifdef _WIN64
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().string(), true, true );
-		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x64" << endl;
+		command += " x64";
 #else
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().string(), true, true );
-		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x86" << endl;
+		command += " x86";
 #endif
+
+		mProcess << command << endl;
 	}
 	else {
 		throw CompilerException( "Failed Initializing Compiler Process" );
@@ -992,7 +992,7 @@ void Compiler::findAppBuildArguments()
 	};
 
 	// locate the .tlog folder
-	auto logPath = mAppPath / ( mProjectName + ".tlog" );
+	auto logPath = mAppPath / "intermediate" / ( mProjectName + ".tlog" );
 	if( ! fs::exists( logPath ) ) {
 		fs::directory_iterator end;
 		fs::directory_iterator logIt( mAppPath );
