@@ -178,8 +178,8 @@ Timer timer;
 ModuleRef ModuleManager::add( const ci::fs::path &path )
 {
 	// make sure temp folders exist
-	// create parent "RTTemp" folder
-	auto tempFolder = ci::app::getAppPath() / "RTTemp" / path.stem();
+	// create parent "intermediate/runtime" folder
+	auto tempFolder = ci::app::getAppPath() / "intermediate" / "runtime" / path.stem();
 	if( ! ci::fs::exists( tempFolder.parent_path() ) ) {
 		ci::fs::create_directory( tempFolder.parent_path() );
 	}

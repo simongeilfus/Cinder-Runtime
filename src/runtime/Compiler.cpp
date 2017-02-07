@@ -587,13 +587,9 @@ Compiler::Compiler()
 {	
 	// get the application name and directory
 	mAppPath		= app::getAppPath().parent_path();
-#ifdef _WIN64
-	mProjectPath	= mAppPath.parent_path().parent_path().parent_path();
-#else
-	mProjectPath	= mAppPath.parent_path().parent_path();
-#endif
+	mProjectPath	= mAppPath.parent_path().parent_path().parent_path().parent_path();
 	mProjectName	= mProjectPath.stem().string();
-	
+		
 	// find the compiler/linker arguments and start the process
 	// with visual studio env vars and paths
 	findAppBuildArguments();
@@ -935,11 +931,10 @@ void Compiler::initializeProcess()
 {
 	if( fs::exists( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) ) {
 		// create a cmd process with the right environment variables and paths
+		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().parent_path().string(), true, true );
 #ifdef _WIN64
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().string(), true, true );
 		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x64" << endl;
 #else
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().string(), true, true );
 		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x86" << endl;
 #endif
 	}
