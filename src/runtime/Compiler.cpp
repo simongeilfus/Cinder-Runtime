@@ -803,8 +803,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 #else
 		//command += " /FS";
 		//command += " /Z7";
-		command += " /Zi";
+		//command += " /Zi";
 		//command += " /Fd" + pdbName;
+		command += " /Fd" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );	
 #endif	
 		command += " /Fo" + outputPath.string() + "\\"; 
 		//command += " /Fo" + ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string();
@@ -832,8 +833,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 #else
 	//command += " /FS";
 	//command += " /Z7";
-	command += " /Zi";
-	//command += " /Fd" + pdbName;
+	//command += " /Zi";
+	command += " /Fd" + pdbName;
+	command += " /Fd" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );
 #endif
 	command += " /Fo" + outputPath.string() + "\\"; 
 	 // Use Precompiled Header
@@ -860,7 +862,8 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /INCREMENTAL:NO";
 	//command += " /CGTHREADS:8";
 #if defined( _DEBUG )
-	//command += " /PDB:" + pdbName;
+	//command += " /PDB:" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );
+	command += " /PDB:" + pdbName;
 	command += " /DEBUG:FASTLINK";
 #endif
 	command += " /DLL ";
@@ -889,7 +892,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 				}
 			}
 			if( ! ignore ){
-				command += " " + obj;
+				command += " " + quote( obj );
 			}
 		}
 	}
@@ -1042,7 +1045,7 @@ void Compiler::findAppBuildArguments()
 					mCompileArgs = cleanArguments( mCompileArgs, 
 					{ 
 						"c", 
-						"Fd", 
+						//"Fd", 
 						"Fo",	
 #if ! defined( _DEBUG )
 						"O1",
@@ -1050,8 +1053,8 @@ void Compiler::findAppBuildArguments()
 						"Ox",
 						"GL",
 #endif
-						"ZI",
-						"Zi"
+						//"ZI",
+						//"Zi"
 					}, false );
 				}
 			}
