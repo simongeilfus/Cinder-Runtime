@@ -998,7 +998,19 @@ void Compiler::findAppBuildArguments()
 	};
 
 	// locate the .tlog folder
-	auto logPath = mAppPath / ( mProjectName + ".tlog" );
+	auto intermediateFolder = mAppPath / "intermediate";
+	auto logPath = mAppPath / "intermediate" / ( mProjectName + ".tlog" );
+	if( ! fs::exists( logPath ) ) {
+		ci::fs::directory_iterator dir( intermediateFolder ), endDir;
+		for( ; dir != endDir; ++dir ) {
+			auto current = ( *dir ).path();
+			if( current.extension() == ".tlog" && fs::is_directory( current ) ) {
+				logPath = current;
+				break;
+			}
+		}
+	}
+
 	if( ! fs::exists( logPath ) ) {
 		fs::directory_iterator end;
 		fs::directory_iterator logIt( mAppPath );
