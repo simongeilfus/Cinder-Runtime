@@ -759,19 +759,11 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	
 	// try deleting or renaming previous pdb files to prevent errors
 	if( fs::exists( outputPath / ( path.stem().string() + ".pdb" ) ) ) {
-		/*bool deleted = false;
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".pdb" ) );
 		try {
-			fs::remove( outputPath / ( path.stem().string() + ".pdb" ) );
-			deleted = true;
-		}
-		catch( const fs::filesystem_error &error ) {}
-		if( ! deleted ) {*/
-			auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".pdb" ) );
-			try {
-				fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
-				mTemporaryFiles.push_back( newName );
-			} catch( const fs::filesystem_error & ) {}
-		//}
+			fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
+			mTemporaryFiles.push_back( newName );
+		} catch( const fs::filesystem_error & ) {}
 	}
 
 	// try renaming previous obj files to prevent errors
@@ -782,7 +774,14 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 			mTemporaryFiles.push_back( newName );
 		}
 		catch( const fs::filesystem_error & ) {}
-		
+	}
+	if( fs::exists( outputPath / ( path.stem().string() + "Factory.obj" ) ) ) {
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + "Factory.obj" ) );
+		try {
+			fs::rename( outputPath / ( path.stem().string() + "Factory.obj" ), newName );
+			mTemporaryFiles.push_back( newName );
+		}
+		catch( const fs::filesystem_error & ) {}
 	}
 
 	// compile the precompiled-header
