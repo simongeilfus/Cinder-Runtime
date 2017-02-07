@@ -602,8 +602,8 @@ Compiler::Compiler()
 	app::App::get()->getSignalCleanup().connect( []() {
 		auto appPath = app::getAppPath().parent_path();
 		ci::fs::recursive_directory_iterator end;
-		for( ci::fs::recursive_directory_iterator it( appPath / "RTTemp" ); it != end; ++it ) {
-			if( it->path().extension() == ".pdb" ) {
+		for( ci::fs::recursive_directory_iterator it( appPath / "intermediate" / "runtime" ); it != end; ++it ) {
+			if( it->path().stem().string().find( "PCH" ) == string::npos && ( it->path().extension() == ".pdb" || it->path().extension() == ".obj" ) ) {
 				try {
 					ci::fs::remove( it->path() );
 				} catch( const fs::filesystem_error & ){}
@@ -772,6 +772,17 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 				mTemporaryFiles.push_back( newName );
 			} catch( const fs::filesystem_error & ) {}
 		//}
+	}
+
+	// try renaming previous obj files to prevent errors
+	if( fs::exists( outputPath / ( path.stem().string() + ".obj" ) ) ) {
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".obj" ) );
+		try {
+			fs::rename( outputPath / ( path.stem().string() + ".obj" ), newName );
+			mTemporaryFiles.push_back( newName );
+		}
+		catch( const fs::filesystem_error & ) {}
+		
 	}
 
 	// compile the precompiled-header

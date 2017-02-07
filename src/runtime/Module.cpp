@@ -196,7 +196,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		if( ci::fs::exists( tempFolder / "build" ) ) {
 			ci::fs::directory_iterator end;
 			for( ci::fs::directory_iterator it( tempFolder / "build" ); it != end; ++it ) {
-				if( it->path().extension() == ".pdb" ) {
+				if( it->path().extension() == ".pdb" && it->path().stem().string().find( "PCH" ) == string::npos ) {
 					try {
 						ci::fs::remove( it->path() );
 					} catch( const fs::filesystem_error & ){}
