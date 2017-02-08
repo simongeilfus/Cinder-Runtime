@@ -983,7 +983,9 @@ void Compiler::findAppBuildArguments()
 						auto objPos = objToLink.find( ".OBJ" );
 						while( resPos != std::string::npos || objPos != std::string::npos ) {
 							auto nextPos = resPos < objPos ? resPos : objPos;
-							mAppLinkedObjs.push_back( objToLink.substr( 0, nextPos + 4 ) );
+							auto start = objToLink.find_first_not_of( "\"" );
+							start = start < nextPos ? start : 0;
+							mAppLinkedObjs.push_back( objToLink.substr( start, nextPos + 4 - start ) );
 							objToLink = objToLink.substr( nextPos + 4 );
 							resPos = objToLink.find( ".RES" );
 							objPos = objToLink.find( ".OBJ" );
