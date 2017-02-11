@@ -178,8 +178,8 @@ Timer timer;
 ModuleRef ModuleManager::add( const ci::fs::path &path )
 {
 	// make sure temp folders exist
-	// create parent "RTTemp" folder
-	auto tempFolder = ci::app::getAppPath() / "RTTemp" / path.stem();
+	// create parent "intermediate/runtime" folder
+	auto tempFolder = ci::app::getAppPath() / "intermediate" / "runtime" / path.stem();
 	if( ! ci::fs::exists( tempFolder.parent_path() ) ) {
 		ci::fs::create_directory( tempFolder.parent_path() );
 	}
@@ -196,7 +196,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 		if( ci::fs::exists( tempFolder / "build" ) ) {
 			ci::fs::directory_iterator end;
 			for( ci::fs::directory_iterator it( tempFolder / "build" ); it != end; ++it ) {
-				if( it->path().extension() == ".pdb" ) {
+				if( it->path().extension() == ".pdb" && it->path().stem().string().find( "PCH" ) == string::npos ) {
 					try {
 						ci::fs::remove( it->path() );
 					} catch( const fs::filesystem_error & ){}
@@ -210,8 +210,23 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 	auto cppPath = ci::fs::canonical( path );
 	auto className = hPath.stem().string();
 	if( cppPath.extension() == ".cpp" ) {
+		// first check in the same folder for the header
 		if( ci::fs::exists( path.parent_path() / ( className + ".h" ) ) ) {
 			hPath = path.parent_path() / ( className + ".h" );
+		}
+		else {
+			// otherwise check in the poject folders
+			auto appPath = ci::app::getAppPath();
+			auto projectPath = appPath.parent_path().parent_path().parent_path().parent_path().parent_path();
+			if( ci::fs::is_directory( projectPath ) ) {
+				ci::fs::recursive_directory_iterator dir( projectPath ), endDir;
+				for( ; dir != endDir; ++dir ) {
+					auto current = ( *dir ).path();
+					if( current.string().find( className + ".h" ) != std::string::npos ) {
+						hPath = ci::fs::canonical( current );
+					}
+				}
+			}
 		}
 	}
 	else if( cppPath.extension() == ".h" ) {

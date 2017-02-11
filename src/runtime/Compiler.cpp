@@ -587,13 +587,9 @@ Compiler::Compiler()
 {	
 	// get the application name and directory
 	mAppPath		= app::getAppPath().parent_path();
-#ifdef _WIN64
-	mProjectPath	= mAppPath.parent_path().parent_path().parent_path();
-#else
-	mProjectPath	= mAppPath.parent_path().parent_path();
-#endif
+	mProjectPath	= mAppPath.parent_path().parent_path().parent_path().parent_path();
 	mProjectName	= mProjectPath.stem().string();
-	
+		
 	// find the compiler/linker arguments and start the process
 	// with visual studio env vars and paths
 	findAppBuildArguments();
@@ -606,8 +602,8 @@ Compiler::Compiler()
 	app::App::get()->getSignalCleanup().connect( []() {
 		auto appPath = app::getAppPath().parent_path();
 		ci::fs::recursive_directory_iterator end;
-		for( ci::fs::recursive_directory_iterator it( appPath / "RTTemp" ); it != end; ++it ) {
-			if( it->path().extension() == ".pdb" ) {
+		for( ci::fs::recursive_directory_iterator it( appPath / "intermediate" / "runtime" ); it != end; ++it ) {
+			if( it->path().stem().string().find( "PCH" ) == string::npos && ( it->path().extension() == ".pdb" || it->path().extension() == ".obj" ) ) {
 				try {
 					ci::fs::remove( it->path() );
 				} catch( const fs::filesystem_error & ){}
@@ -763,19 +759,29 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	
 	// try deleting or renaming previous pdb files to prevent errors
 	if( fs::exists( outputPath / ( path.stem().string() + ".pdb" ) ) ) {
-		/*bool deleted = false;
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".pdb" ) );
 		try {
-			fs::remove( outputPath / ( path.stem().string() + ".pdb" ) );
-			deleted = true;
+			fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
+			mTemporaryFiles.push_back( newName );
+		} catch( const fs::filesystem_error & ) {}
+	}
+
+	// try renaming previous obj files to prevent errors
+	if( fs::exists( outputPath / ( path.stem().string() + ".obj" ) ) ) {
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".obj" ) );
+		try {
+			fs::rename( outputPath / ( path.stem().string() + ".obj" ), newName );
+			mTemporaryFiles.push_back( newName );
 		}
-		catch( const fs::filesystem_error &error ) {}
-		if( ! deleted ) {*/
-			auto newName = getNextAvailableName( outputPath / ( path.stem().string() + ".pdb" ) );
-			try {
-				fs::rename( outputPath / ( path.stem().string() + ".pdb" ), newName );
-				mTemporaryFiles.push_back( newName );
-			} catch( const fs::filesystem_error & ) {}
-		//}
+		catch( const fs::filesystem_error & ) {}
+	}
+	if( fs::exists( outputPath / ( path.stem().string() + "Factory.obj" ) ) ) {
+		auto newName = getNextAvailableName( outputPath / ( path.stem().string() + "Factory.obj" ) );
+		try {
+			fs::rename( outputPath / ( path.stem().string() + "Factory.obj" ), newName );
+			mTemporaryFiles.push_back( newName );
+		}
+		catch( const fs::filesystem_error & ) {}
 	}
 
 	// compile the precompiled-header
@@ -796,8 +802,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 #else
 		//command += " /FS";
 		//command += " /Z7";
-		command += " /Zi";
+		//command += " /Zi";
 		//command += " /Fd" + pdbName;
+		command += " /Fd" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );	
 #endif	
 		command += " /Fo" + outputPath.string() + "\\"; 
 		//command += " /Fo" + ( outputPath / ( precompiledHeader.stem().string() + ".obj" ) ).string();
@@ -825,8 +832,9 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 #else
 	//command += " /FS";
 	//command += " /Z7";
-	command += " /Zi";
-	//command += " /Fd" + pdbName;
+	//command += " /Zi";
+	command += " /Fd" + pdbName;
+	command += " /Fd" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );
 #endif
 	command += " /Fo" + outputPath.string() + "\\"; 
 	 // Use Precompiled Header
@@ -853,7 +861,8 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 	command += " /INCREMENTAL:NO";
 	//command += " /CGTHREADS:8";
 #if defined( _DEBUG )
-	//command += " /PDB:" + pdbName;
+	//command += " /PDB:" + quote( ( outputPath / ( path.stem().string() + "PCH.pdb" ) ).string() );
+	command += " /PDB:" + pdbName;
 	command += " /DEBUG:FASTLINK";
 #endif
 	command += " /DLL ";
@@ -882,7 +891,7 @@ void Compiler::build( const ci::fs::path &path, const Compiler::Options &options
 				}
 			}
 			if( ! ignore ){
-				command += " " + obj;
+				command += " " + quote( obj );
 			}
 		}
 	}
@@ -935,11 +944,10 @@ void Compiler::initializeProcess()
 {
 	if( fs::exists( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) ) {
 		// create a cmd process with the right environment variables and paths
+		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().parent_path().string(), true, true );
 #ifdef _WIN64
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().parent_path().string(), true, true );
 		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x64" << endl;
 #else
-		mProcess = make_unique<Process>( "cmd /k prompt 1$g\n", mAppPath.parent_path().string(), true, true );
 		mProcess << quote( "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat" ) + " x86" << endl;
 #endif
 	}
@@ -975,7 +983,9 @@ void Compiler::findAppBuildArguments()
 						auto objPos = objToLink.find( ".OBJ" );
 						while( resPos != std::string::npos || objPos != std::string::npos ) {
 							auto nextPos = resPos < objPos ? resPos : objPos;
-							mAppLinkedObjs.push_back( objToLink.substr( 0, nextPos + 4 ) );
+							auto start = objToLink.find_first_not_of( "\"" );
+							start = start < nextPos ? start : 0;
+							mAppLinkedObjs.push_back( objToLink.substr( start, nextPos + 4 - start ) );
 							objToLink = objToLink.substr( nextPos + 4 );
 							resPos = objToLink.find( ".RES" );
 							objPos = objToLink.find( ".OBJ" );
@@ -992,7 +1002,19 @@ void Compiler::findAppBuildArguments()
 	};
 
 	// locate the .tlog folder
-	auto logPath = mAppPath / ( mProjectName + ".tlog" );
+	auto intermediateFolder = mAppPath / "intermediate";
+	auto logPath = mAppPath / "intermediate" / ( mProjectName + ".tlog" );
+	if( ! fs::exists( logPath ) ) {
+		ci::fs::directory_iterator dir( intermediateFolder ), endDir;
+		for( ; dir != endDir; ++dir ) {
+			auto current = ( *dir ).path();
+			if( current.extension() == ".tlog" && fs::is_directory( current ) ) {
+				logPath = current;
+				break;
+			}
+		}
+	}
+
 	if( ! fs::exists( logPath ) ) {
 		fs::directory_iterator end;
 		fs::directory_iterator logIt( mAppPath );
@@ -1024,7 +1046,7 @@ void Compiler::findAppBuildArguments()
 					mCompileArgs = cleanArguments( mCompileArgs, 
 					{ 
 						"c", 
-						"Fd", 
+						//"Fd", 
 						"Fo",	
 #if ! defined( _DEBUG )
 						"O1",
@@ -1032,8 +1054,8 @@ void Compiler::findAppBuildArguments()
 						"Ox",
 						"GL",
 #endif
-						"ZI",
-						"Zi"
+						//"ZI",
+						//"Zi"
 					}, false );
 				}
 			}
