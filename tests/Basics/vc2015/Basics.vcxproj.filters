@@ -14,28 +14,28 @@
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
     <Filter Include="Blocks">
-      <UniqueIdentifier>{3EA83449-61E6-496D-8726-4BA338154B26}</UniqueIdentifier>
+      <UniqueIdentifier>{C4347E09-81C0-4740-8BEE-37014B1C717A}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Cinder-Runtime">
-      <UniqueIdentifier>{39495E2A-3412-4166-84E7-0792310DA0D2}</UniqueIdentifier>
+      <UniqueIdentifier>{42465A72-FD39-48B4-BF4A-B3D567497411}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Cinder-Runtime\include">
-      <UniqueIdentifier>{B0E4138B-66DC-4D23-B0F0-C2BDD12B95A2}</UniqueIdentifier>
+      <UniqueIdentifier>{A79B7AF7-2276-4003-A537-C82EE695F655}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Cinder-Runtime\include\runtime">
-      <UniqueIdentifier>{0CF466D3-ABE5-4AA1-B627-21CBB7B40771}</UniqueIdentifier>
+      <UniqueIdentifier>{36292B63-4D1A-4953-84A8-17B2A5117CA6}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Cinder-Runtime\src">
-      <UniqueIdentifier>{AF91D67B-1634-4699-8A0A-9F8FACC1257F}</UniqueIdentifier>
+      <UniqueIdentifier>{204A6B0E-FF9D-47D1-8CDC-A0FD27FFA521}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Cinder-Runtime\src\runtime">
-      <UniqueIdentifier>{76D85A0F-2F6A-497D-A081-51D9142F29DF}</UniqueIdentifier>
+      <UniqueIdentifier>{4BED4674-9B97-4243-AF94-BBD882AD18D2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Watchdog">
-      <UniqueIdentifier>{2EBA7DBA-63CB-48E2-BB6A-13948C99E16C}</UniqueIdentifier>
+      <UniqueIdentifier>{6FBBB3F7-3A5F-4186-9F0C-F00B712F3EC2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Blocks\Watchdog\include">
-      <UniqueIdentifier>{1131976A-17F7-4BAD-8C41-C2708B533BC6}</UniqueIdentifier>
+      <UniqueIdentifier>{82E43C97-7B61-4A63-913B-F688E3A63AA1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -48,7 +48,13 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\App.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Compiler.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Memory.h">

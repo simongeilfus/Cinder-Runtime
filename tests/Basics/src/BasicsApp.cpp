@@ -39,4 +39,4 @@ void BasicsApp::draw()
 	}
 }
 
-CINDER_APP( BasicsApp, RendererGl )
+CINDER_APP( BasicsApp, RendererGl( RendererGl::Options().msaa( 8 ) ) )
