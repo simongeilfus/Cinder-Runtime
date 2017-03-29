@@ -38,7 +38,9 @@
 
 namespace runtime {
 
-#if ! defined( RT_DISABLE_SHARED_POINTERS ) && defined( CINDER_DLL )
+#if ! defined( RT_DISABLE_SHARED_POINTERS ) && defined( CINDER_SHARED )
+
+#define RT_VIRTUAL virtual
 
 namespace details {
 	template<typename T> class Class;
@@ -291,6 +293,7 @@ inline std::shared_ptr<T> make_shared( Args&&... args )
 { 
 	return std::make_shared<T>( std::forward<Args>( args )... ); 
 }
+#define RT_VIRTUAL
 #endif
 
 } // namespace runtime
