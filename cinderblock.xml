@@ -12,6 +12,10 @@
 	<includePath>include</includePath>
 	<headerPattern>include/runtime/*.h</headerPattern>	
     <sourcePattern>src/runtime/*.cpp</sourcePattern>
+
+	<platform os="msw">
+		<buildCopy cinder="true">lib/msw/$(PlatformTarget)/$(Configuration)/$(PlatformToolset)/cinder.dll</buildCopy>
+	</platform>
     
 </block>
 </cinder>
