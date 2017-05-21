@@ -66,9 +66,9 @@ protected:
 	//! Write to the input pipe
 	bool write( const std::string &cmd );
 	template <typename T> friend inline Process& operator <<(Process& process, const T &value );
-	template <typename T> friend inline std::unique_ptr<Process>& operator <<(std::unique_ptr<Process>& process, const T &value );
+	template <typename T> friend inline ProcessPtr& operator <<(ProcessPtr& process, const T &value );
 	friend inline Process& operator <<(Process& process, std::ostream&(*f)(std::ostream&) );
-	friend inline std::unique_ptr<Process>& operator <<(std::unique_ptr<Process>& process, std::ostream&(*f)(std::ostream&) );
+	friend inline ProcessPtr& operator <<(ProcessPtr& process, std::ostream&(*f)(std::ostream&) );
 
 	bool							mProcessRunning;
 	bool							mIsOutputQueueEmpty;
@@ -110,7 +110,7 @@ inline Process& operator <<(Process& process, std::ostream&(*f)(std::ostream&) )
 }
 
 template <typename T>
-inline std::unique_ptr<Process>& operator <<(std::unique_ptr<Process>& process, const T &value )
+inline ProcessPtr& operator <<(ProcessPtr& process, const T &value )
 {
 	std::stringstream ss;
 	ss << value;
@@ -118,7 +118,7 @@ inline std::unique_ptr<Process>& operator <<(std::unique_ptr<Process>& process, 
     return process;
 }
 
-inline std::unique_ptr<Process>& operator <<(std::unique_ptr<Process>& process, std::ostream&(*f)(std::ostream&) ) 
+inline ProcessPtr& operator <<(ProcessPtr& process, std::ostream&(*f)(std::ostream&) ) 
 {
     if( f == std::endl<char, std::char_traits<char>> ) {
 		process->write( "\n" );
