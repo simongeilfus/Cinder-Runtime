@@ -35,11 +35,13 @@ public:
 	CompilerMSVC();
 	~CompilerMSVC();
 	
-	//! Compiles and links the file at path. A callback can be specified to get the compilation results.
-	void build( const ci::fs::path &path, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
-	//! Compiles and links the file at path. A callback can be specified to get the compilation results.
-	void build( const ci::fs::path &path, const std::string &compilerArgs, const std::string &linkerArgs, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );	
+	void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) override;
 	
+protected:
+	std::string		getCLInitCommand() const override;
+	ci::fs::path	getCompilerPath() const override;
+	std::string		getCompilerInitArgs() const override;
+	ci::fs::path	getProcessPath() const override;
 };
 
 } // namespace runtime

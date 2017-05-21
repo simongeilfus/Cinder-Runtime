@@ -36,24 +36,26 @@ class CompilationResult;
 class CompilerBase {
 public:
 	CompilerBase();
-	~CompilerBase();
+	virtual ~CompilerBase();
 	
 	//! Compiles and links the file at path. A callback can be specified to get the compilation results.
-	void build( const ci::fs::path &path, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
-	//! Compiles and links the file at path. A callback can be specified to get the compilation results.
-	void build( const ci::fs::path &path, const std::string &compilerArgs, const std::string &linkerArgs, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
-
-	std::string		getCLInitCommand() const;
-	ci::fs::path	getCompilerPath() const;
-	ci::fs::path	getProcessPath() const;
+	virtual void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) {}
 	
 protected:
-	virtual void initializeProcess();
+	virtual std::string		getCLInitCommand() const = 0;
+	virtual ci::fs::path	getCompilerPath() const = 0;
+	virtual std::string		getCompilerInitArgs() const = 0;
+	virtual ci::fs::path	getProcessPath() const = 0;
 
-	ProcessPtr		mProcess;
-	std::string		mCLInitCommand;
-	ci::fs::path	mCompilerPath;
-	ci::fs::path	mProcessPath;
+	void parseProcessOutput();
+	void initializeProcess();
+
+	ProcessPtr								mProcess;
+	ci::signals::ScopedConnection			mProcessOutputConnection;
+	bool									mVerbose;
+	std::function<void(CompilationResult&)> mBuildFinish;
+	std::vector<std::string>				mErrors;
+	std::vector<std::string>				mWarnings;
 };
 
 class CompilationResult {
