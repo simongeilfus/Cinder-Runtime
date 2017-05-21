@@ -31,20 +31,18 @@ void CompilerRewriteApp::setup()
 
 	// linker args
 	command += " /link ";
-	command += " /OUT:test.dll";
-	command += " /IMPLIB:test.lib";
+	command += " /OUT:BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\test.dll";
+	command += " /IMPLIB:BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\test.lib";
 	command += " /INCREMENTAL:NO /NOLOGO";
 	command += " /LIBPATH:..\\..\\..\\..\\..\\LIB\\MSW\\X64";
 	command += " /LIBPATH:..\\..\\..\\..\\..\\LIB\\MSW\\X64\\DEBUG_SHARED\\V140\\";
 	command += " CINDER.LIB OPENGL32.LIB KERNEL32.LIB USER32.LIB GDI32.LIB WINSPOOL.LIB COMDLG32.LIB ADVAPI32.LIB SHELL32.LIB OLE32.LIB OLEAUT32.LIB UUID.LIB ODBC32.LIB ODBCCP32.LIB /NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCPMT ";
 	command += " /MACHINE:X64";
-	//command += " /CGTHREADS:8";
 #if defined( _DEBUG )
 	command += " /PDB:\"C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\VC2015\\BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\VC140_RT.PDB\"";
 	command += " /DEBUG:FASTLINK";
 #endif
 	command += " /DLL ";
-	//command += " C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\VC2015\\BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\TEST.OBJ";
 
 	mCompiler->build( command, []( const rt::CompilationResult &result ) {
 		app::console() << "Done!" << endl;
