@@ -3,6 +3,8 @@
 #include "cinder/gl/gl.h"
 
 #include "runtime/CompilerMSVC.h"
+#include "Watchdog.h"
+#include "Test.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -11,16 +13,33 @@ using namespace std;
 class CompilerRewriteApp : public App {
 public:
 	void setup() override;
-	void update() override;
 	void draw() override;
+	
+	void buildTestCpp();
 
+	unique_ptr<Test> mTest;
+	Font mFont;
 	rt::CompilerRef mCompiler;
 };
 
 void CompilerRewriteApp::setup()
 {
+	mFont = Font( "Arial", 35 );
 	mCompiler = rt::Compiler::create();
+	mTest = make_unique<Test>();
 	
+	wd::watch( "C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\SRC\\TEST.CPP", [this]( const fs::path &path ) { buildTestCpp(); } );
+}
+
+void CompilerRewriteApp::draw()
+{
+	gl::clear( Color( 0, 0, 0 ) ); 
+
+	gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFont );
+}
+
+void CompilerRewriteApp::buildTestCpp()
+{
 	// compiler args
 	std::string command = "cl ";
 	command += " /Fd\"C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\VC2015\\BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\VC140_RT.PDB\" ";
@@ -40,22 +59,13 @@ void CompilerRewriteApp::setup()
 	command += " /MACHINE:X64";
 #if defined( _DEBUG )
 	command += " /PDB:\"C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\VC2015\\BUILD\\X64\\DEBUG_SHARED\\INTERMEDIATE\\VC140_RT.PDB\"";
-	command += " /DEBUG:FASTLINK";
+	command += " /DEBUG";
 #endif
 	command += " /DLL ";
 
 	mCompiler->build( command, []( const rt::CompilationResult &result ) {
 		app::console() << "Done!" << endl;
 	} );
-}
-
-void CompilerRewriteApp::update()
-{
-}
-
-void CompilerRewriteApp::draw()
-{
-	gl::clear( Color( 0, 0, 0 ) ); 
 }
 
 CINDER_APP( CompilerRewriteApp, RendererGl() )
