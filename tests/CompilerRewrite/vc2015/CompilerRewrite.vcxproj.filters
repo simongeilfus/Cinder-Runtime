@@ -51,9 +51,6 @@
     <ClInclude Include="..\..\..\include\runtime\App.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Compiler.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
@@ -63,9 +60,6 @@
     <ClInclude Include="..\..\..\include\runtime\Module.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\..\src\runtime\Compiler.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\Module.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
