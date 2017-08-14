@@ -297,8 +297,7 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	if( settings.mGenerateFactory ) {
 		auto factoryPath = CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
-			ClassFactory factory( sourcePath.stem().string() );
-			factory.generate( factoryPath );
+			generateClassFactory( factoryPath, sourcePath.stem().string() );
 		}
 		auto factoryObjPath = CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.obj" );
 		if( ! fs::exists( factoryObjPath ) ) {
