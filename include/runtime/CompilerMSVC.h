@@ -24,24 +24,106 @@
 
 namespace runtime {
 
-using Compiler			= class CompilerMSVC;
-using CompilerRef		= std::shared_ptr<class CompilerMSVC>;
-using CompilerMSVCRef	= std::shared_ptr<class CompilerMSVC>;
+using Compiler = class CompilerMsvc; // temp shortcut
+using CompilerRef = std::shared_ptr<class CompilerMsvc>; // temp shortcut
+using CompilerPtr = std::unique_ptr<class CompilerMsvc>; // temp shortcut
+using CompilerMsvcRef = std::shared_ptr<class CompilerMsvc>;
+using CompilerMsvcPtr = std::unique_ptr<class CompilerMsvc>;
 
-class CompilerMSVC : public CompilerBase {
+class CompilerMsvc : public CompilerBase {
 public:
-	static CompilerMSVCRef create();
+	CompilerMsvc();
+	~CompilerMsvc();
+	
+	//! Describes the list of Options and arguments available when building a file
+	class BuildSettings {
+	public:
+		//! Adds the default build settings
+		BuildSettings& default();
 
-	CompilerMSVC();
-	~CompilerMSVC();
+		//! Adds an extra include folder to the compiler BuildSettings
+		BuildSettings& include( const ci::fs::path &path );
+		//! Adds an extra include folder to the compiler BuildSettings
+		BuildSettings& libraryPath( const ci::fs::path &path );
+		//! Adds an extra include folder to the compiler BuildSettings
+		BuildSettings& library( const std::string &library );
+		
+		//! Adds a preprocessor definition to the compiler BuildSettings
+		BuildSettings& define( const std::string &definition );
+
+		//! Specifies the path to the precompiled header.
+		BuildSettings& precompiledHeader( const ci::fs::path &path, bool create );
+		//! Adds a forced include as the first lined of the compiled file (If you use multiple /FI options, files are included in the order they are processed by CL.)
+		BuildSettings& forceInclude( const std::string &filename );
+		//! Specifies an additional file to be compiled (and linked).
+		BuildSettings& additionalSource( const ci::fs::path &cppFile );
+		//! Specifies additional files to be compiled (and linked).
+		BuildSettings& additionalSources( const std::vector<ci::fs::path> &cppFiles );
+		
+		//! Specifies an object (.obj) file name or directory to be used instead of the default.
+		BuildSettings& objectFile( const ci::fs::path &path );
+		//! Specifies a file name for the program database (PDB) file created by /Z7, /Zi, /ZI (Debug Information Format).
+		BuildSettings& programDatabase( const ci::fs::path &path );
+
+		//! Sets the output path
+		BuildSettings& outputPath( const ci::fs::path &path );
+		
+		//! Adds an obj files to be linked
+		BuildSettings& linkObj( const ci::fs::path &path );
+		//! Adds the app's generated .obj files to be linked. Default to true
+		BuildSettings& linkAppObjs( bool link );
+		
+		//! Generates a class Factory source. Default to true
+		BuildSettings& generateFactory( bool generate );
+		
+		//! Adds an additional compiler option
+		BuildSettings& compilerOption( const std::string &option );
+		//! Adds an additional linker option
+		BuildSettings& linkerOption( const std::string &option );
+
+		//! Enables verbose mode. Disabled by default.
+		BuildSettings& verbose( bool enabled = true );
+
+		BuildSettings();
+	protected:
+		friend class CompilerMsvc;
+		bool mVerbose;
+		bool mCreatePrecompiledHeader;
+		bool mLinkAppObjs;
+		bool mGenerateFactory;
+		ci::fs::path mPrecompiledHeader;
+		ci::fs::path mOutputPath;
+		ci::fs::path mObjectFilePath;
+		ci::fs::path mPdbPath;
+		std::vector<ci::fs::path> mIncludes;
+		std::vector<ci::fs::path> mLibraryPaths;
+		std::vector<ci::fs::path> mAdditionalSources;
+		std::vector<std::string> mLibraries;
+		std::vector<std::string> mPpDefinitions;
+		std::vector<std::string> mForcedIncludes;
+		std::vector<std::string> mCompilerOptions;
+		std::vector<std::string> mLinkerOptions;
+		std::vector<ci::fs::path> mObjPaths;
+	};
 	
 	void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) override;
+	void build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
+	void build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
 	
 protected:
+	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
+	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
+	std::string generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
+
+	void parseProcessOutput() override;
+
 	std::string		getCLInitCommand() const override;
 	ci::fs::path	getCompilerPath() const override;
 	std::string		getCompilerInitArgs() const override;
-	ci::fs::path	getProcessPath() const override;
+
+	using BuildMap = std::map<ci::fs::path,std::function<void(const CompilationResult&)>>;
+
+	BuildMap mBuilds;
 };
 
 } // namespace runtime
