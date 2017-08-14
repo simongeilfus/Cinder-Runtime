@@ -21,18 +21,18 @@ public:
 	void buildTestCpp();
 
 	unique_ptr<Test> mTest;
-	Font mFontLarge, mFontSmall;
+	Font mFontLarge;
 	rt::CompilerPtr mCompiler;
 	rt::ModuleRef mModule;
 };
 
 void CompilerRewriteApp::setup()
 {
-	mFontSmall = Font( "Arial", 15 );
 	mFontLarge = Font( "Arial", 35 );
 	mCompiler = make_unique<rt::Compiler>();
 	mTest = make_unique<Test>();
 	
+	// watch .h and .cpp
 	FileWatcher::instance().watch( { CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, [this]( const WatchEvent &event ) { buildTestCpp(); } );
 }
 
@@ -43,26 +43,27 @@ void CompilerRewriteApp::draw()
 	if( mTest ) {
 		gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
 	}
-	//gl::drawStringCentered( CI_RT_PROJECT_PATH.string(), getWindowCenter() + vec2( 0,30 ), ColorA::white(), mFontSmall );
 }
 
 void CompilerRewriteApp::buildTestCpp()
 {
 	Timer timer( true );
+
+	// unlock the dll-handle before building
 	if( mModule ) {
 		mModule->unlockHandle();
 	}
 
-	auto settings = rt::Compiler::BuildSettings().default()
-		.include( "../../../include" )
-		//.compilerOption( "/O2" )
-		//.compilerOption( "/MP" )
-		;
+	auto settings = rt::Compiler::BuildSettings()
+		.default() // default cinder project settings
+		.include( "../../../include" ); // cinder-runtime include folder
+		
+	// initiate the build
 	mCompiler->build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
 		auto dllPath = CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll";
 		if( fs::exists( dllPath ) ) {
 			
-			mTest.reset();
+			//mTest.reset();
 
 			if( ! mModule ) {
 				mModule = make_shared<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
@@ -84,16 +85,6 @@ void CompilerRewriteApp::buildTestCpp()
 			
 		}
 	} );
-	/*mCompiler->build( command, []( const rt::CompilationResult &result ) {
-		app::console() << "Done!" << endl;
-	} );*/
-
-
-	//Mscv::Options().includePath( ".." ).libraryPath( "../.." ).source( sourceA ).source( sourceB, { sourceA, sourceC } ).additionalOptions( Msvc::getDefaultFlags() );
-
-	
-
-	//app::console() << ( "../../../../../lib/msw" / fs::path( CI_RT_PLATFORM ) / fs::path( CI_RT_CONFIGURATION ) / fs::path( CI_RT_PLATFORM_TOOLSET ) ).generic_string() << endl;
 }
 
 CINDER_APP( CompilerRewriteApp, RendererGl() )
