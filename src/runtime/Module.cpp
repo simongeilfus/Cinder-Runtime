@@ -143,6 +143,16 @@ ci::signals::Signal<void( const ModuleRef& )>& Module::getChangedSignal()
 {
 	return mChangedSignal;
 }
+
+void* Module::getMakeSharedFactoryPtr() const
+{
+	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_shared" );
+}
+void* Module::getMakeUniqueFactoryPtr() const
+{
+	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_unique" );
+}
+
 #if 0
 ModuleManagerRef ModuleManager::create()
 {

@@ -68,7 +68,23 @@ public:
 	//! Returns the signal used to notify Module/Handle changes
 	ci::signals::Signal<void(const ModuleRef&)>& getChangedSignal();
 
+	
+	template<typename T>
+	using MakeSharedFactory = void (__cdecl*)(std::shared_ptr<T>*);
+
+	template<typename T>
+	MakeSharedFactory<T> getMakeSharedFactory() const;
+
+	template<typename T>
+	using MakeUniqueFactory = void (__cdecl*)(std::unique_ptr<T>*);
+
+	template<typename T>
+	MakeUniqueFactory<T> getMakeUniqueFactory() const;
+
 protected:
+	void* getMakeSharedFactoryPtr() const;
+	void* getMakeUniqueFactoryPtr() const;
+
 	Handle			mHandle;
 	ci::fs::path	mPath, mTempPath;
 	
@@ -76,6 +92,19 @@ protected:
 	ci::signals::Signal<void(const ModuleRef&)> mCleanupSignal;
 	std::map<std::string,std::string> mSymbols;
 };
+
+
+template<typename T>
+Module::MakeSharedFactory<T> Module::getMakeSharedFactory() const
+{
+	return static_cast<MakeSharedFactory<T>>( getMakeSharedFactoryPtr() );
+}
+
+template<typename T>
+Module::MakeUniqueFactory<T> Module::getMakeUniqueFactory() const
+{
+	return static_cast<MakeUniqueFactory<T>>( getMakeUniqueFactoryPtr() );
+}
 
 #if 0
 using ModuleManagerRef = std::shared_ptr<class ModuleManager>;
