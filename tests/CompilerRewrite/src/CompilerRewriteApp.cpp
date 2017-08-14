@@ -1,10 +1,13 @@
 #include "cinder/app/App.h"
 #include "cinder/app/RendererGl.h"
 #include "cinder/gl/gl.h"
+#include "cinder/FileWatcher.h"
 
-#include "runtime/CompilerMSVC.h"
-#include "Watchdog.h"
+#include "runtime/CompilerMsvc.h"
+#include "runtime/Module.h"
+
 #include "Test.h"
+#include <Windows.h>
 
 using namespace ci;
 using namespace ci::app;
@@ -17,19 +20,20 @@ public:
 	
 	void buildTestCpp();
 
-	unique_ptr<Test> mTest;
+	shared_ptr<Test> mTest;
 	Font mFontLarge, mFontSmall;
-	rt::CompilerRef mCompiler;
+	rt::CompilerPtr mCompiler;
+	rt::ModuleRef mModule;
 };
 
 void CompilerRewriteApp::setup()
 {
 	mFontSmall = Font( "Arial", 15 );
 	mFontLarge = Font( "Arial", 35 );
-	mCompiler = rt::Compiler::create();
+	mCompiler = make_unique<rt::Compiler>();
 	mTest = make_unique<Test>();
 	
-	wd::watch( "C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\SRC\\TEST.CPP", [this]( const fs::path &path ) { buildTestCpp(); } );
+	FileWatcher::instance().watch( { CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, [this]( const WatchEvent &event ) { buildTestCpp(); } );
 }
 
 void CompilerRewriteApp::draw()
@@ -37,40 +41,51 @@ void CompilerRewriteApp::draw()
 	gl::clear( Color( 0, 0, 0 ) ); 
 	
 	gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
-	gl::drawStringCentered( PROJECT_PATH, getWindowCenter() + vec2( 0,30 ), ColorA::white(), mFontSmall );
+	//gl::drawStringCentered( CI_RT_PROJECT_PATH.string(), getWindowCenter() + vec2( 0,30 ), ColorA::white(), mFontSmall );
 }
 
 void CompilerRewriteApp::buildTestCpp()
 {
-	fs::path outputDirectory = PROJECT_DIR / fs::path( "build" ) / PLATFORM / CONFIGURATION;
-	fs::path intermediateDirectory = outputDirectory / fs::path( "intermediate" );
+	Timer timer( true );
+	if( mModule ) {
+		mModule->unlockHandle();
+	}
 
-	// compiler args
-	std::string command = "cl ";
-	command += " /Fd\"" + intermediateDirectory.string() + "\\VC140_RT.PDB\" ";
-	command += " /Fo\"" + intermediateDirectory.string() + "\\\\\""; 
-	command += "/Zi /nologo /W3 /WX- /Od /D CINDER_SHARED /D WIN32 /D _WIN32_WINNT=0x0601 /D _WINDOWS /D NOMINMAX /D _DEBUG /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Gd /TP ";
-	command += "/I..\\INCLUDE /I..\\..\\..\\..\\..\\INCLUDE /I..\\..\\..\\INCLUDE /I..\\BLOCKS\\WATCHDOG\\INCLUDE ";
-	command += " C:\\CODE\\CINDER\\CINDER_FORK\\BLOCKS\\CINDER-RUNTIME\\TESTS\\COMPILERREWRITE\\SRC\\TEST.CPP";
-	
-	// linker args
-	command += " /link ";
-	command += " /OUT:" + intermediateDirectory.string() + "\\test.dll";
-	command += " /IMPLIB:" + intermediateDirectory.string() + "\\test.lib";
-	command += " /INCREMENTAL:NO /NOLOGO";
-	command += " /LIBPATH:..\\..\\..\\..\\..\\LIB\\MSW\\" + string( PLATFORM );
-	command += " /LIBPATH:..\\..\\..\\..\\..\\LIB\\MSW\\" + string( PLATFORM ) + "\\" + string( CONFIGURATION ) + "\\V140\\";
-	command += " CINDER.LIB OPENGL32.LIB KERNEL32.LIB USER32.LIB GDI32.LIB WINSPOOL.LIB COMDLG32.LIB ADVAPI32.LIB SHELL32.LIB OLE32.LIB OLEAUT32.LIB UUID.LIB ODBC32.LIB ODBCCP32.LIB /NODEFAULTLIB:LIBCMT /NODEFAULTLIB:LIBCPMT ";
-	command += " /MACHINE:X64"; // PLATFORM ?;
-#if defined( _DEBUG )
-	command += " /PDB:\"" + intermediateDirectory.string() + "\\VC140_RT.PDB\"";
-	command += " /DEBUG";
-#endif
-	command += " /DLL ";
+	auto settings = rt::Compiler::BuildSettings().default()
+		.include( "../../../include" )
+		//.compilerOption( "/O2" )
+		//.compilerOption( "/MP" )
+		;
+	mCompiler->build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
+		if( ! mModule ) {
+			mModule = make_shared<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
+		}
+		else {
+			mModule->updateHandle();
+		}
 
-	mCompiler->build( command, []( const rt::CompilationResult &result ) {
-		app::console() << "Done!" << endl;
+		if( auto handle = mModule->getHandle() ) {
+			using FactoryPtr = void (__cdecl*)(std::shared_ptr<Test>*);
+			if( auto factoryMakeShared = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "rt_make_shared" ) ) {
+				std::shared_ptr<Test> newPtr;
+				factoryMakeShared( &newPtr );
+				if( newPtr ) {
+					console() << timer.getSeconds() * 1000.0 << "ms" << endl;
+					console() << newPtr->getString() << endl;
+				}
+			}
+		}
 	} );
+	/*mCompiler->build( command, []( const rt::CompilationResult &result ) {
+		app::console() << "Done!" << endl;
+	} );*/
+
+
+	//Mscv::Options().includePath( ".." ).libraryPath( "../.." ).source( sourceA ).source( sourceB, { sourceA, sourceC } ).additionalOptions( Msvc::getDefaultFlags() );
+
+	
+
+	//app::console() << ( "../../../../../lib/msw" / fs::path( CI_RT_PLATFORM ) / fs::path( CI_RT_CONFIGURATION ) / fs::path( CI_RT_PLATFORM_TOOLSET ) ).generic_string() << endl;
 }
 
 CINDER_APP( CompilerRewriteApp, RendererGl() )

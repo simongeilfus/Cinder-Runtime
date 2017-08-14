@@ -75,13 +75,22 @@
     <ClCompile Include="..\src\Test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\Process.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\CompilerMsvc.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Test2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,10 +101,19 @@
     <ClInclude Include="..\src\Test.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\CompilerMSVC.h">
+    <ClInclude Include="..\..\..\include\runtime\Process.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Process.h">
+    <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Test2.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ClassFactory.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
   </ItemGroup>

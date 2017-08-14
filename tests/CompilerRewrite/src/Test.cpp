@@ -2,11 +2,7 @@
 
 using namespace std;
 
-Test::Test()
-{
-}
-
 std::string Test::getString()
 {
-	return "Hello!";
+	return "Test";
 }
