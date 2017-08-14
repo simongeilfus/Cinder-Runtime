@@ -20,7 +20,7 @@ public:
 	
 	void buildTestCpp();
 
-	shared_ptr<Test> mTest;
+	unique_ptr<Test> mTest;
 	Font mFontLarge, mFontSmall;
 	rt::CompilerPtr mCompiler;
 	rt::ModuleRef mModule;
@@ -40,7 +40,9 @@ void CompilerRewriteApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) ); 
 	
-	gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
+	if( mTest ) {
+		gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
+	}
 	//gl::drawStringCentered( CI_RT_PROJECT_PATH.string(), getWindowCenter() + vec2( 0,30 ), ColorA::white(), mFontSmall );
 }
 
@@ -57,23 +59,29 @@ void CompilerRewriteApp::buildTestCpp()
 		//.compilerOption( "/MP" )
 		;
 	mCompiler->build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
-		if( ! mModule ) {
-			mModule = make_shared<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
-		}
-		else {
-			mModule->updateHandle();
-		}
+		auto dllPath = CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll";
+		if( fs::exists( dllPath ) ) {
+			
+			mTest.reset();
 
-		if( auto handle = mModule->getHandle() ) {
-			using FactoryPtr = void (__cdecl*)(std::shared_ptr<Test>*);
-			if( auto factoryMakeShared = (FactoryPtr) GetProcAddress( static_cast<HMODULE>( handle ), "rt_make_shared" ) ) {
-				std::shared_ptr<Test> newPtr;
-				factoryMakeShared( &newPtr );
+			if( ! mModule ) {
+				mModule = make_shared<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
+			}
+			else {
+				mModule->updateHandle();
+			}
+
+
+			if( auto makeUnique = mModule->getMakeUniqueFactory<Test>() ) {
+				std::unique_ptr<Test> newPtr;
+				makeUnique( &newPtr );
 				if( newPtr ) {
 					console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 					console() << newPtr->getString() << endl;
+					mTest = std::move( newPtr );
 				}
 			}
+			
 		}
 	} );
 	/*mCompiler->build( command, []( const rt::CompilationResult &result ) {
