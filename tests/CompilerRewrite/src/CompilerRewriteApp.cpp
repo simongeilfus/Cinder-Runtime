@@ -19,18 +19,17 @@ public:
 	void draw() override;
 	
 	void buildTestCpp();
-
+	
+	rt::ModulePtr mModule;
 	unique_ptr<Test> mTest;
 	Font mFontLarge;
-	rt::CompilerPtr mCompiler;
-	rt::ModuleRef mModule;
 };
 
 void CompilerRewriteApp::setup()
 {
 	mFontLarge = Font( "Arial", 35 );
-	mCompiler = make_unique<rt::Compiler>();
 	mTest = make_unique<Test>();
+	mModule = make_unique<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
 	
 	// watch .h and .cpp
 	FileWatcher::instance().watch( { CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, [this]( const WatchEvent &event ) { buildTestCpp(); } );
@@ -50,35 +49,26 @@ void CompilerRewriteApp::buildTestCpp()
 	Timer timer( true );
 
 	// unlock the dll-handle before building
-	if( mModule ) {
-		mModule->unlockHandle();
-	}
-
+	mModule->unlockHandle();
+	
+	// prepare build settings
 	auto settings = rt::Compiler::BuildSettings()
 		.default() // default cinder project settings
 		.include( "../../../include" ); // cinder-runtime include folder
 		
 	// initiate the build
-	mCompiler->build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
+	rt::CompilerMsvc::instance().build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
 		auto dllPath = CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll";
+		// if a new dll exists update the handle
 		if( fs::exists( dllPath ) ) {
-			
 			//mTest.reset();
-
-			if( ! mModule ) {
-				mModule = make_shared<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
-			}
-			else {
-				mModule->updateHandle();
-			}
-
-
+			mModule->updateHandle();
+			// and try to get a ptr to its make_unique factory function
 			if( auto makeUnique = mModule->getMakeUniqueFactory<Test>() ) {
 				std::unique_ptr<Test> newPtr;
 				makeUnique( &newPtr );
 				if( newPtr ) {
 					console() << timer.getSeconds() * 1000.0 << "ms" << endl;
-					console() << newPtr->getString() << endl;
 					mTest = std::move( newPtr );
 				}
 			}

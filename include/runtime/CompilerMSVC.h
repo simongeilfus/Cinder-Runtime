@@ -34,6 +34,8 @@ class CompilerMsvc : public CompilerBase {
 public:
 	CompilerMsvc();
 	~CompilerMsvc();
+
+	static CompilerMsvc& instance();
 	
 	//! Describes the list of Options and arguments available when building a file
 	class BuildSettings {

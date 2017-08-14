@@ -141,6 +141,12 @@ CompilerMsvc::~CompilerMsvc()
 {
 }
 
+CompilerMsvc& CompilerMsvc::instance()
+{
+	static CompilerMsvcPtr compiler = make_unique<CompilerMsvc>();
+	return *compiler.get();
+}
+
 void CompilerMsvc::build( const std::string &arguments, const std::function<void( const CompilationResult& )> &onBuildFinish )
 {
 	if( ! mProcess ) {
