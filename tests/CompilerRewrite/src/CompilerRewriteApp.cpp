@@ -7,7 +7,6 @@
 #include "runtime/Module.h"
 
 #include "Test.h"
-#include <Windows.h>
 
 using namespace ci;
 using namespace ci::app;
