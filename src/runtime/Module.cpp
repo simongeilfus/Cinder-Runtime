@@ -38,11 +38,6 @@ using namespace ci::app;
 
 namespace runtime {
 
-ModuleRef Module::create( const ci::fs::path &path )
-{
-	return std::make_shared<Module>( path );
-}
-
 Module::Module( const ci::fs::path &path )
 : mPath( path )
 #if defined( CINDER_MSW )
@@ -148,7 +143,7 @@ ci::signals::Signal<void( const ModuleRef& )>& Module::getChangedSignal()
 {
 	return mChangedSignal;
 }
-
+#if 0
 ModuleManagerRef ModuleManager::create()
 {
 	return std::make_shared<ModuleManager>();
@@ -333,7 +328,7 @@ ModuleRef ModuleManager::add( const ci::fs::path &path )
 	};
 
 	// create the empty module and add it to the list of modules
-	ModuleRef module = Module::create( tempFolder / "build" / ( className + ".dll" ) );
+	ModuleRef module = make_shared<Module>( tempFolder / "build" / ( className + ".dll" ) );
 	mModules.push_back( module );
 
 	// watch files for changes
@@ -379,5 +374,6 @@ void ModuleManager::handleBuild( const std::string &className, const std::weak_p
 		}
 	}
 }
+#endif
 
 } // namespace runtime

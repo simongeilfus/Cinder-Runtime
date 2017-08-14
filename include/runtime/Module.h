@@ -20,17 +20,19 @@
 */
 #pragma once
 
-#include "Compiler.h"
+//#include "Compiler.h"
+#include "cinder/Filesystem.h"
 #include "cinder/Signals.h"
+
+#include <map>
 
 namespace runtime {
 
+using ModulePtr = std::unique_ptr<class Module>;
 using ModuleRef = std::shared_ptr<class Module>;
 
 class Module : public std::enable_shared_from_this<Module> {
 public:
-	//! Returns a new ref-counted Module object
-	static ModuleRef create( const ci::fs::path &path );
 	//! Constructs a new Module object
 	Module( const ci::fs::path &path );
 	//! Destroys the Module object, release its handles and delete the temporary files
@@ -75,6 +77,7 @@ protected:
 	std::map<std::string,std::string> mSymbols;
 };
 
+#if 0
 using ModuleManagerRef = std::shared_ptr<class ModuleManager>;
 
 class ModuleManager {
@@ -92,6 +95,7 @@ protected:
 	std::vector<ModuleRef>	mModules;
 	CompilerRef				mCompiler;
 };
+#endif
 
 } // namespace runtime
 
