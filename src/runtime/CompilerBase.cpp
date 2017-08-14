@@ -37,7 +37,6 @@ CompilerBase::~CompilerBase()
 void CompilerBase::parseProcessOutput()
 {
 	string fullOutput;
-	bool done = false;
 	while( mProcess->isOutputAvailable() ) {
 		auto output = removeEndline( mProcess->getOutputAsync() );
 		if( output.find( "error" ) != string::npos ) { 
@@ -46,16 +45,9 @@ void CompilerBase::parseProcessOutput()
 		else if( output.find( "warning" ) != string::npos ) {
 			mWarnings.push_back( output );
 		}
-		if( output.find( "CI_BUILD_FINISHED" ) != string::npos ) {
-			done = true;
-		}
 		fullOutput += output;
 	}
 	if( mVerbose && ! fullOutput.empty() ) app::console() << fullOutput << endl;
-	
-	if( done && mBuildFinish ) {
-		mBuildFinish( CompilationResult( "", "", mErrors, mWarnings, { { "", "" } } ) );
-	}
 }
 
 void CompilerBase::initializeProcess()
@@ -63,7 +55,7 @@ void CompilerBase::initializeProcess()
 	if( fs::exists( getCompilerPath() ) ) {
 		
 		// create a command line process with the right environment variables and paths
-		mProcess = make_unique<Process>( getCLInitCommand(), getProcessPath().string(), true, true );
+		mProcess = make_unique<Process>( getCLInitCommand(), CI_RT_PROJECT_DIR.string(), true, true );
 		
 		// start the compiler process
 		mProcess << quote( getCompilerPath().string() ) + " " + getCompilerInitArgs() << endl;
@@ -74,6 +66,11 @@ void CompilerBase::initializeProcess()
 	else {
 		throw CompilerException( "Failed Initializing Compiler Process at " + getCompilerPath().string() );
 	}
+}
+
+CompilationResult::CompilationResult( const ci::fs::path &filePath, const ci::fs::path &outputPath, const std::vector<std::string> &errors, const std::vector<std::string> &warnings, const std::map<std::string,std::string> &symbols )
+: mFilePath( filePath ), mOutputPath( outputPath ), mErrors( errors ), mWarnings( warnings ), mSymbols( symbols )	
+{
 }
 
 }

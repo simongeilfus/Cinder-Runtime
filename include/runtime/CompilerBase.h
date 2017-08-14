@@ -45,15 +45,13 @@ protected:
 	virtual std::string		getCLInitCommand() const = 0;
 	virtual ci::fs::path	getCompilerPath() const = 0;
 	virtual std::string		getCompilerInitArgs() const = 0;
-	virtual ci::fs::path	getProcessPath() const = 0;
 
-	void parseProcessOutput();
+	virtual void parseProcessOutput();
 	void initializeProcess();
 
 	ProcessPtr								mProcess;
 	ci::signals::ScopedConnection			mProcessOutputConnection;
 	bool									mVerbose;
-	std::function<void(CompilationResult&)> mBuildFinish;
 	std::vector<std::string>				mErrors;
 	std::vector<std::string>				mWarnings;
 };
