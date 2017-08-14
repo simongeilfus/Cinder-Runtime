@@ -6,7 +6,7 @@ using namespace ci;
 
 namespace runtime {
 
-void generateClassFactory( const ci::fs::path &outputPath, const std::string &className, const std::string &headerName = "" )
+void generateClassFactory( const ci::fs::path &outputPath, const std::string &className, const std::string &headerName )
 {
 	std::ofstream outputFile( outputPath );		
 	outputFile << "#include <memory>" << endl << endl;
