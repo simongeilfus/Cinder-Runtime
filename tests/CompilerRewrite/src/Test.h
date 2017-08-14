@@ -1,8 +1,9 @@
 #pragma once
 
 #include <string>
+#include "runtime/Virtual.h"
 
 class Test {
 public:
-	virtual std::string getString();
+	rt_virtual std::string getString();
 };

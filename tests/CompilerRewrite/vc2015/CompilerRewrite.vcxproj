@@ -435,6 +435,7 @@
     <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h" />
     <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h" />
     <ClInclude Include="..\..\..\include\runtime\Process.h" />
+    <ClInclude Include="..\..\..\include\runtime\Virtual.h" />
     <ClInclude Include="..\include\Resources.h" />
     <ClInclude Include="..\..\..\include\runtime\App.h" />
     <ClInclude Include="..\..\..\include\runtime\Compiler.h" />
