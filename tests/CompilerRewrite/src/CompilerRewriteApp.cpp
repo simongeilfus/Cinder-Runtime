@@ -18,9 +18,11 @@ public:
 	void setup() override;
 	void draw() override;
 	
+#if defined( CINDER_SHARED )
 	void buildTestCpp();
-	
 	rt::ModulePtr mModule;
+#endif
+	
 	unique_ptr<Test> mTest;
 	Font mFontLarge;
 };
@@ -29,10 +31,16 @@ void CompilerRewriteApp::setup()
 {
 	mFontLarge = Font( "Arial", 35 );
 	mTest = make_unique<Test>();
-	mModule = make_unique<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
 	
-	// watch .h and .cpp
-	FileWatcher::instance().watch( { CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, [this]( const WatchEvent &event ) { buildTestCpp(); } );
+#if defined( CINDER_SHARED )
+	// init module and watch .h and .cpp
+	mModule = make_unique<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
+	FileWatcher::instance().watch( 
+		{ CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, 
+		FileWatcher::Options().callOnWatch( false ),
+		[this]( const WatchEvent &event ) { buildTestCpp(); } 
+	);
+#endif
 }
 
 void CompilerRewriteApp::draw()
@@ -44,6 +52,7 @@ void CompilerRewriteApp::draw()
 	}
 }
 
+#if defined( CINDER_SHARED )
 void CompilerRewriteApp::buildTestCpp()
 {
 	Timer timer( true );
@@ -76,5 +85,6 @@ void CompilerRewriteApp::buildTestCpp()
 		}
 	} );
 }
+#endif
 
 CINDER_APP( CompilerRewriteApp, RendererGl() )
