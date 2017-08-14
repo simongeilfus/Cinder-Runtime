@@ -66,10 +66,8 @@ void CompilerRewriteApp::buildTestCpp()
 		
 	// initiate the build
 	rt::CompilerMsvc::instance().build( CI_RT_PROJECT_ROOT / "src/Test.cpp", settings, [=]( const rt::CompilationResult &result ) {
-		auto dllPath = CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll";
 		// if a new dll exists update the handle
-		if( fs::exists( dllPath ) ) {
-			//mTest.reset();
+		if( fs::exists( mModule->getPath() ) ) {
 			mModule->updateHandle();
 			// and try to get a ptr to its make_unique factory function
 			if( auto makeUnique = mModule->getMakeUniqueFactory<Test>() ) {
