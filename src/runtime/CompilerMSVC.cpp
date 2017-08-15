@@ -373,6 +373,12 @@ void CompilerMsvc::parseProcessOutput()
 		if( mErrors.empty() ) {
 			app::console() << "========== rt::Compiler Build succeeded: " << buildIt->first << " ==========" << endl;
 		}
+		else {
+			for( const auto &err : mErrors ) {
+				app::console() << err << endl;
+			}
+			app::console() << "========== rt::Compiler Build Failed: " << buildIt->first << " ==========" << endl;
+		}
 
 		mBuilds.erase( buildIt );
 	}

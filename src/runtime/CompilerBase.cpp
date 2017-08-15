@@ -26,7 +26,7 @@ namespace {
 }
 
 CompilerBase::CompilerBase()
-	: mVerbose( true )
+	: mVerbose( false )
 {
 }
 
