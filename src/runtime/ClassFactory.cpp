@@ -21,6 +21,11 @@ void generateClassFactory( const ci::fs::path &outputPath, const std::string &cl
 	outputFile << "\t*ptr = std::make_unique<" << className << ">();" << endl;
 	outputFile << "}" << endl;
 	outputFile << endl;
+	outputFile << "extern \"C\" __declspec(dllexport) " << className << "* __cdecl rt_make_raw()" << endl;
+	outputFile << "{" << endl;
+	outputFile << "\treturn new " << className << "();" << endl;
+	outputFile << "}" << endl;
+	outputFile << endl;
 }
 
 }

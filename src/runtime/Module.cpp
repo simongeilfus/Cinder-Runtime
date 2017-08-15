@@ -152,6 +152,10 @@ void* Module::getMakeUniqueFactoryPtr() const
 {
 	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_unique" );
 }
+void* Module::getMakeRawFactoryPtr() const
+{
+	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_raw" );
+}
 
 #if 0
 ModuleManagerRef ModuleManager::create()
