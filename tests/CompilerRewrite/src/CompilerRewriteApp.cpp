@@ -7,6 +7,7 @@
 #include "runtime/Module.h"
 
 #include "Test.h"
+#include "Test2.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -15,6 +16,7 @@ using namespace std;
 class CompilerRewriteApp : public App {
 public:
 	void setup() override;
+	void cleanup() override;
 	void draw() override;
 	
 #if defined( CINDER_SHARED )
@@ -23,6 +25,10 @@ public:
 #endif
 	
 	unique_ptr<Test> mTest;
+	unique_ptr<Test2> mTest2;
+	shared_ptr<Test2> mTest3;
+	Test2* mTest4;
+
 	Font mFontLarge;
 };
 
@@ -30,6 +36,9 @@ void CompilerRewriteApp::setup()
 {
 	mFontLarge = Font( "Arial", 35 );
 	mTest = make_unique<Test>();
+	mTest2 = make_unique<Test2>();
+	mTest3 = shared_ptr<Test2>( new Test2 ); // make_shared won't work unfortunately
+	mTest4 = new Test2();
 	
 #if defined( CINDER_SHARED )
 	// init module and watch .h and .cpp
@@ -42,6 +51,11 @@ void CompilerRewriteApp::setup()
 #endif
 }
 
+void CompilerRewriteApp::cleanup()
+{
+	delete mTest4;
+}
+
 void CompilerRewriteApp::draw()
 {
 	gl::clear( Color( 0, 0, 0 ) ); 
@@ -49,6 +63,19 @@ void CompilerRewriteApp::draw()
 	if( mTest ) {
 		gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
 	}
+	
+	if( mTest2 ) {
+		gl::drawStringCentered( mTest2->getString(), getWindowCenter() - vec2( 0, 40 ), ColorA::white(), mFontLarge );
+	}
+	
+	if( mTest3 ) {
+		gl::drawStringCentered( mTest3->getString(), getWindowCenter() - vec2( 120, 40 ), ColorA::white(), mFontLarge );
+	}
+	
+	if( mTest4 ) {
+		gl::drawStringCentered( mTest4->getString(), getWindowCenter() - vec2( -120, 40 ), ColorA::white(), mFontLarge );
+	}
+	
 }
 
 #if defined( CINDER_SHARED )
@@ -70,13 +97,9 @@ void CompilerRewriteApp::buildTestCpp()
 		if( fs::exists( mModule->getPath() ) ) {
 			mModule->updateHandle();
 			// and try to get a ptr to its make_unique factory function
-			if( auto makeUnique = mModule->getMakeUniqueFactory<Test>() ) {
-				std::unique_ptr<Test> newPtr;
-				makeUnique( &newPtr );
-				if( newPtr ) {
-					console() << timer.getSeconds() * 1000.0 << "ms" << endl;
-					mTest = std::move( newPtr );
-				}
+			if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
+				updatePtr( &mTest );
+				console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 			}
 			
 		}
