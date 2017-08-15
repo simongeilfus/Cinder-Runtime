@@ -1,20 +1,16 @@
 #include "Test2.h"
-#include "cinder/app/App.h"
-#include "runtime/ClassInstanceWatcher.h"
 
-using namespace std;
-using namespace ci;
-
-Test2::Test2()
-{
-}
-
-std::string Test2::getString()
+const char* Test2::getString()
 {
 	return "Hello!";
 }
 
+
+// 
 #if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
+
+#include "runtime/ClassInstanceWatcher.h"
+
 void* Test2::operator new( size_t size )
 {
 	void * ptr = ::operator new( size );
