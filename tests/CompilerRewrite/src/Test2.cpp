@@ -20,6 +20,7 @@ void* Test2::operator new( size_t size )
 	
 void Test2::operator delete( void* ptr )
 {
+	rt::watchClassInstance( static_cast<Test2*>( ptr ), {}, "", true );
 	::operator delete( ptr );
 }
 #endif

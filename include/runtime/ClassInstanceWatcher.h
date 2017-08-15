@@ -11,11 +11,18 @@
 namespace runtime {
 
 template<class T>
-void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath )
+void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, bool unwatch = false )
 {
 	static rt::ModulePtr sModule;
 	static std::vector<T*> sInstances;
-	sInstances.push_back( static_cast<T*>( ptr ) );
+
+	if( unwatch ) {
+		sInstances.erase( std::remove( sInstances.begin(), sInstances.end(), ptr ), sInstances.end() );
+		return;
+	}
+	else {
+		sInstances.push_back( static_cast<T*>( ptr ) );
+	}
 
 	if( ! sModule ) {
 		sModule = std::make_unique<rt::Module>( dllPath );
@@ -47,8 +54,8 @@ void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, con
 								memcpy( temp, newPtr, size );
 								memcpy( newPtr, sInstances[i], size );
 								memcpy( sInstances[i], temp, size );
-
-								delete newPtr;
+								
+								::operator delete( newPtr );
 							}
 						}
 			
