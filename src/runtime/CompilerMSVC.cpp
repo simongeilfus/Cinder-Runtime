@@ -317,7 +317,8 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// issue the build command with a completion token
 	auto command = generateBuildCommand( sourcePath, buildSettings );
 	mBuilds.insert( make_pair( sourcePath.filename(), onBuildFinish ) );
-	app::console() << "------ rt::Compiler Build started: " << sourcePath.filename() << " ------" << endl;
+	app::console() << "------ rt::Compiler Build started ------" << endl;
+	app::console() << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
 
 }
@@ -346,6 +347,19 @@ namespace {
 	}
 }
 
+namespace {
+std::string trimProjectDir( const std::string &s )
+{
+	auto it = s.find( CI_RT_PROJECT_DIR.generic_string() );
+	if( it != std::string::npos ) {
+		return s.substr( CI_RT_PROJECT_DIR.generic_string().length() );
+	}
+	else {
+		return s;
+	}
+}
+}
+
 void CompilerMsvc::parseProcessOutput()
 {
 	string fullOutput;
@@ -353,13 +367,12 @@ void CompilerMsvc::parseProcessOutput()
 	while( mProcess->isOutputAvailable() ) {
 		auto output = removeEndline( mProcess->getOutputAsync() );
 		if( output.find( "error" ) != string::npos ) { 
-			mErrors.push_back( output );	
+			mErrors.push_back( trimProjectDir( output ) );	
 		}
 		else if( output.find( "warning" ) != string::npos ) {
-			mWarnings.push_back( output );
+			mWarnings.push_back( trimProjectDir( output ) );
 		}
 		if( output.find( "CI_BUILD" ) != string::npos ) {
-			//app::console() << "Found CI_BUILD: " << output.substr( output.find_first_of( " " ) + 1 ) << endl;
 			buildIt = mBuilds.find( output.substr( output.find_first_of( " " ) + 1 ) );
 		}
 		fullOutput += output;
@@ -368,16 +381,19 @@ void CompilerMsvc::parseProcessOutput()
 	if( mVerbose && ! fullOutput.empty() ) app::console() << fullOutput << endl;
 	
 	if( buildIt != mBuilds.end() ) {
-		buildIt->second( CompilationResult( "", "", mErrors, mWarnings, { { "", "" } } ) );
-		
+
+		for( auto warning : mWarnings ) {
+			app::console() << warning << endl;
+		}	
 		if( mErrors.empty() ) {
-			app::console() << "========== rt::Compiler Build succeeded: " << buildIt->first << " ==========" << endl;
+			buildIt->second( CompilationResult( "", "", mErrors, mWarnings, { { "", "" } } ) );
+			app::console() << "========== rt::Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
 		}
 		else {
-			for( const auto &err : mErrors ) {
-				app::console() << err << endl;
+			for( auto error : mErrors ) {
+				app::console() << error << endl;
 			}
-			app::console() << "========== rt::Compiler Build Failed: " << buildIt->first << " ==========" << endl;
+			app::console() << "========== rt::Compiler Build: 0 succeeded, 1 failed, 0 up-to-date, 0 skipped ==========" << endl;
 		}
 
 		mBuilds.erase( buildIt );
