@@ -116,6 +116,9 @@
     <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\make_shared.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resources.rc">

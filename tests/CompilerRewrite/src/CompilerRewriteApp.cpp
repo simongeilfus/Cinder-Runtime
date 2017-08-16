@@ -5,6 +5,7 @@
 
 #include "runtime/CompilerMsvc.h"
 #include "runtime/Module.h"
+#include "runtime/make_shared.h"
 
 #include "Test.h"
 #include "Test2.h"
@@ -41,7 +42,7 @@ void CompilerRewriteApp::setup()
 	mFontLarge = Font( "Arial", 35 );
 	mTest = make_unique<Test>();
 	mTest2 = make_unique<Test2>();
-	mTest3 = shared_ptr<Test2>( new Test2 ); // make_shared won't work unfortunately
+	mTest3 = make_shared<Test2>(); // make_shared won't work unfortunately
 	mTest4 = new Test2();
 
 	{
