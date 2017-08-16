@@ -482,6 +482,7 @@
     <ClInclude Include="..\..\..\include\runtime\Memory.h" />
     <ClInclude Include="..\..\..\include\runtime\Module.h" />
     <ClInclude Include="..\blocks\Watchdog\include\Watchdog.h" />
+    <ClInclude Include="..\src\Clear.h" />
     <ClInclude Include="..\src\Test.h" />
     <ClInclude Include="..\src\Test2.h" />
   </ItemGroup>

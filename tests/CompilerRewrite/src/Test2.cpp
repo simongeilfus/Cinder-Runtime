@@ -12,6 +12,6 @@ std::string Test2::getString()
 {
 	mCount++;
 	//return "Hello!";
-	return ( " #" + std::to_string( mCount ) );
+	return ( "#" + std::to_string( mCount ) );
 }
 
