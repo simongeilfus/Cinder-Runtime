@@ -1,12 +1,8 @@
 #pragma once
 
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
-#include "runtime/ClassWatcher.h"
-#endif
-
 namespace runtime {
 
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
+#if defined( CINDER_SHARED )
 
 template<class T,class ...Args>
 inline std::shared_ptr<T> make_shared( Args&&... args )
@@ -28,6 +24,6 @@ inline std::shared_ptr<T> make_shared( Args&&... args )
 
 namespace rt = runtime;
 
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
+#if defined( CINDER_SHARED )
 #define make_shared rt::make_shared
 #endif
