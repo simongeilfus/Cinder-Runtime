@@ -25,6 +25,9 @@ public:
 #endif
 	
 	unique_ptr<Test> mTest;
+
+
+
 	unique_ptr<Test2> mTest2;
 	shared_ptr<Test2> mTest3;
 	Test2* mTest4;
@@ -34,6 +37,7 @@ public:
 
 void CompilerRewriteApp::setup()
 {
+	setWindowPos( 0, 10 );
 	mFontLarge = Font( "Arial", 35 );
 	mTest = make_unique<Test>();
 	mTest2 = make_unique<Test2>();
@@ -91,7 +95,7 @@ void CompilerRewriteApp::buildTestCpp()
 	mModule->unlockHandle();
 	
 	// prepare build settings
-	auto settings = rt::Compiler::BuildSettings()
+	auto settings = rt::Compiler::BuildSettings().define( "RT_COMPILED" )
 		.default() // default cinder project settings
 		.include( "../../../include" ); // cinder-runtime include folder
 		

@@ -2,7 +2,7 @@
 
 using namespace std;
 
-std::string Test::getString()
+const char* Test::getString()
 {
 	return "Test!";
 }

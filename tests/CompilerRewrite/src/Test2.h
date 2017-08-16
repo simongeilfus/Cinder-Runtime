@@ -1,12 +1,15 @@
 #pragma once
 
+#include <string>
+#include "runtime/Virtual.h"
+#include "runtime/ClassWatcher.h"
+
 class Test2 {
 public:
-	virtual const char* getString();
+	Test2();
+	rt_virtual std::string getString();
 
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
-	void* operator new( size_t size );
-	void operator delete( void* ptr );
-#endif
-
+protected:
+	int mCount;
+	RT_WATCH_CLASS_HEADER
 };

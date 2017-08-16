@@ -470,7 +470,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\runtime\ClassFactory.h" />
-    <ClInclude Include="..\..\..\include\runtime\ClassInstanceWatcher.h" />
+    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h" />
     <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h" />
     <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h" />
     <ClInclude Include="..\..\..\include\runtime\Process.h" />

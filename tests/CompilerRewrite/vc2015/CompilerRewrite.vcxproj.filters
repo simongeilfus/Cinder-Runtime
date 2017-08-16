@@ -113,7 +113,7 @@
     <ClInclude Include="..\..\..\include\runtime\Virtual.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\ClassInstanceWatcher.h">
+    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,26 +1,17 @@
 #include "Test2.h"
 
-const char* Test2::getString()
+RT_WATCH_CLASS_IMPL( Test2 );
+
+Test2::Test2()
+: mCount( 0 )
 {
-	return "Hello!";
+	mCount = 10;
 }
 
-
-// 
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
-
-#include "runtime/ClassInstanceWatcher.h"
-
-void* Test2::operator new( size_t size )
+std::string Test2::getString()
 {
-	void * ptr = ::operator new( size );
-	rt::watchClassInstance( static_cast<Test2*>( ptr ), { CI_RT_PROJECT_ROOT / "src/Test2.cpp", CI_RT_PROJECT_ROOT / "src/Test2.h" }, CI_RT_INTERMEDIATE_DIR / "runtime/Test2/Test2.dll" );
-	return ptr;
+	mCount++;
+	//return "Hello!";
+	return ( " #" + std::to_string( mCount ) );
 }
-	
-void Test2::operator delete( void* ptr )
-{
-	rt::watchClassInstance( static_cast<Test2*>( ptr ), {}, "", true );
-	::operator delete( ptr );
-}
-#endif
+
