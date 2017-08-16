@@ -150,6 +150,20 @@ void Class::operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
+#define RT_WATCH_CLASS_INLINE( Class ) \
+void* operator new( size_t size ) \
+{ \
+	void * ptr = ::operator new( size ); \
+	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
+	rt::watchClassInstance( static_cast<Class*>( ptr ), { cppPath }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
+	return ptr; \
+} \
+void operator delete( void* ptr ) \
+{ \
+	rt::watchClassInstance( static_cast<Class*>( ptr ), {}, "", rt::Compiler::BuildSettings(), true ); \
+	::operator delete( ptr ); \
+} \
+
 #define __RT_WATCH_CLASS_IMPL_SWITCH(_1,_2,_3,NAME,...) NAME
 #define RT_WATCH_CLASS_IMPL( ... ) __RT_WATCH_CLASS_IMPL_SWITCH(__VA_ARGS__,__RT_WATCH_CLASS_IMPL2,__RT_WATCH_CLASS_IMPL1,__RT_WATCH_CLASS_IMPL0)(__VA_ARGS__)
 
@@ -157,5 +171,6 @@ void Class::operator delete( void* ptr ) \
 
 #define RT_WATCH_CLASS_HEADER
 #define RT_WATCH_CLASS_IMPL( ... )
+#define RT_WATCH_CLASS_INLINE( Class )
 
 #endif
