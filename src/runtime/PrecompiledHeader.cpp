@@ -1,4 +1,6 @@
 #include "runtime/PrecompiledHeader.h"
+#include <fstream>
+#include <sstream>
 
 using namespace std;
 using namespace ci;
