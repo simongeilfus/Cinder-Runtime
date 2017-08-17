@@ -58,27 +58,43 @@ protected:
 
 class CompilationResult {
 public:
-	//! Returns the path of the file that has been compiled
-	ci::fs::path getFilePath() const;
 	//! Returns the path of the compilation output
 	ci::fs::path getOutputPath() const;
+	//! Returns the path of the file that has been compiled
+	const std::vector<ci::fs::path>&	getFilePaths() const;
+	//! Returns the path of the file that has been compiled
+	std::vector<ci::fs::path>&			getFilePaths();
+	//! Returns the path of the file that has been compiled
+	const std::vector<ci::fs::path>&	getObjectFilePaths() const;	
+	//! Returns the path of the file that has been compiled
+	std::vector<ci::fs::path>&			getObjectFilePaths();	
+	//! Returns the path of the file that has been compiled
+	ci::fs::path getPdbFilePath() const;
 	//! Returns whether the compilation ended with errors
 	bool hasErrors() const;
 	//! Returns the list of errors 
-	const std::vector<std::string>& getErrors() const;
+	const std::vector<std::string>&	getErrors() const;
+	//! Returns the list of errors 
+	std::vector<std::string>&		getErrors();
 	//! Returns the list of warnings
 	const std::vector<std::string>& getWarnings() const;
-	//! Returns a map of exported symbols and their mangled names
-	const std::map<std::string,std::string>& getSymbols() const;
+	//! Returns the list of warnings
+	std::vector<std::string>&		getWarnings();
 	
-	CompilationResult( const ci::fs::path &filePath, const ci::fs::path &outputPath, const std::vector<std::string>& errors, const std::vector<std::string>& warnings, const std::map<std::string,std::string> &symbols );
+	//! Returns the path of the compilation output
+	void setOutputPath( const ci::fs::path &path );
+	//! Returns the path of the file that has been compiled
+	void setPdbFilePath( const ci::fs::path &path );
+
+	CompilationResult();
 
 protected:
 	ci::fs::path mOutputPath;
-	ci::fs::path mFilePath;
+	ci::fs::path mPdbFilePath;
+	std::vector<ci::fs::path> mFilePaths;
+	std::vector<ci::fs::path> mObjectFilePaths;
 	std::vector<std::string> mErrors;
 	std::vector<std::string> mWarnings;
-	std::map<std::string,std::string> mSymbols;
 };
 
 class CompilerException : public ci::Exception {

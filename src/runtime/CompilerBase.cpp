@@ -68,9 +68,60 @@ void CompilerBase::initializeProcess()
 	}
 }
 
-CompilationResult::CompilationResult( const ci::fs::path &filePath, const ci::fs::path &outputPath, const std::vector<std::string> &errors, const std::vector<std::string> &warnings, const std::map<std::string,std::string> &symbols )
-: mFilePath( filePath ), mOutputPath( outputPath ), mErrors( errors ), mWarnings( warnings ), mSymbols( symbols )	
+CompilationResult::CompilationResult()
 {
 }
 
+ci::fs::path CompilationResult::getOutputPath() const
+{
+	return mOutputPath;
+}
+const std::vector<ci::fs::path>& CompilationResult::getFilePaths() const
+{
+	return mFilePaths;
+}
+std::vector<ci::fs::path>& CompilationResult::getFilePaths()
+{
+	return mFilePaths;
+}
+const std::vector<ci::fs::path>& CompilationResult::getObjectFilePaths() const
+{
+	return mObjectFilePaths;
+}
+std::vector<ci::fs::path>& CompilationResult::getObjectFilePaths()
+{
+	return mObjectFilePaths;
+}
+ci::fs::path CompilationResult::getPdbFilePath() const
+{
+	return mPdbFilePath;
+}
+bool CompilationResult::hasErrors() const
+{
+	return ! mErrors.empty();
+}
+const std::vector<std::string>& CompilationResult::getErrors() const
+{
+	return mErrors;
+}
+std::vector<std::string>& CompilationResult::getErrors()
+{
+	return mErrors;
+}
+const std::vector<std::string>& CompilationResult::getWarnings() const
+{
+	return mWarnings;
+}
+std::vector<std::string>& CompilationResult::getWarnings()
+{
+	return mWarnings;
+}
+void CompilationResult::setOutputPath( const ci::fs::path &path )
+{
+	mOutputPath = path;
+}
+void CompilationResult::setPdbFilePath( const ci::fs::path &path )
+{
+	mPdbFilePath = path;
+}
 }
