@@ -95,8 +95,6 @@ void CompilerRewriteApp::draw()
 #if defined( CINDER_SHARED )
 void CompilerRewriteApp::buildTestCpp()
 {
-	Timer timer( true );
-
 	// unlock the dll-handle before building
 	mModule->unlockHandle();
 	
@@ -113,7 +111,6 @@ void CompilerRewriteApp::buildTestCpp()
 			// and try to get a ptr to its make_unique factory function
 			if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
 				updatePtr( &mTest );
-				console() << timer.getSeconds() * 1000.0 << "ms" << endl;
 			}
 			
 		}
@@ -137,6 +134,8 @@ using namespace std;
 
 class CompilerRewriteApp : public App {
 public:
+	CompilerRewriteApp() = default;
+	CompilerRewriteApp(const CompilerRewriteApp &) {}
 	//CompilerRewriteApp(){}
 	void draw() override;
 	
@@ -178,15 +177,20 @@ void watchApp( T* ptr, const ci::fs::path &source, const ci::fs::path &dllPath, 
 					if( ci::fs::exists( sModule->getPath() ) ) {
 						sModule->updateHandle();
 						// and try to get a ptr to its make_unique factory function
-						if( auto makeRaw = sModule->getMakeRawFactory<T>() ) {
+						void* copyConstruct = (void*) GetProcAddress( static_cast<HMODULE>( sModule->getHandle() ), "rt_copy_construct" );
+						if( copyConstruct ) {
+						//if( auto makeRaw = sModule->getMakeRawFactory<T>() ) {
 							// create a single new instance an use its vtable to override the originals's vtables
 							//
-							void* vtableFn = (void*) GetProcAddress( static_cast<HMODULE>( sModule->getHandle() ), "rt_vtable" );
-							void* vtable = ( (void*(__cdecl*)()) vtableFn )();
-							*(void **)sInstance = vtable;
-							//T* newPtr = makeRaw();
-							//*(void **)sInstance = *(void**) newPtr;
-							//::operator delete( newPtr );
+							//void* vtableFn = (void*) GetProcAddress( static_cast<HMODULE>( sModule->getHandle() ), "rt_vtable" );
+							//void* vtable = ( (void*(__cdecl*)()) vtableFn )();
+							//*(void **)sInstance = vtable;
+							T* current = static_cast<T*>( ci::app::App::get() );
+							T* newPtr = ( (T*(__cdecl*)(T*)) copyConstruct )( current );
+							//CompilerRewriteApp bla;
+							//auto blabla = new CompilerRewriteApp( bla );
+							*(void **)sInstance = *(void**) newPtr;
+							::operator delete( newPtr );
 						}
 			
 					}
@@ -230,6 +234,10 @@ CINDER_APP( CompilerRewriteApp, RendererGl() )
 extern "C" __declspec(dllexport) CompilerRewriteApp* __cdecl rt_make_raw()
 {
 	return new CompilerRewriteApp();
+}
+extern "C" __declspec(dllexport) CompilerRewriteApp* __cdecl rt_copy_construct( CompilerRewriteApp* current )
+{
+	return new CompilerRewriteApp( *current );
 }
 
 extern "C" __declspec(dllexport) void* __cdecl rt_vtable()
