@@ -4,7 +4,6 @@
 
 #include "cinder/Filesystem.h"
 #include "cinder/FileWatcher.h"
-#include "cinder/Timer.h"
 
 #include "runtime/Module.h"
 #include "runtime/CompilerMsvc.h"
@@ -31,12 +30,11 @@ void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, con
 		ci::FileWatcher::instance().watch( filePaths, 
 			ci::FileWatcher::Options().callOnWatch( false ),
 			[&,source,settings]( const ci::WatchEvent &event ) {  
-				ci::Timer timer( true );
 				// unlock the dll-handle before building
 				sModule->unlockHandle();
 		
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, settings, [&,event,timer]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, settings, [&,event]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( sModule->getPath() ) ) {
 						sModule->updateHandle();
@@ -64,8 +62,6 @@ void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, con
 									::operator delete( newPtr );
 								}
 							}
-
-							ci::app::console() << timer.getSeconds() * 1000.0 << "ms" << std::endl;
 #elif 0
 							// create a single new instance an use its vtable to override the originals's vtables
 							T* newPtr = makeRaw();
@@ -73,18 +69,24 @@ void watchClassInstance( T* ptr, const std::vector<ci::fs::path> &filePaths, con
 							ci::app::console() << "object size " << sizeof( * newPtr ) << std::endl;
 							for( size_t i = 0; i < sInstances.size(); ++i ) {
 								*(void **)sInstances[i] = *(void**) newPtr;
+								//std::swap( *(void **)sInstances[i], *(void**) newPtr );
 							}
 							::operator delete( newPtr );
 #else
+							//ci::app::console() << sizeof(T) << " vs " << sModule->getSizeOf()() << std::endl;
 							// create new instances and swap with the originals
 							for( size_t i = 0; i < sInstances.size(); ++i ) {
+							#if 1
 								T* newPtr = makeRaw();
+								T* oldPtr = sInstances[i];
+								std::memmove( oldPtr, newPtr, sizeof( T ) );
+							#else
 								size_t size = sizeof T;
 								void* temp = malloc( size );
 								memcpy( temp, newPtr, size );
 								memcpy( newPtr, sInstances[i], size );
 								memcpy( sInstances[i], temp, size );
-								
+							#endif								
 								::operator delete( newPtr );
 							}
 #endif
@@ -107,7 +109,9 @@ namespace rt = runtime;
 public: \
 	void* operator new( size_t size ); \
 	void operator delete( void* ptr ); \
+private: \
 	static const ci::fs::path getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); } \
+public:
 
 #define __RT_WATCH_CLASS_IMPL0( Class ) \
 void* Class::operator new( size_t size ) \
@@ -169,7 +173,11 @@ void operator delete( void* ptr ) \
 
 #else
 
-#define RT_WATCH_CLASS_HEADER
+#include "cinder/Filesystem.h"
+#include "cinder/FileWatcher.h"
+#define RT_WATCH_CLASS_HEADER \
+public: \
+	static const ci::fs::path getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); }
 #define RT_WATCH_CLASS_IMPL( ... )
 #define RT_WATCH_CLASS_INLINE( Class )
 
