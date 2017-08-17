@@ -71,26 +71,25 @@ public:
 	
 	template<typename T>
 	using MakeSharedFactory = void (__cdecl*)(std::shared_ptr<T>*);
+	template<typename T>
+	using MakeUniqueFactory = void (__cdecl*)(std::unique_ptr<T>*);
+	template<typename T>
+	using MakeRawFactory = T* (__cdecl*)();
+	using SizeOf = std::size_t(__cdecl*)();
 
 	template<typename T>
 	MakeSharedFactory<T> getMakeSharedFactory() const;
-	
-	template<typename T>
-	using MakeUniqueFactory = void (__cdecl*)(std::unique_ptr<T>*);
-
 	template<typename T>
 	MakeUniqueFactory<T> getMakeUniqueFactory() const;
-
-	template<typename T>
-	using MakeRawFactory = T* (__cdecl*)();
-
 	template<typename T>
 	MakeRawFactory<T> getMakeRawFactory() const;
+	SizeOf getSizeOf() const;
 
 protected:
 	void* getMakeSharedFactoryPtr() const;
 	void* getMakeUniqueFactoryPtr() const;
 	void* getMakeRawFactoryPtr() const;
+	void* getSizeOfPtr() const;
 
 	Handle			mHandle;
 	ci::fs::path	mPath, mTempPath;

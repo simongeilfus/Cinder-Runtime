@@ -26,6 +26,11 @@ void generateClassFactory( const ci::fs::path &outputPath, const std::string &cl
 	outputFile << "\treturn new " << className << "();" << endl;
 	outputFile << "}" << endl;
 	outputFile << endl;
+	outputFile << "extern \"C\" __declspec(dllexport) size_t __cdecl rt_sizeof()" << endl;
+	outputFile << "{" << endl;
+	outputFile << "\treturn sizeof( " << className << ");" << endl;
+	outputFile << "}" << endl;
+	outputFile << endl;
 }
 
 }

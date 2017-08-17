@@ -156,6 +156,15 @@ void* Module::getMakeRawFactoryPtr() const
 {
 	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_raw" );
 }
+void* Module::getSizeOfPtr() const
+{
+	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_sizeof" );
+}
+
+Module::SizeOf Module::getSizeOf() const
+{
+	return static_cast<SizeOf>( getSizeOfPtr() );
+}
 
 #if 0
 ModuleManagerRef ModuleManager::create()
