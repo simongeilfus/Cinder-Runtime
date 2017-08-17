@@ -179,7 +179,7 @@ std::string CompilerMsvc::getCompilerInitArgs() const
 #endif
 }
 
-std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const
+std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
 	string command = "cl ";
 	for( auto define : settings.mPpDefinitions ) {
@@ -205,11 +205,12 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	// additional files to compile
 	for( const auto &path : settings.mAdditionalSources ) {
 		command += path.generic_string() + " ";
+		result->getFilePaths().push_back( path );
 	}
 
 	return command;
 }
-std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const
+std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
 	string command = "/link ";
 	
@@ -223,7 +224,9 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += linkerArg + " ";
 	}
 	
-	command += settings.mOutputPath.empty() ? "/OUT:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".dll" ) ).string() + " " : "/OUT:" + settings.mOutputPath.generic_string() + " ";
+	auto outputPath = settings.mOutputPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".dll" ) ) : settings.mOutputPath;
+	result->setOutputPath( outputPath );
+	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
 	command += "/DEBUG:FASTLINK ";
 	command += settings.mPdbPath.empty() ? "/PDB:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
@@ -231,9 +234,12 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 #endif
 	command += "/DLL ";
 
+	result->getObjectFilePaths().push_back( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".obj" ) );
 	for( auto obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
+		result->getObjectFilePaths().push_back( obj );
 	}
+
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( CI_RT_INTERMEDIATE_DIR ), end = fs::directory_iterator(); it != end; it++ ) {
 			if( it->path().extension() == ".obj" ) {
@@ -242,6 +248,7 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 					&& it->path().filename().string().find( CI_RT_PROJECT_PATH.stem().string() + "App.obj" ) == string::npos
 					) {
 					command += it->path().generic_string() + " ";
+					result->getObjectFilePaths().push_back( it->path() );
 				}
 			}
 		}
@@ -250,9 +257,9 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	return command;
 }
 
-std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const
+std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
-	return generateCompilerCommand( sourcePath, settings ) + generateLinkerCommand( sourcePath, settings );
+	return generateCompilerCommand( sourcePath, settings, result ) + generateLinkerCommand( sourcePath, settings, result );
 }
 
 namespace {
@@ -275,9 +282,16 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	if( ! mProcess ) {
 		throw CompilerException( "Compiler Process not initialized" );
 	}
+	
+    std::chrono::steady_clock::time_point timePoint = std::chrono::steady_clock::now();
+
 	// clear the error and warning vectors
 	mErrors.clear();
 	mWarnings.clear();
+
+	// prepare compilation results
+	CompilationResult result;
+	result.getFilePaths().push_back( sourcePath );
 
 	// make sure the intermediate directories exists
 	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" ) ) {
@@ -296,6 +310,7 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 			fs::rename( pdb, newName );
 		} catch( const std::exception & ) {}
 	}
+	result.setPdbFilePath( pdb );
 #endif
 
 	// generate factor if needed and add it to the compiler list
@@ -315,10 +330,10 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	}
 		
 	// issue the build command with a completion token
-	auto command = generateBuildCommand( sourcePath, buildSettings );
-	mBuilds.insert( make_pair( sourcePath.filename(), onBuildFinish ) );
-	app::console() << "------ rt::Compiler Build started ------" << endl;
-	app::console() << sourcePath.filename() << endl;
+	auto command = generateBuildCommand( sourcePath, buildSettings, &result );
+	mBuilds.insert( make_pair( sourcePath.filename(), make_tuple( result, onBuildFinish, timePoint ) ) );
+	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << CI_RT_PROJECT_PATH.stem() << ", Configuration: " << CI_RT_CONFIGURATION << " " << CI_RT_PLATFORM_TARGET << " ------" << endl;
+	app::console() << "1>  " << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
 
 }
@@ -381,19 +396,30 @@ void CompilerMsvc::parseProcessOutput()
 	if( mVerbose && ! fullOutput.empty() ) app::console() << fullOutput << endl;
 	
 	if( buildIt != mBuilds.end() ) {
-
+		
 		for( auto warning : mWarnings ) {
-			app::console() << warning << endl;
+			app::console() << "1>" + warning << endl;
 		}	
 		if( mErrors.empty() ) {
-			buildIt->second( CompilationResult( "", "", mErrors, mWarnings, { { "", "" } } ) );
-			app::console() << "========== rt::Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
+			const Build &build = buildIt->second;
+			app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getOutputPath() << endl;
+			app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getPdbFilePath() << endl;
+			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
+			auto elapsed = std::chrono::steady_clock::now() - std::get<2>( build );
+			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
+			auto elapsedMinutes = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
+			auto elapsedHours = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
+			std::ostringstream oss;
+			oss << std::setfill('0') << std::setw(2) << elapsedHours << ":" << std::setw(2) << elapsedMinutes << ":"
+				<< std::setw(2) << ( elapsedMicro % 1000000000 ) / 1000000 << "." << std::setw(3) << ( elapsedMicro % 1000000 ) / 1000;
+			app::console() << endl << "Time Elapsed " << oss.str() << endl << endl;
+			std::get<1>( build )( std::get<0>( build ) );
 		}
 		else {
 			for( auto error : mErrors ) {
-				app::console() << error << endl;
+				app::console() << "1>" + error << endl;
 			}
-			app::console() << "========== rt::Compiler Build: 0 succeeded, 1 failed, 0 up-to-date, 0 skipped ==========" << endl;
+			app::console() << "========== Runtime Compiler Build: 0 succeeded, 1 failed, 0 up-to-date, 0 skipped ==========" << endl;
 		}
 
 		mBuilds.erase( buildIt );

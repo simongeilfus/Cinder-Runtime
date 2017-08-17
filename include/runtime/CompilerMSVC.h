@@ -113,9 +113,9 @@ public:
 	void build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
 	
 protected:
-	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
-	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
-	std::string generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings ) const;
+	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
+	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
+	std::string generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
 
 	void parseProcessOutput() override;
 
@@ -123,7 +123,8 @@ protected:
 	ci::fs::path	getCompilerPath() const override;
 	std::string		getCompilerInitArgs() const override;
 
-	using BuildMap = std::map<ci::fs::path,std::function<void(const CompilationResult&)>>;
+	using Build = std::tuple<CompilationResult,std::function<void(const CompilationResult&)>,std::chrono::steady_clock::time_point>;
+	using BuildMap = std::map<ci::fs::path,Build>;
 
 	BuildMap mBuilds;
 };
