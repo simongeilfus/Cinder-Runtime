@@ -39,7 +39,7 @@ void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths
 	
 	if( ! mModule ) {
 		mModule = std::make_unique<rt::Module>( dllPath );
-		ci::app::console() << "Watching " << dllPath << std::endl;
+
 		ci::fs::path source = filePaths.front();
 		ci::FileWatcher::instance().watch( filePaths, 
 			ci::FileWatcher::Options().callOnWatch( false ),
