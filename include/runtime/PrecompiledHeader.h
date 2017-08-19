@@ -5,7 +5,7 @@
 namespace runtime {
 
 //! Generates the object factory file with a set of extern "C" functions allowing instancing of the class
-void generatePrecompiledHeader( const ci::fs::path &outputPath, const std::string &className, const std::string &headerName = "" );
+bool generatePrecompiledHeader( const ci::fs::path &sourcePath, const ci::fs::path &outputHeader, const ci::fs::path &outputCpp, bool force );
 
 } // namespace runtime
 

@@ -90,9 +90,9 @@ public:
 	protected:
 		friend class CompilerMsvc;
 		bool mVerbose;
-		bool mCreatePrecompiledHeader;
 		bool mLinkAppObjs;
 		bool mGenerateFactory;
+		bool mGeneratePch;
 		ci::fs::path mPrecompiledHeader;
 		ci::fs::path mOutputPath;
 		ci::fs::path mObjectFilePath;

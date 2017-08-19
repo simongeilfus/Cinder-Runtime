@@ -4,6 +4,7 @@
 #include "runtime/Process.h"
 
 #include "cinder/app/App.h"
+#include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
 using namespace std;
@@ -20,8 +21,9 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
 		.libraryPath( CI_RT_CINDER_PATH / "lib/msw" / CI_RT_PLATFORM_TARGET / CI_RT_CONFIGURATION / CI_RT_PLATFORM_TOOLSET )
 		.library( "cinder.lib" )
 		.define( "CINDER_SHARED" ).define( "WIN32" ).define( "_WIN32_WINNT=0x0601" ).define( "_WINDOWS" ).define( "NOMINMAX" ).define( "_UNICODE" ).define( "UNICODE" )
-		.compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" ).compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
-		.compilerOption( "/Gm" )
+		.compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
+		.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
+		//.compilerOption( "/Gm" )
 #if defined( _DEBUG )
 		.compilerOption( "/Od" )
 		.compilerOption( "/Zi" )
@@ -57,7 +59,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::define( const std::str
 }
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::precompiledHeader( const ci::fs::path &path, bool create )
 {
-	mCreatePrecompiledHeader = true;
+	mGeneratePch = true;
 	mPrecompiledHeader = path;
 	return *this;
 }
@@ -128,12 +130,14 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::generateFactory( bool 
 }
 
 CompilerMsvc::BuildSettings::BuildSettings()
-: mLinkAppObjs( true ), mGenerateFactory( true )
+: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( true )
 {
 }
 
 CompilerMsvc::CompilerMsvc()
 {
+	CI_LOG_W( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
+
 	initializeProcess();
 }
 
@@ -181,17 +185,58 @@ std::string CompilerMsvc::getCompilerInitArgs() const
 
 std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
-	string command = "cl ";
-	for( auto define : settings.mPpDefinitions ) {
+	string command;
+
+	// generate precompile header
+	bool createPch = false;
+	if( settings.mGeneratePch ) {
+		
+		createPch = generatePrecompiledHeader( sourcePath, 
+			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.h" ),
+			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false );
+
+		if( createPch ) {
+			command += "cl /c ";
+
+			for( const auto &define : settings.mPpDefinitions ) {
+				command += "/D " + define + " ";
+			}
+			for( const auto &include : settings.mIncludes ) {
+				command += "/I" + include.generic_string() + " ";
+			}
+			for( const auto &include : settings.mForcedIncludes ) {
+				command += "/FI " + include + " ";
+			}
+			for( const auto &compilerArg : settings.mCompilerOptions ) {
+				command += compilerArg + " ";
+			}
+			
+			command += settings.mObjectFilePath.empty() ? "/Fo" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+			command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
+		#if defined( _DEBUG )
+			command += "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " ";
+		#endif
+
+			command += "/Yc" + sourcePath.stem().string() + "Pch.h ";
+
+			command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ) ).generic_string();
+			command += "\n";
+		}
+	}
+
+	command += "cl ";
+	command += "/MP ";
+	
+	for( const auto &define : settings.mPpDefinitions ) {
 		command += "/D " + define + " ";
 	}
-	for( auto include : settings.mIncludes ) {
+	for( const auto &include : settings.mIncludes ) {
 		command += "/I" + include.generic_string() + " ";
 	}
-	for( auto include : settings.mForcedIncludes ) {
-		command += "/FI " + include + " ";
+	for( const auto &include : settings.mForcedIncludes ) {
+		command += "/FI" + include + " ";
 	}
-	for( auto compilerArg : settings.mCompilerOptions ) {
+	for( const auto &compilerArg : settings.mCompilerOptions ) {
 		command += compilerArg + " ";
 	}
 
@@ -200,6 +245,10 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	command += settings.mPdbPath.empty() ? "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
 #endif
 	
+			command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
+			command += "/Yu" + sourcePath.stem().string() + "Pch.h ";
+			command += "/FI" + sourcePath.stem().string() + "Pch.h ";
+
 	// main source file
 	command += sourcePath.generic_string() + " ";
 	// additional files to compile
@@ -214,13 +263,13 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 {
 	string command = "/link ";
 	
-	for( auto libraryPath : settings.mLibraryPaths ) {
+	for( const auto &libraryPath : settings.mLibraryPaths ) {
 		command += "/LIBPATH:" + libraryPath.generic_string() + " ";
 	}
-	for( auto library : settings.mLibraries ) {
+	for( const auto &library : settings.mLibraries ) {
 		command += library + " ";
 	}
-	for( auto linkerArg : settings.mLinkerOptions ) {
+	for( const auto &linkerArg : settings.mLinkerOptions ) {
 		command += linkerArg + " ";
 	}
 	
@@ -235,10 +284,13 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	command += "/DLL ";
 
 	result->getObjectFilePaths().push_back( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".obj" ) );
-	for( auto obj : settings.mObjPaths ) {
+	for( const auto &obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
 		result->getObjectFilePaths().push_back( obj );
 	}
+	
+	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.obj" ) ).generic_string() + " ";
+	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
 
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( CI_RT_INTERMEDIATE_DIR ), end = fs::directory_iterator(); it != end; it++ ) {
@@ -321,12 +373,12 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 			generateClassFactory( factoryPath, sourcePath.stem().string() );
 		}
 		auto factoryObjPath = CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.obj" );
-		if( ! fs::exists( factoryObjPath ) ) {
+		//if( ! fs::exists( factoryObjPath ) ) {
 			buildSettings.additionalSource( factoryPath );
-		}
-		else {
-			buildSettings.linkObj( factoryObjPath );
-		}
+		//}
+		//else {
+		//	buildSettings.linkObj( factoryObjPath );
+		//}
 	}
 		
 	// issue the build command with a completion token
@@ -403,7 +455,9 @@ void CompilerMsvc::parseProcessOutput()
 		if( mErrors.empty() ) {
 			const Build &build = buildIt->second;
 			app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getOutputPath() << endl;
-			app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getPdbFilePath() << endl;
+			if( ! std::get<0>( build ).getPdbFilePath().empty() ) {
+				app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getPdbFilePath() << endl;
+			}
 			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
 			auto elapsed = std::chrono::steady_clock::now() - std::get<2>( build );
 			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
