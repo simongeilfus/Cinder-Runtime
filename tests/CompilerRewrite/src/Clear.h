@@ -8,8 +8,21 @@ class Clear {
 public:
 	rt_virtual void clear()
 	{
-		ci::gl::clear( ci::ColorA( 0, 0, 0, 1 ) );
+		ci::gl::clear( ci::ColorA( 0, 0, 1, 1 ) );
 	}
 
-	RT_WATCH_CLASS_INLINE( Clear );
+#if ! defined( RT_COMPILED )
+	void* operator new( size_t size )
+	{
+		void * ptr = ::operator new( size );
+		auto headerPath = ci::fs::absolute( ci::fs::path( __FILE__ ) );
+		rt::ClassWatcher<Clear>::instance().watch( static_cast<Clear*>( ptr ), { headerPath }, CI_RT_INTERMEDIATE_DIR / "runtime/Clear/Clear.dll", rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );
+		return ptr;
+	}
+	void operator delete( void* ptr )
+	{
+		rt::ClassWatcher<Clear>::instance().unwatch( static_cast<Clear*>( ptr ) );
+		::operator delete( ptr );
+	}
+#endif
 };

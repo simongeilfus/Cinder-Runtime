@@ -11,5 +11,5 @@ public:
 
 protected:
 	int mCount;
-	RT_WATCH_CLASS_HEADER
+	RT_WATCH_HEADER
 };

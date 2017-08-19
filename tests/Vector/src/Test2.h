@@ -13,5 +13,5 @@ protected:
 	ci::vec2 mPosition;
 	ci::ColorA mColor;
 	float mSize;
-	RT_WATCH_CLASS_HEADER;
+	RT_WATCH_HEADER;
 };
