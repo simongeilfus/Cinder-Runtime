@@ -13,13 +13,54 @@ namespace runtime {
 template<class T>
 class ClassWatcher {
 public:
-
+	
+	//! Returns the global ClassWatcher instance
 	static ClassWatcher& instance();
-
+	
+	//! Adds an instance to the ClassWatcher watch list
 	void watch( T* ptr , const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() );
+	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
+	enum class Method { OVERRIDE_PTR, SWAP_VTABLE, HEADER_OVERRIDE_PTR_OR_CPP_SWAP_VTABLE };
+
+	class Options {
+	public:
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& source( const ci::fs::path &path );
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& header( const ci::fs::path &path );
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& className( const ci::fs::path &path );
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& method( Method method );
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings );
+		
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& watchAdditionalSources( bool watch = true );
+		//! Adds an extra include folder to the compiler BuildSettings
+		Options& watchObjectFiles( bool watch = true );
+
+	protected:
+		std::string		mClassName;
+		ci::fs::path	mSources;
+		ci::fs::path	mDllPath;
+		friend class ClassWatcher<T>;
+	};
+	
+	//! Adds an extra include folder to the compiler BuildSettings
+	const Options&	getOptions() const;
+	//! Adds an extra include folder to the compiler BuildSettings
+	void			setOptions( const Options& options );
+	
+	//! Returns the signal used to notify when the Module/Handle is about to be unloaded
+	ci::signals::Signal<void(const Module&)>& getCleanupSignal();
+	//! Returns the signal used to notify Module/Handle changes
+	ci::signals::Signal<void(const Module&)>& getChangedSignal();
+
 protected:
+	Options			mOptions;
 	rt::ModulePtr	mModule;
 	std::vector<T*> mInstances;
 };
@@ -119,6 +160,18 @@ void ClassWatcher<T>::unwatch( T* ptr )
 	mInstances.erase( std::remove( mInstances.begin(), mInstances.end(), ptr ), mInstances.end() );
 }
 
+
+template<class T>
+ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getCleanupSignal()
+{
+	return mModule->getCleanupSignal();
+}
+template<class T>
+ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getChangedSignal()
+{
+	return mModule->getChangedSignal();
+}
+
 } // namespace runtime
 
 namespace rt = runtime;
@@ -138,7 +191,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "NO_RT_COMPILED" ).include( "../../../include" ) );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -185,7 +238,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "NO_RT_COMPILED" ).include( "../../../include" ) );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
