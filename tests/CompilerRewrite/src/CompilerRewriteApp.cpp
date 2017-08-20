@@ -74,6 +74,8 @@ void CompilerRewriteApp::draw()
 		mClear->clear();
 	}
 	
+	gl::setMatricesWindow( getWindowSize() );
+
 	if( mTest ) {
 		gl::drawStringCentered( mTest->getString(), getWindowCenter(), ColorA::white(), mFontLarge );
 	}
@@ -90,6 +92,7 @@ void CompilerRewriteApp::draw()
 		gl::drawStringCentered( mTest4->getString(), getWindowCenter() - vec2( -120, 40 ), ColorA::white(), mFontLarge );
 	}
 	
+	mTest2->draw();
 }
 
 #if defined( CINDER_SHARED )

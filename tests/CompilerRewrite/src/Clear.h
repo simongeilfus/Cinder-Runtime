@@ -8,7 +8,7 @@ class Clear {
 public:
 	rt_virtual void clear()
 	{
-		ci::gl::clear( ci::ColorA( 0, 0, 1, 1 ) );
+		ci::gl::clear( ci::ColorA( 0, 0, 0, 1 ) );
 	}
 
 #if ! defined( RT_COMPILED )
