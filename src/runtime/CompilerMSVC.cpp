@@ -24,6 +24,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
 		.compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
 		.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
 		//.compilerOption( "/Gm" )
+		
 #if defined( _DEBUG )
 		.compilerOption( "/Od" )
 		.compilerOption( "/Zi" )
@@ -32,7 +33,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
 #else
 		.compilerOption( "/MD" )
 #endif
-		.linkerOption( "/INCREMENTAL:NO" )
+		//.linkerOption( "/INCREMENTAL:NO" )
 		.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
 		;
 }
@@ -136,7 +137,7 @@ CompilerMsvc::BuildSettings::BuildSettings()
 
 CompilerMsvc::CompilerMsvc()
 {
-	CI_LOG_W( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
+	CI_LOG_V( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
 
 	initializeProcess();
 }
@@ -281,6 +282,7 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	command += settings.mPdbPath.empty() ? "/PDB:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
 	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
 #endif
+	command += "/INCREMENTAL ";
 	command += "/DLL ";
 
 	result->getObjectFilePaths().push_back( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".obj" ) );
