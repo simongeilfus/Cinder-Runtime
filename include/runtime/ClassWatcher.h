@@ -191,7 +191,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "NO_RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -238,7 +238,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "NO_RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
