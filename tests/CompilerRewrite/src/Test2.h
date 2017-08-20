@@ -4,7 +4,6 @@
 #include "runtime/Virtual.h"
 #include "runtime/ClassWatcher.h"
 #include "cinder/gl/Batch.h"
-#include "Test.h"
 
 class Test2 {
 public:
@@ -13,7 +12,6 @@ public:
 	rt_virtual std::string getString();
 
 protected:
-	std::unique_ptr<Test> mTest;
 	int mCount;
 	ci::gl::BatchRef mBatch;
 	RT_WATCH_HEADER
