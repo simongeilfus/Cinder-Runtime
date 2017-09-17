@@ -172,7 +172,13 @@ std::string CompilerMsvc::getCLInitCommand() const
 
 ci::fs::path CompilerMsvc::getCompilerPath() const
 {
+#if _MSC_VER == 1900
 	return "C:\\Program Files (x86)\\Microsoft Visual Studio 14.0\\VC\\vcvarsall.bat";
+#elif _MSC_VER >= 1910
+	return "C:\\Program Files (x86)\\Microsoft Visual Studio\\2017\\Community\\VC\\Auxiliary\\Build\\vcvarsall.bat";
+#else
+	#error Visual Studio version not supported.
+#endif
 }
 
 std::string CompilerMsvc::getCompilerInitArgs() const
