@@ -6,8 +6,7 @@
 	author="Simon Geilfus"
 	summary="Runtime Compiled C++ for Cinder"
 	git="https://github.com/simongeilfus/Cinder-Runtime.git"
-	>	
-	<requires>sg.watchdog</requires>
+	>
 	
 	<includePath>include</includePath>
 	<headerPattern>include/runtime/*.h</headerPattern>	
