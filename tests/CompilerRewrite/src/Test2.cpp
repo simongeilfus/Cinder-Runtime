@@ -14,15 +14,15 @@ Test2::Test2()
 
 std::string Test2::getString()
 {
-
 	mCount++;
-	return ( "_" + std::to_string( mCount ) );
+	return ( "__" + std::to_string( mCount ) );
 }
 
 
 void Test2::draw()
 {
 	gl::translate( vec2(120,220) );
+	gl::scale( vec2( 1.0f ) );
 	mBatch->draw();
 }
 
