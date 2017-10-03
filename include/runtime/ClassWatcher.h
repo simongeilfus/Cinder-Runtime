@@ -87,9 +87,15 @@ void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths
 			[&,source,settings]( const ci::WatchEvent &event ) {  
 				// unlock the dll-handle before building
 				mModule->unlockHandle();
-		
+				
+				// force precompiled-header re-generation on header change
+				rt::Compiler::BuildSettings buildSettings = settings;
+				if( event.getFile().extension() == ".h" ) {
+					buildSettings.createPrecompiledHeader();
+				}
+
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, settings, [&,event]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->updateHandle();

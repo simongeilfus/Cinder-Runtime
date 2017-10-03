@@ -58,10 +58,18 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::define( const std::str
 	mPpDefinitions.push_back( definition );
 	return *this;
 }
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::precompiledHeader( const ci::fs::path &path, bool create )
+
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::usePrecompiledHeader( bool use /*const ci::fs::path &path*/ )
 {
-	mGeneratePch = true;
-	mPrecompiledHeader = path;
+	mUsePch = use;
+	//mPrecompiledHeader = path;
+	return *this;
+}
+		
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::createPrecompiledHeader( bool create /*const ci::fs::path &path*/ )
+{
+	mGeneratePch = create;
+	//mPrecompiledHeader = path;
 	return *this;
 }
 
@@ -131,7 +139,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::generateFactory( bool 
 }
 
 CompilerMsvc::BuildSettings::BuildSettings()
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( true )
+: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true )
 {
 }
 
@@ -190,9 +198,9 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 
 	// generate precompile header
 	bool createPch = false;
-	if( settings.mGeneratePch ) {
+	if( settings.mUsePch ) {
 		
-		createPch = generatePrecompiledHeader( sourcePath, 
+		createPch = settings.mGeneratePch || generatePrecompiledHeader( sourcePath, 
 			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.h" ),
 			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false );
 
@@ -222,6 +230,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 
 			command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ) ).generic_string();
 			command += "\n";
+			app::console() << "Re-generate PCH" << endl;
 		}
 	}
 
