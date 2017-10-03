@@ -197,12 +197,11 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	string command;
 
 	// generate precompile header
-	bool createPch = false;
 	if( settings.mUsePch ) {
 		
-		createPch = settings.mGeneratePch || generatePrecompiledHeader( sourcePath, 
+		bool createPch = generatePrecompiledHeader( sourcePath, 
 			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.h" ),
-			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false );
+			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false ) || settings.mGeneratePch;
 
 		if( createPch ) {
 			command += "cl /c ";
