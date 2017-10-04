@@ -21,7 +21,6 @@
 
 #include "runtime/Module.h"
 #include "cinder/Log.h"
-#include "Watchdog.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -34,7 +33,6 @@
 
 using namespace std;
 using namespace ci;
-using namespace ci::app;
 
 namespace runtime {
 
