@@ -31,12 +31,6 @@
     <Filter Include="Blocks\Cinder-Runtime\src\runtime">
       <UniqueIdentifier>{4BED4674-9B97-4243-AF94-BBD882AD18D2}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Watchdog">
-      <UniqueIdentifier>{6FBBB3F7-3A5F-4186-9F0C-F00B712F3EC2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Blocks\Watchdog\include">
-      <UniqueIdentifier>{82E43C97-7B61-4A63-913B-F688E3A63AA1}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\VectorApp.cpp">
@@ -63,9 +57,6 @@
     <ClCompile Include="..\..\..\src\runtime\Module.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
-    <ClInclude Include="..\blocks\Watchdog\include\Watchdog.h">
-      <Filter>Blocks\Watchdog\include</Filter>
-    </ClInclude>
     <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>

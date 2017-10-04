@@ -157,7 +157,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions);PROJECT_DIR=R"($(ProjectDir))";PROJECT_PATH=R"($(ProjectPath))";PLATFORM=R"($(Platform))";CONFIGURATION=R"($(Configuration))"</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -188,7 +188,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -220,7 +220,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions);PROJECT_DIR=R"($(ProjectDir))";PROJECT_PATH=R"($(ProjectPath))";PLATFORM=R"($(Platform))";CONFIGURATION=R"($(Configuration))"</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -249,7 +249,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -278,7 +278,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions);PROJECT_DIR=R"($(ProjectDir))";PROJECT_PATH=R"($(ProjectPath))";PLATFORM=R"($(Platform))";CONFIGURATION=R"($(Configuration))"</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -311,7 +311,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -346,7 +346,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions);PROJECT_DIR=R"($(ProjectDir))";PROJECT_PATH=R"($(ProjectPath))";PLATFORM=R"($(Platform))";CONFIGURATION=R"($(Configuration))"</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader />
@@ -378,7 +378,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>..\include;"..\..\..\..\..\include";..\..\..\include;..\blocks\Watchdog\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -480,7 +480,6 @@
     <ClInclude Include="..\..\..\include\runtime\CompilerBase.h" />
     <ClInclude Include="..\..\..\include\runtime\Memory.h" />
     <ClInclude Include="..\..\..\include\runtime\Module.h" />
-    <ClInclude Include="..\blocks\Watchdog\include\Watchdog.h" />
     <ClInclude Include="..\src\Clear.h" />
     <ClInclude Include="..\src\Test2.h" />
   </ItemGroup>
