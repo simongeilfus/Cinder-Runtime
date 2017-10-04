@@ -229,7 +229,6 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 
 			command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ) ).generic_string();
 			command += "\n";
-			app::console() << "Re-generate PCH" << endl;
 		}
 	}
 
