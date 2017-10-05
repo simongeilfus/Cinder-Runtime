@@ -60,6 +60,43 @@ public:
 	ci::signals::Signal<void(const Module&)>& getChangedSignal();
 
 protected:
+	
+	template<typename, typename C>
+	struct hasPreRuntimeBuild {
+		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
+	};
+
+	template<typename C, typename Ret, typename... Args>
+	struct hasPreRuntimeBuild<C, Ret(Args...)> {
+	private:
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().preRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename> static constexpr std::false_type check(...);
+		typedef decltype(check<C>(0)) type;
+	public:
+		static constexpr bool value = type::value;
+	};
+
+	template<typename U=T,std::enable_if_t<hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) { t->preRuntimeBuild(); }
+	template<typename U=T,std::enable_if_t<!hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) {} // no-op
+	
+	template<typename, typename C>
+	struct hasPostRuntimeBuild {
+		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
+	};
+
+	template<typename C, typename Ret, typename... Args>
+	struct hasPostRuntimeBuild <C, Ret(Args...)> {
+	private:
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().postRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename> static constexpr std::false_type check(...);
+		typedef decltype(check<C>(0)) type;
+	public:
+		static constexpr bool value = type::value;
+	};
+
+	template<typename U=T,std::enable_if_t<hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) { t->postRuntimeBuild(); }
+	template<typename U=T,std::enable_if_t<!hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) {} // no-op
+
 	Options			mOptions;
 	rt::ModulePtr	mModule;
 	std::vector<T*> mInstances;
@@ -106,13 +143,16 @@ void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths
 								// create a single new instance an use its vtable to override the originals's vtables
 								T* newPtr = makeRaw();
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
+									callPreRuntimeBuild( mInstances[i] );
 									*(void **)mInstances[i] = *(void**) newPtr;
+									callPostRuntimeBuild( mInstances[i] );
 								}
 								::operator delete( newPtr );
 							}
 							else if( event.getFile().extension() == ".h" ){
 								// create new instances and swap with the originals
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
+									callPreRuntimeBuild( mInstances[i] );
 									T* newPtr = makeRaw();
 									size_t size = sizeof T;
 									void* temp = malloc( size );
@@ -121,6 +161,7 @@ void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths
 									memcpy( mInstances[i], temp, size );
 								
 									::operator delete( newPtr );
+									callPostRuntimeBuild( mInstances[i] );
 								}
 							}
 #elif 0
