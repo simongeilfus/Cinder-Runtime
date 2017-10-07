@@ -73,12 +73,16 @@ Module::~Module()
 void Module::updateHandle()
 {
 	if( fs::exists( mPath ) ) {
+		
+		mCleanupSignal.emit( *this );
+
 		if( mHandle != nullptr ) {
 			FreeLibrary( static_cast<HINSTANCE>( mHandle ) );
 		}
 #if defined( CINDER_MSW )
 		mHandle = LoadLibrary( mPath.wstring().c_str() );
 #endif
+		mChangedSignal.emit( *this );
 	}
 }
 
