@@ -59,6 +59,8 @@ public:
 	//! Returns the signal used to notify Module/Handle changes
 	ci::signals::Signal<void(const Module&)>& getChangedSignal();
 
+	rt::Module*	getModule() const { return mModule.get(); }
+
 protected:
 	
 	template<typename, typename C>
