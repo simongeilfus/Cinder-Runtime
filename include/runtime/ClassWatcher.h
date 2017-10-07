@@ -139,9 +139,6 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 
 						if( event.getFile().extension() == ".cpp" ) {
 							// Find the address of the vtable
-							// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
-							// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
-							// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
 							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + name + "@@6B@" ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );

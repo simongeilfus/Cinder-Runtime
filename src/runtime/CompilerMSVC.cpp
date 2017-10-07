@@ -285,6 +285,9 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	
 	// TODO: Make this optional
 	// vtable symbol export
+	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
+	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
+	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
 	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ) ) {
 		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
 		std::ofstream outputFile( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) );		
