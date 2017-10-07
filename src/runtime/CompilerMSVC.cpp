@@ -283,6 +283,16 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += linkerArg + " ";
 	}
 	
+	// TODO: Make this optional
+	// vtable symbol export
+	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ) ) {
+		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
+		std::ofstream outputFile( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) );		
+		outputFile << "EXPORTS" << endl;
+		outputFile << "\t??_7" << sourcePath.stem() << "@@6B@\t\tDATA" << endl;
+	}
+	command += "/DEF:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ).string() + " ";
+	
 	auto outputPath = settings.mOutputPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".dll" ) ) : settings.mOutputPath;
 	result->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
