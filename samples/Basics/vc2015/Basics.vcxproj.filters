@@ -33,10 +33,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\CompilerRewriteApp.cpp">
+    <ClCompile Include="..\src\BasicsApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\CompilerRewriteApp.cpp">
+    <ClCompile Include="..\src\BasicsApp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClInclude Include="..\include\Resources.h">
@@ -57,9 +57,6 @@
     <ClCompile Include="..\..\..\src\runtime\Module.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Test.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
@@ -69,7 +66,7 @@
     <ClCompile Include="..\..\..\src\runtime\CompilerMsvc.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Test2.cpp">
+    <ClCompile Include="..\src\Basics.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
@@ -83,16 +80,13 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Test.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Process.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Test2.h">
+    <ClInclude Include="..\src\Basics.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
@@ -109,9 +103,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\make_shared.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Clear.h">
-      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

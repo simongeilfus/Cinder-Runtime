@@ -54,7 +54,7 @@ void CompilerRewriteApp::setup()
 	
 #if defined( CINDER_SHARED )
 	// init module and watch .h and .cpp
-	mModule = make_unique<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/Test.dll" );
+	mModule = make_unique<rt::Module>( CI_RT_INTERMEDIATE_DIR / "runtime/Test/build/Test.dll" );
 	FileWatcher::instance().watch( 
 		{ CI_RT_PROJECT_ROOT / "src/Test.h", CI_RT_PROJECT_ROOT / "src/Test.cpp" }, 
 		FileWatcher::Options().callOnWatch( false ),
@@ -112,10 +112,9 @@ void CompilerRewriteApp::buildTestCpp()
 		if( fs::exists( mModule->getPath() ) ) {
 			mModule->updateHandle();
 			// and try to get a ptr to its make_unique factory function
-			if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
+			/*if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
 				updatePtr( &mTest );
-			}
-			
+			}*/			
 		}
 	} );
 }

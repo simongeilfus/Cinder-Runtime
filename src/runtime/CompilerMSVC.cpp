@@ -35,6 +35,10 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
 #endif
 		//.linkerOption( "/INCREMENTAL:NO" )
 		.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
+		.define( "RT_COMPILED" )
+
+		// cinder-runtime include 
+		.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
 		;
 }
 
@@ -58,10 +62,18 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::define( const std::str
 	mPpDefinitions.push_back( definition );
 	return *this;
 }
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::precompiledHeader( const ci::fs::path &path, bool create )
+
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::usePrecompiledHeader( bool use /*const ci::fs::path &path*/ )
 {
-	mGeneratePch = true;
-	mPrecompiledHeader = path;
+	mUsePch = use;
+	//mPrecompiledHeader = path;
+	return *this;
+}
+		
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::createPrecompiledHeader( bool create /*const ci::fs::path &path*/ )
+{
+	mGeneratePch = create;
+	//mPrecompiledHeader = path;
 	return *this;
 }
 
@@ -131,7 +143,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::generateFactory( bool 
 }
 
 CompilerMsvc::BuildSettings::BuildSettings()
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( true )
+: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true )
 {
 }
 
@@ -195,12 +207,11 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	string command;
 
 	// generate precompile header
-	bool createPch = false;
-	if( settings.mGeneratePch ) {
+	if( settings.mUsePch ) {
 		
-		createPch = generatePrecompiledHeader( sourcePath, 
+		bool createPch = generatePrecompiledHeader( sourcePath, 
 			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.h" ),
-			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false );
+			CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false ) || settings.mGeneratePch;
 
 		if( createPch ) {
 			command += "cl /c ";
@@ -218,10 +229,10 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 				command += compilerArg + " ";
 			}
 			
-			command += settings.mObjectFilePath.empty() ? "/Fo" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
-			command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
+			command += settings.mObjectFilePath.empty() ? "/Fo" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+			command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
 		#if defined( _DEBUG )
-			command += "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " ";
+			command += "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " ";
 		#endif
 
 			command += "/Yc" + sourcePath.stem().string() + "Pch.h ";
@@ -247,14 +258,16 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		command += compilerArg + " ";
 	}
 
-	command += settings.mObjectFilePath.empty() ? "/Fo" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+	command += settings.mObjectFilePath.empty() ? "/Fo" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 #if defined( _DEBUG )
-	command += settings.mPdbPath.empty() ? "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/Fd" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
 #endif
 	
-			command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
-			command += "/Yu" + sourcePath.stem().string() + "Pch.h ";
-			command += "/FI" + sourcePath.stem().string() + "Pch.h ";
+	if( settings.mUsePch ) {
+		command += "/Fp" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
+		command += "/Yu" + sourcePath.stem().string() + "Pch.h ";
+		command += "/FI" + sourcePath.stem().string() + "Pch.h ";
+	}
 
 	// main source file
 	command += sourcePath.generic_string() + " ";
@@ -280,25 +293,38 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += linkerArg + " ";
 	}
 	
-	auto outputPath = settings.mOutputPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".dll" ) ) : settings.mOutputPath;
+	// TODO: Make this optional
+	// vtable symbol export
+	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
+	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
+	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
+	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ) ) {
+		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
+		std::ofstream outputFile( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) );		
+		outputFile << "EXPORTS" << endl;
+		outputFile << "\t??_7" << sourcePath.stem() << "@@6B@\t\tDATA" << endl;
+	}
+	command += "/DEF:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ).string() + " ";
+	
+	auto outputPath = settings.mOutputPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".dll" ) ) : settings.mOutputPath;
 	result->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
 	command += "/DEBUG:FASTLINK ";
-	command += settings.mPdbPath.empty() ? "/PDB:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
-	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/PDB:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";
 
-	result->getObjectFilePaths().push_back( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".obj" ) );
+	result->getObjectFilePaths().push_back( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".obj" ) );
 	for( const auto &obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
 		result->getObjectFilePaths().push_back( obj );
 	}
 	
-	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.obj" ) ).generic_string() + " ";
-	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
+	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Pch.obj" ) ).generic_string() + " ";
+	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
 
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( CI_RT_INTERMEDIATE_DIR ), end = fs::directory_iterator(); it != end; it++ ) {
@@ -360,10 +386,13 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() ) ) {
 		fs::create_directory( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() );
 	}
+	if( ! fs::exists( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" ) ) {
+		fs::create_directory( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" );
+	}
 
 #if defined( _DEBUG ) && 1
 	// try renaming previous pdb files to prevent errors
-	auto pdb = settings.mPdbPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".pdb" ) ) : settings.mPdbPath;
+	auto pdb = settings.mPdbPath.empty() ? ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ) : settings.mPdbPath;
 	if( fs::exists( pdb ) ) {
 		auto newName = getNextAvailableName( pdb );
 		try {
@@ -380,7 +409,7 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 		if( ! fs::exists( factoryPath ) ) {
 			generateClassFactory( factoryPath, sourcePath.stem().string() );
 		}
-		auto factoryObjPath = CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.obj" );
+		auto factoryObjPath = CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" );
 		//if( ! fs::exists( factoryObjPath ) ) {
 			buildSettings.additionalSource( factoryPath );
 		//}

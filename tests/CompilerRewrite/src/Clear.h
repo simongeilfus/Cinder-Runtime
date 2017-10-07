@@ -16,7 +16,7 @@ public:
 	{
 		void * ptr = ::operator new( size );
 		auto headerPath = ci::fs::absolute( ci::fs::path( __FILE__ ) );
-		rt::ClassWatcher<Clear>::instance().watch( static_cast<Clear*>( ptr ), { headerPath }, CI_RT_INTERMEDIATE_DIR / "runtime/Clear/Clear.dll", rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );
+		rt::ClassWatcher<Clear>::instance().watch( static_cast<Clear*>( ptr ), "Clear", { headerPath }, CI_RT_INTERMEDIATE_DIR / "runtime/Clear/build/Clear.dll", rt::Compiler::BuildSettings().default() );
 		return ptr;
 	}
 	void operator delete( void* ptr )

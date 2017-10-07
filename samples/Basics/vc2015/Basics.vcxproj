@@ -36,7 +36,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{46E840EE-4306-4220-B361-BD37E39B5594}</ProjectGuid>
-    <RootNamespace>CompilerRewrite</RootNamespace>
+    <RootNamespace>Basics</RootNamespace>
     <Keyword>Win32Proj</Keyword>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -456,7 +456,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\CompilerRewriteApp.cpp" />
+    <ClCompile Include="..\src\BasicsApp.cpp" />
     <ClCompile Include="..\..\..\src\runtime\Module.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|Win32'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
@@ -465,8 +465,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\src\Test.cpp" />
-    <ClCompile Include="..\src\Test2.cpp" />
+    <ClCompile Include="..\src\Basics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\runtime\ClassFactory.h" />
@@ -481,9 +480,7 @@
     <ClInclude Include="..\..\..\include\runtime\CompilerBase.h" />
     <ClInclude Include="..\..\..\include\runtime\Memory.h" />
     <ClInclude Include="..\..\..\include\runtime\Module.h" />
-    <ClInclude Include="..\src\Clear.h" />
-    <ClInclude Include="..\src\Test.h" />
-    <ClInclude Include="..\src\Test2.h" />
+    <ClInclude Include="..\src\Basics.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

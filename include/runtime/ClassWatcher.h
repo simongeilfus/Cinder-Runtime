@@ -18,11 +18,11 @@ public:
 	static ClassWatcher& instance();
 	
 	//! Adds an instance to the ClassWatcher watch list
-	void watch( T* ptr , const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() );
+	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() );
 	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
-	enum class Method { OVERRIDE_PTR, SWAP_VTABLE, HEADER_OVERRIDE_PTR_OR_CPP_SWAP_VTABLE };
+	enum class Method { RECONSTRUCT, SWAP_VTABLE };
 
 	class Options {
 	public:
@@ -60,6 +60,43 @@ public:
 	ci::signals::Signal<void(const Module&)>& getChangedSignal();
 
 protected:
+	
+	template<typename, typename C>
+	struct hasPreRuntimeBuild {
+		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
+	};
+
+	template<typename C, typename Ret, typename... Args>
+	struct hasPreRuntimeBuild<C, Ret(Args...)> {
+	private:
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().preRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename> static constexpr std::false_type check(...);
+		typedef decltype(check<C>(0)) type;
+	public:
+		static constexpr bool value = type::value;
+	};
+
+	template<typename U=T,std::enable_if_t<hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) { t->preRuntimeBuild(); }
+	template<typename U=T,std::enable_if_t<!hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) {} // no-op
+	
+	template<typename, typename C>
+	struct hasPostRuntimeBuild {
+		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
+	};
+
+	template<typename C, typename Ret, typename... Args>
+	struct hasPostRuntimeBuild <C, Ret(Args...)> {
+	private:
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().postRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename> static constexpr std::false_type check(...);
+		typedef decltype(check<C>(0)) type;
+	public:
+		static constexpr bool value = type::value;
+	};
+
+	template<typename U=T,std::enable_if_t<hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) { t->postRuntimeBuild(); }
+	template<typename U=T,std::enable_if_t<!hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) {} // no-op
+
 	Options			mOptions;
 	rt::ModulePtr	mModule;
 	std::vector<T*> mInstances;
@@ -74,7 +111,7 @@ typename ClassWatcher<T>& ClassWatcher<T>::instance()
 }
 
 template<class T>
-void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() )
+void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() )
 {
 	mInstances.push_back( static_cast<T*>( ptr ) );
 	
@@ -84,67 +121,42 @@ void ClassWatcher<T>::watch( T* ptr , const std::vector<ci::fs::path> &filePaths
 		ci::fs::path source = filePaths.front();
 		ci::FileWatcher::instance().watch( filePaths, 
 			ci::FileWatcher::Options().callOnWatch( false ),
-			[&,source,settings]( const ci::WatchEvent &event ) {  
+			[&,source,settings,name]( const ci::WatchEvent &event ) {  
 				// unlock the dll-handle before building
 				mModule->unlockHandle();
-		
+				
+				// force precompiled-header re-generation on header change
+				rt::Compiler::BuildSettings buildSettings = settings;
+				if( event.getFile().extension() == ".h" ) {
+					buildSettings.createPrecompiledHeader();
+				}
+
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, settings, [&,event]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,name]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->updateHandle();
-						// and try to get a ptr to its make_unique factory function
-						if( auto makeRaw = mModule->getMakeRawFactory<T>() ) {
-#if 1
-							if( event.getFile().extension() == ".cpp" ) {
-								// create a single new instance an use its vtable to override the originals's vtables
-								T* newPtr = makeRaw();
+
+						if( event.getFile().extension() == ".cpp" ) {
+							// Find the address of the vtable
+							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + name + "@@6B@" ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
-									*(void **)mInstances[i] = *(void**) newPtr;
-								}
-								::operator delete( newPtr );
-							}
-							else if( event.getFile().extension() == ".h" ){
-								// create new instances and swap with the originals
-								for( size_t i = 0; i < mInstances.size(); ++i ) {
-									T* newPtr = makeRaw();
-									size_t size = sizeof T;
-									void* temp = malloc( size );
-									memcpy( temp, newPtr, size );
-									memcpy( newPtr, mInstances[i], size );
-									memcpy( mInstances[i], temp, size );
-								
-									::operator delete( newPtr );
+									callPreRuntimeBuild( mInstances[i] );
+									*(void **)mInstances[i] = vtableAddress;
+									callPostRuntimeBuild( mInstances[i] );
 								}
 							}
-#elif 0
-							// create a single new instance an use its vtable to override the originals's vtables
-							T* newPtr = makeRaw();
-							ci::app::console() << "vtable size " << sizeof( *(void **) newPtr ) << std::endl;
-							ci::app::console() << "object size " << sizeof( * newPtr ) << std::endl;
-							for( size_t i = 0; i < mInstances.size(); ++i ) {
-								*(void **)mInstances[i] = *(void**) newPtr;
-								//std::swap( *(void **)mInstances[i], *(void**) newPtr );
+						}
+						else if( event.getFile().extension() == ".h" ){
+							if( auto placementNewOperator = static_cast<T*(__cdecl*)(T*)>( mModule->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
+								// use placement new to construct new instances at the current instances addresses
+								for( size_t i = 0; i < mInstances.size(); ++i ) {
+									callPreRuntimeBuild( mInstances[i] );
+									mInstances[i]->~T();
+									placementNewOperator( mInstances[i] );
+									callPostRuntimeBuild( mInstances[i] );
+								}
 							}
-							::operator delete( newPtr );
-#else
-							//ci::app::console() << sizeof(T) << " vs " << mModule->getSizeOf()() << std::endl;
-							// create new instances and swap with the originals
-							for( size_t i = 0; i < mInstances.size(); ++i ) {
-							#if 1
-								T* newPtr = makeRaw();
-								T* oldPtr = mInstances[i];
-								std::memmove( oldPtr, newPtr, sizeof( T ) );
-							#else
-								size_t size = sizeof T;
-								void* temp = malloc( size );
-								memcpy( temp, newPtr, size );
-								memcpy( newPtr, mInstances[i], size );
-								memcpy( mInstances[i], temp, size );
-							#endif								
-								::operator delete( newPtr );
-							}
-#endif
 						}
 			
 					}
@@ -191,7 +203,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -205,7 +217,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -218,7 +230,7 @@ void Class::operator delete( void* ptr ) \
 void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), { Source, Header }, Dll, Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { Source, Header }, Dll, Settings );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -238,7 +250,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default().define( "RT_COMPILED" ).include( "../../../include" ) );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
@@ -258,7 +270,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
@@ -271,7 +283,7 @@ void operator delete( void* ptr ) \
 #define __RT_WATCH_INLINE_SWITCH(_1,_2,NAME,...) NAME
 #define __RT_WATCH_EXPAND(x) x
 #define RT_WATCH_IMPL( ... ) __RT_WATCH_EXPAND(__RT_WATCH_IMPL_SWITCH(__VA_ARGS__,__RT_WATCH_IMPL3,__RT_WATCH_IMPL2,__RT_WATCH_IMPL1))__RT_WATCH_EXPAND((__VA_ARGS__))
-#define RT_WATCH_INLINE( ... ) __RT_WATCH_INLINE_SWITCH(__VA_ARGS__,__RT_WATCH_INLINE2,__RT_WATCH_INLINE1)(__VA_ARGS__)
+#define RT_WATCH_INLINE( ... ) __RT_WATCH_EXPAND(__RT_WATCH_INLINE_SWITCH(__VA_ARGS__,__RT_WATCH_INLINE2,__RT_WATCH_INLINE1))__RT_WATCH_EXPAND((__VA_ARGS__))
 
 #else
 

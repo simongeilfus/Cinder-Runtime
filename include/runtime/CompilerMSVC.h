@@ -52,9 +52,11 @@ public:
 		
 		//! Adds a preprocessor definition to the compiler BuildSettings
 		BuildSettings& define( const std::string &definition );
-
+		
 		//! Specifies the path to the precompiled header.
-		BuildSettings& precompiledHeader( const ci::fs::path &path, bool create );
+		BuildSettings& usePrecompiledHeader( bool use = true /*const ci::fs::path &path*/ );
+		//! Specifies the path to the precompiled header.
+		BuildSettings& createPrecompiledHeader( bool create = true /*const ci::fs::path &path*/ );
 		//! Adds a forced include as the first lined of the compiled file (If you use multiple /FI options, files are included in the order they are processed by CL.)
 		BuildSettings& forceInclude( const std::string &filename );
 		//! Specifies an additional file to be compiled (and linked).
@@ -93,6 +95,7 @@ public:
 		bool mLinkAppObjs;
 		bool mGenerateFactory;
 		bool mGeneratePch;
+		bool mUsePch;
 		ci::fs::path mPrecompiledHeader;
 		ci::fs::path mOutputPath;
 		ci::fs::path mObjectFilePath;

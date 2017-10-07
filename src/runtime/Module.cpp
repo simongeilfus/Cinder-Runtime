@@ -21,7 +21,6 @@
 
 #include "runtime/Module.h"
 #include "cinder/Log.h"
-#include "Watchdog.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -34,7 +33,6 @@
 
 using namespace std;
 using namespace ci;
-using namespace ci::app;
 
 namespace runtime {
 
@@ -124,6 +122,11 @@ bool Module::isValid() const
 	return mHandle != nullptr;
 }
 
+void* Module::getSymbolAddress( const std::string &symbol ) const
+{
+	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), symbol.c_str() );
+}
+
 ci::signals::Signal<void( const Module& )>& Module::getCleanupSignal()
 {
 	return mCleanupSignal;
@@ -132,28 +135,6 @@ ci::signals::Signal<void( const Module& )>& Module::getCleanupSignal()
 ci::signals::Signal<void( const Module& )>& Module::getChangedSignal()
 {
 	return mChangedSignal;
-}
-
-void* Module::getMakeSharedFactoryPtr() const
-{
-	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_shared" );
-}
-void* Module::getMakeUniqueFactoryPtr() const
-{
-	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_unique" );
-}
-void* Module::getMakeRawFactoryPtr() const
-{
-	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_make_raw" );
-}
-void* Module::getSizeOfPtr() const
-{
-	return (void*) GetProcAddress( static_cast<HMODULE>( mHandle ), "rt_sizeof" );
-}
-
-Module::SizeOf Module::getSizeOf() const
-{
-	return static_cast<SizeOf>( getSizeOfPtr() );
 }
 
 } // namespace runtime

@@ -20,11 +20,8 @@
 */
 #pragma once
 
-//#include "Compiler.h"
 #include "cinder/Filesystem.h"
 #include "cinder/Signals.h"
-
-#include <map>
 
 namespace runtime {
 
@@ -57,60 +54,21 @@ public:
 	ci::fs::path getTempPath() const;
 	//! Returns whether the current Handle is valid
 	bool isValid() const;
+
+	void*	getSymbolAddress( const std::string &symbol ) const;
 	
 	//! Returns the signal used to notify when the Module/Handle is about to be unloaded
 	ci::signals::Signal<void(const Module&)>& getCleanupSignal();
 	//! Returns the signal used to notify Module/Handle changes
 	ci::signals::Signal<void(const Module&)>& getChangedSignal();
 
-	
-	template<typename T>
-	using MakeSharedFactory = void (__cdecl*)(std::shared_ptr<T>*);
-	template<typename T>
-	using MakeUniqueFactory = void (__cdecl*)(std::unique_ptr<T>*);
-	template<typename T>
-	using MakeRawFactory = T* (__cdecl*)();
-	using SizeOf = std::size_t(__cdecl*)();
-
-	template<typename T>
-	MakeSharedFactory<T> getMakeSharedFactory() const;
-	template<typename T>
-	MakeUniqueFactory<T> getMakeUniqueFactory() const;
-	template<typename T>
-	MakeRawFactory<T> getMakeRawFactory() const;
-	SizeOf getSizeOf() const;
-
 protected:
-	void* getMakeSharedFactoryPtr() const;
-	void* getMakeUniqueFactoryPtr() const;
-	void* getMakeRawFactoryPtr() const;
-	void* getSizeOfPtr() const;
-
 	Handle			mHandle;
 	ci::fs::path	mPath, mTempPath;
 	
 	ci::signals::Signal<void(const Module&)> mChangedSignal;
 	ci::signals::Signal<void(const Module&)> mCleanupSignal;
 };
-
-
-template<typename T>
-Module::MakeSharedFactory<T> Module::getMakeSharedFactory() const
-{
-	return static_cast<MakeSharedFactory<T>>( getMakeSharedFactoryPtr() );
-}
-
-template<typename T>
-Module::MakeUniqueFactory<T> Module::getMakeUniqueFactory() const
-{
-	return static_cast<MakeUniqueFactory<T>>( getMakeUniqueFactoryPtr() );
-}
-
-template<typename T>
-Module::MakeRawFactory<T> Module::getMakeRawFactory() const
-{
-	return static_cast<MakeRawFactory<T>>( getMakeRawFactoryPtr() );
-}
 
 } // namespace runtime
 
