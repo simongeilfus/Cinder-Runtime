@@ -112,10 +112,9 @@ void CompilerRewriteApp::buildTestCpp()
 		if( fs::exists( mModule->getPath() ) ) {
 			mModule->updateHandle();
 			// and try to get a ptr to its make_unique factory function
-			if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
+			/*if( auto updatePtr = mModule->getMakeUniqueFactory<Test>() ) {
 				updatePtr( &mTest );
-			}
-			
+			}*/			
 		}
 	} );
 }
