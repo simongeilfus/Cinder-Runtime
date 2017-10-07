@@ -324,7 +324,10 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	}
 	
 	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Pch.obj" ) ).generic_string() + " ";
-	command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
+
+	if( settings.mGenerateFactory ) { 
+		command += ( CI_RT_INTERMEDIATE_DIR / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
+	}
 
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( CI_RT_INTERMEDIATE_DIR ), end = fs::directory_iterator(); it != end; it++ ) {
