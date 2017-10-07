@@ -35,6 +35,10 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
 #endif
 		//.linkerOption( "/INCREMENTAL:NO" )
 		.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
+		.define( "RT_COMPILED" )
+
+		// cinder-runtime include 
+		.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
 		;
 }
 
