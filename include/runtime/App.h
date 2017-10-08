@@ -1,16 +1,17 @@
 #pragma once
 
 #include "cinder/app/App.h"
-#include "runtime/ClassWatcher.h"
 
 #if defined( CINDER_SHARED )
+
+#include "runtime/ClassWatcher.h"
 
 namespace runtime {
 
 template<typename AppT>
 class RtApp : public AppT {
 public:
-	void	launch() override { AppT::launch(); }
+	void rtExecuteLaunch() { executeLaunch(); }
 };
 
 template<typename AppT>
@@ -39,7 +40,7 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 		} );
 	});
 
-	app->launch();
+	app->rtExecuteLaunch();
 
 	ci::app::Platform::get()->cleanupLaunch();
 	rt::ClassWatcher<AppT>::instance().unwatch( static_cast<AppT*>( app ) );
