@@ -8,6 +8,12 @@
 namespace runtime {
 
 template<typename AppT>
+class RtApp : public AppT {
+public:
+	void	launch() override { AppT::launch(); }
+};
+
+template<typename AppT>
 void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn() )
 {
 	ci::app::Platform::get()->prepareLaunch();
@@ -21,7 +27,7 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	if( settings.getShouldQuit() )
 		return;
 
-	ci::app::AppMsw *app = static_cast<ci::app::AppMsw *>( new AppT );
+	RtApp<AppT>* app = new RtApp<AppT>;
 	app->dispatchAsync( [=]() {
 		std::vector<ci::fs::path> sources = { ci::fs::absolute( ci::fs::path( sourceFile ) ) };
 		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, 
@@ -33,7 +39,7 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 		} );
 	});
 
-	app->executeLaunch();
+	app->launch();
 
 	ci::app::Platform::get()->cleanupLaunch();
 	rt::ClassWatcher<AppT>::instance().unwatch( static_cast<AppT*>( app ) );
