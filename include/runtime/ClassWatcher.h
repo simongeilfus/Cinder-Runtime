@@ -137,6 +137,7 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,name]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
+						mModule->getCleanupSignal().emit( *mModule );
 						mModule->updateHandle();
 
 						if( event.getFile().extension() == ".cpp" ) {
@@ -160,7 +161,8 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 								}
 							}
 						}
-			
+						
+						mModule->getChangedSignal().emit( *mModule );
 					}
 				} );
 			} 
