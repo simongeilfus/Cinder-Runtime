@@ -20,17 +20,16 @@
 */
 #pragma once
 
-#include "Compiler.h"
+#include "cinder/Filesystem.h"
 #include "cinder/Signals.h"
 
 namespace runtime {
 
+using ModulePtr = std::unique_ptr<class Module>;
 using ModuleRef = std::shared_ptr<class Module>;
 
 class Module : public std::enable_shared_from_this<Module> {
 public:
-	//! Returns a new ref-counted Module object
-	static ModuleRef create( const ci::fs::path &path );
 	//! Constructs a new Module object
 	Module( const ci::fs::path &path );
 	//! Destroys the Module object, release its handles and delete the temporary files
@@ -55,42 +54,20 @@ public:
 	ci::fs::path getTempPath() const;
 	//! Returns whether the current Handle is valid
 	bool isValid() const;
-	
-	//! Sets the map of exported symbols and their mangled names
-	void setSymbols( const std::map<std::string,std::string>& symbols );
-	//! Returns a map of exported symbols and their mangled names
-	const std::map<std::string,std::string>& getSymbols() const;
+
+	void*	getSymbolAddress( const std::string &symbol ) const;
 	
 	//! Returns the signal used to notify when the Module/Handle is about to be unloaded
-	ci::signals::Signal<void(const ModuleRef&)>& getCleanupSignal();
+	ci::signals::Signal<void(const Module&)>& getCleanupSignal();
 	//! Returns the signal used to notify Module/Handle changes
-	ci::signals::Signal<void(const ModuleRef&)>& getChangedSignal();
+	ci::signals::Signal<void(const Module&)>& getChangedSignal();
 
 protected:
 	Handle			mHandle;
 	ci::fs::path	mPath, mTempPath;
 	
-	ci::signals::Signal<void(const ModuleRef&)> mChangedSignal;
-	ci::signals::Signal<void(const ModuleRef&)> mCleanupSignal;
-	std::map<std::string,std::string> mSymbols;
-};
-
-using ModuleManagerRef = std::shared_ptr<class ModuleManager>;
-
-class ModuleManager {
-public:
-	static ModuleManagerRef create();
-	static ModuleManagerRef get();
-	ModuleManager();
-	~ModuleManager();
-	
-	ModuleRef add( const ci::fs::path &path );
-
-protected:
-	void handleBuild( const std::string &className, const std::weak_ptr<Module> &module, const CompilationResult &results );
-	
-	std::vector<ModuleRef>	mModules;
-	CompilerRef				mCompiler;
+	ci::signals::Signal<void(const Module&)> mChangedSignal;
+	ci::signals::Signal<void(const Module&)> mCleanupSignal;
 };
 
 } // namespace runtime
