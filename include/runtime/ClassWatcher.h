@@ -18,7 +18,7 @@ public:
 	static ClassWatcher& instance();
 	
 	//! Adds an instance to the ClassWatcher watch list
-	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() );
+	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) );
 	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
@@ -113,7 +113,7 @@ typename ClassWatcher<T>& ClassWatcher<T>::instance()
 }
 
 template<class T>
-void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() )
+void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) )
 {
 	mInstances.push_back( static_cast<T*>( ptr ) );
 	
@@ -207,7 +207,8 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
+	auto buildSettings = rt::Compiler::BuildSettings( true ); \
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -221,7 +222,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -254,7 +255,8 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
+	auto buildSettings = rt::Compiler::BuildSettings( true ); \
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
@@ -274,7 +276,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \

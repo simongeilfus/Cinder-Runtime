@@ -40,8 +40,9 @@ public:
 	//! Describes the list of Options and arguments available when building a file
 	class BuildSettings {
 	public:
-		//! Adds the default build settings
-		BuildSettings& default();
+		BuildSettings();
+		BuildSettings( bool defaultSettings );
+		BuildSettings( const ci::fs::path &vcxProjPath );
 
 		//! Adds an extra include folder to the compiler BuildSettings
 		BuildSettings& include( const ci::fs::path &path );
@@ -68,9 +69,19 @@ public:
 		BuildSettings& objectFile( const ci::fs::path &path );
 		//! Specifies a file name for the program database (PDB) file created by /Z7, /Zi, /ZI (Debug Information Format).
 		BuildSettings& programDatabase( const ci::fs::path &path );
-
-		//! Sets the output path
+		
+		//! Sets the output directory path
 		BuildSettings& outputPath( const ci::fs::path &path );
+		//! Sets the intermediate directory path
+		BuildSettings& intermediatePath( const ci::fs::path &path );
+		
+		//! Specifies the build configuration (Debug_Shared, Release_Shared, Release, Debug, etc...)
+		BuildSettings& configuration( const std::string &option );
+		//! Specifies the target platform (Win32 or x64)
+		BuildSettings& platform( const std::string &option );
+		//! Specifies the target platform toolset (v120, v140, v141, etc..)
+		BuildSettings& platformToolset( const std::string &option );
+
 		
 		//! Adds an obj files to be linked
 		BuildSettings& linkObj( const ci::fs::path &path );
@@ -88,7 +99,25 @@ public:
 		//! Enables verbose mode. Disabled by default.
 		BuildSettings& verbose( bool enabled = true );
 
-		BuildSettings();
+		const ci::fs::path& 	getPrecompiledHeader() const { return mPrecompiledHeader; }
+		const ci::fs::path& 	getOutputPath() const { return mOutputPath; }
+		const ci::fs::path& 	getIntermediatePath() const { return mIntermediatePath; }
+		const ci::fs::path& 	getObjectFilePath() const { return mObjectFilePath; }
+		const ci::fs::path& 	getPdbPath() const { return mPdbPath; }
+		const std::string&		getConfiguration() const { return mConfiguration; }
+		const std::string&		getPlatform() const { return mPlatform; }
+		const std::string&		getPlatformToolset() const { return mPlatformToolset; }
+
+		const std::vector<ci::fs::path>& 	getIncludes() const { return mIncludes; }
+		const std::vector<ci::fs::path>& 	getLibraryPaths() const { return mLibraryPaths; }
+		const std::vector<ci::fs::path>& 	getAdditionalSources() const { return mAdditionalSources; }
+		const std::vector<std::string>& 	getLibraries() const { return mLibraries; }
+		const std::vector<std::string>& 	getPpDefinitions() const { return mPpDefinitions; }
+		const std::vector<std::string>& 	getForcedIncludes() const { return mForcedIncludes; }
+		const std::vector<std::string>& 	getCompilerOptions() const { return mCompilerOptions; }
+		const std::vector<std::string>& 	getLinkerOptions() const { return mLinkerOptions; }
+		const std::vector<ci::fs::path>& 	getObjPaths() const { return mObjPaths; }
+
 	protected:
 		friend class CompilerMsvc;
 		bool mVerbose;
@@ -98,8 +127,12 @@ public:
 		bool mUsePch;
 		ci::fs::path mPrecompiledHeader;
 		ci::fs::path mOutputPath;
+		ci::fs::path mIntermediatePath;
 		ci::fs::path mObjectFilePath;
 		ci::fs::path mPdbPath;
+		std::string	mConfiguration;
+		std::string	mPlatform;
+		std::string	mPlatformToolset;
 		std::vector<ci::fs::path> mIncludes;
 		std::vector<ci::fs::path> mLibraryPaths;
 		std::vector<ci::fs::path> mAdditionalSources;
@@ -123,6 +156,7 @@ protected:
 	void parseProcessOutput() override;
 
 	std::string		getCLInitCommand() const override;
+	ci::fs::path	getCLInitPath() const override;
 	ci::fs::path	getCompilerPath() const override;
 	std::string		getCompilerInitArgs() const override;
 

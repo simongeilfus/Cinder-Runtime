@@ -43,6 +43,7 @@ public:
 	
 protected:
 	virtual std::string		getCLInitCommand() const = 0;
+	virtual ci::fs::path	getCLInitPath() const = 0;
 	virtual ci::fs::path	getCompilerPath() const = 0;
 	virtual std::string		getCompilerInitArgs() const = 0;
 
