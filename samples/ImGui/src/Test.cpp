@@ -31,13 +31,5 @@ void Test::draw()
 }
 
 // RT_WATCH_IMPL has to be added to mark the class
-// as runtime reloadable. Currently any extra blocks
-// or libraries used have to be manually added to the
-// class build settings as shown here.
-RT_WATCH_IMPL( Test, rt::CompilerMsvc::BuildSettings().default()
-	// Cinder-Imgui
-	.include( "../../../../Cinder-ImGui/lib/imgui" )
-	.include( "../../../../Cinder-ImGui/include" )
-	.libraryPath( "../../../../Cinder-ImGui/lib/msw/" CI_RT_PLATFORM_TARGET "/" CI_RT_CONFIGURATION )
-	.library( "Cinder-ImGui.lib" )
-);
+// as runtime reloadable. 
+RT_WATCH_IMPL( Test );
