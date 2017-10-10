@@ -26,41 +26,45 @@ public:
 
 	class Options {
 	public:
+		Options() : mMethod( Method::SWAP_VTABLE ), mBuildSettings( true ) {}
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& source( const ci::fs::path &path );
+		Options& source( const ci::fs::path &path ) { mSource = path; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& header( const ci::fs::path &path );
+		// Options& header( const ci::fs::path &path );
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& className( const ci::fs::path &path );
+		Options& className( const std::string &name ) { mClassName = name; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& method( Method method );
+		Options& method( Method method ) { mMethod = method; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings );
+		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings ) { mBuildSettings = buildSettings; return *this; }
 		
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& watchAdditionalSources( bool watch = true );
+		// Options& additionalSources( bool watch = true );
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& watchObjectFiles( bool watch = true );
+		// Options& objectFiles( bool watch = true );
 
 	protected:
-		std::string		mClassName;
-		ci::fs::path	mSources;
-		ci::fs::path	mDllPath;
+		std::string					mClassName;
+		ci::fs::path				mSources;
+		Method						mMethod;
+		CompilerMsvc::BuildSettings mBuildSettings;
 		friend class ClassWatcher<T>;
 	};
 	
-	//! Adds an extra include folder to the compiler BuildSettings
-	const Options&	getOptions() const;
-	//! Adds an extra include folder to the compiler BuildSettings
-	void			setOptions( const Options& options );
-	
 	//! Returns the signal used to notify when the Module/Handle is about to be unloaded
-	ci::signals::Signal<void(const Module&)>& getCleanupSignal();
+	ci::signals::Signal<void(const Module&)>& getCleanupSignal() { return mModule->getCleanupSignal(); }
 	//! Returns the signal used to notify Module/Handle changes
-	ci::signals::Signal<void(const Module&)>& getChangedSignal();
-
-	rt::Module*	getModule() const { return mModule.get(); }
-
+	ci::signals::Signal<void(const Module&)>& getChangedSignal() { return mModule->getChangedSignal(); }
+	
+	const rt::Module& getModule() const { return *mModule; }
+	rt::Module& getModule() { return *mModule; }
+	
+	//! Adds an extra include folder to the compiler BuildSettings
+	const Options&	getOptions() const { return mOptions; }
+	//! Adds an extra include folder to the compiler BuildSettings
+	Options&		getOptions() { return mOptions; }
+	//! Adds an extra include folder to the compiler BuildSettings
+	void			setOptions( const Options& options ) { mOptions = options; }
 protected:
 	
 	template<typename, typename C>
@@ -109,7 +113,7 @@ template<class T>
 typename ClassWatcher<T>& ClassWatcher<T>::instance()
 {
 	static std::unique_ptr<ClassWatcher<T>> watcher = std::make_unique<ClassWatcher<T>>();
-	return *watcher.get();
+	return *watcher;
 }
 
 template<class T>
@@ -132,9 +136,12 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 				if( event.getFile().extension() == ".h" ) {
 					buildSettings.createPrecompiledHeader();
 				}
+				if( buildSettings.getModuleName().empty() ) {
+					buildSettings.moduleName( name );
+				}
 
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,name]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,buildSettings]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->getCleanupSignal().emit( *mModule );
@@ -142,7 +149,7 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 
 						if( event.getFile().extension() == ".cpp" ) {
 							// Find the address of the vtable
-							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + name + "@@6B@" ) ) {
+							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + buildSettings.getModuleName() + "@@6B@" ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
 									*(void **)mInstances[i] = vtableAddress;
@@ -174,18 +181,6 @@ template<class T>
 void ClassWatcher<T>::unwatch( T* ptr )
 {
 	mInstances.erase( std::remove( mInstances.begin(), mInstances.end(), ptr ), mInstances.end() );
-}
-
-
-template<class T>
-ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getCleanupSignal()
-{
-	return mModule->getCleanupSignal();
-}
-template<class T>
-ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getChangedSignal()
-{
-	return mModule->getChangedSignal();
 }
 
 } // namespace runtime
