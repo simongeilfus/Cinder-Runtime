@@ -8,6 +8,11 @@
 #include "runtime/Module.h"
 #include "runtime/CompilerMsvc.h"
 
+#if defined( CEREAL_CEREAL_HPP_ )
+#include <cereal/details/traits.hpp>
+#include <cereal/archives/binary.hpp>
+#endif
+
 namespace runtime {
 
 template<class T>
@@ -102,6 +107,18 @@ protected:
 
 	template<typename U=T,std::enable_if_t<hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) { t->postRuntimeBuild(); }
 	template<typename U=T,std::enable_if_t<!hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) {} // no-op
+	
+#if defined( CEREAL_CEREAL_HPP_ )
+	template<typename Archive, typename U=T,std::enable_if_t<(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> 
+	void serialize( Archive &archive, U* t ) 
+	{ 
+		try { 
+			archive( *t ); 
+		}
+		catch( const std::exception &exc ) {}
+	}
+	template<typename Archive, typename U=T,std::enable_if_t<!(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> void serialize( Archive &archive, U* t ) {} // no-op
+#endif
 
 	Options			mOptions;
 	rt::ModulePtr	mModule;
@@ -152,8 +169,17 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + buildSettings.getModuleName() + "@@6B@" ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									std::stringstream archiveStream;
+									cereal::BinaryOutputArchive outputArchive( archiveStream );
+									serialize( outputArchive, mInstances[i] );
+								#endif
 									*(void **)mInstances[i] = vtableAddress;
 									callPostRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									cereal::BinaryInputArchive inputArchive( archiveStream );
+									serialize( inputArchive, mInstances[i] );
+								#endif
 								}
 							}
 						}
@@ -162,9 +188,18 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 								// use placement new to construct new instances at the current instances addresses
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									std::stringstream archiveStream;
+									cereal::BinaryOutputArchive outputArchive( archiveStream );
+									serialize( outputArchive, mInstances[i] );
+								#endif
 									mInstances[i]->~T();
 									placementNewOperator( mInstances[i] );
 									callPostRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									cereal::BinaryInputArchive inputArchive( archiveStream );
+									serialize( inputArchive, mInstances[i] );
+								#endif
 								}
 							}
 						}
