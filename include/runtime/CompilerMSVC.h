@@ -81,8 +81,10 @@ public:
 		BuildSettings& platform( const std::string &option );
 		//! Specifies the target platform toolset (v120, v140, v141, etc..)
 		BuildSettings& platformToolset( const std::string &option );
+				
+		//! Specifies the class or function name (used for code generation and paths names)
+		BuildSettings& moduleName( const std::string &name );
 
-		
 		//! Adds an obj files to be linked
 		BuildSettings& linkObj( const ci::fs::path &path );
 		//! Adds the app's generated .obj files to be linked. Default to true
@@ -107,6 +109,7 @@ public:
 		const std::string&		getConfiguration() const { return mConfiguration; }
 		const std::string&		getPlatform() const { return mPlatform; }
 		const std::string&		getPlatformToolset() const { return mPlatformToolset; }
+		const std::string&		getModuleName() const { return mModuleName; }
 
 		const std::vector<ci::fs::path>& 	getIncludes() const { return mIncludes; }
 		const std::vector<ci::fs::path>& 	getLibraryPaths() const { return mLibraryPaths; }
@@ -133,6 +136,7 @@ public:
 		std::string	mConfiguration;
 		std::string	mPlatform;
 		std::string	mPlatformToolset;
+		std::string mModuleName;
 		std::vector<ci::fs::path> mIncludes;
 		std::vector<ci::fs::path> mLibraryPaths;
 		std::vector<ci::fs::path> mAdditionalSources;

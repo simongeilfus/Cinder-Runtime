@@ -36,8 +36,10 @@ namespace {
 
 	#ifdef _WIN64
 			platform = "x64";
+			platformTarget = "x64";
 	#else
 			platform = "Win32";
+			platformTarget = "x86";
 	#endif
 
 	#if defined( _DEBUG )
@@ -61,6 +63,7 @@ namespace {
 
 		string configuration;
 		string platform;
+		string platformTarget;
 		string platformToolset;
 		fs::path projectPath;
 		fs::path projectDir;
@@ -110,7 +113,7 @@ namespace {
 		string output = input;
 		replaceAll( output, "$(Configuration)", config.configuration );
 		replaceAll( output, "$(Platform)", config.platform );
-		replaceAll( output, "$(PlatformTarget)", config.platform );
+		replaceAll( output, "$(PlatformTarget)", config.platformTarget );
 		replaceAll( output, "$(PlatformToolset)", config.platformToolset );
 		replaceAll( output, "$(ProjectDir)", config.projectDir.string() + "/" );
 		return output;
@@ -364,6 +367,11 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::platformToolset( const
 	mPlatformToolset = option;
 	return *this;
 }
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::moduleName( const std::string &name )
+{
+	mModuleName = name;
+	return *this;
+}
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::forceInclude( const std::string &filename )
 {
 	mForcedIncludes.push_back( filename );
@@ -466,8 +474,8 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	if( settings.mUsePch ) {
 		
 		bool createPch = generatePrecompiledHeader( sourcePath, 
-			settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.h" ),
-			settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ), false ) || settings.mGeneratePch;
+			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.h" ),
+			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ), false ) || settings.mGeneratePch;
 
 		if( createPch ) {
 			command += "cl /c ";
@@ -485,15 +493,15 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 				command += compilerArg + " ";
 			}
 			
-			command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
-			command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
+			command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+			command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
 		#if defined( _DEBUG )
-			command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " ";
+			command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
 		#endif
 
-			command += "/Yc" + sourcePath.stem().string() + "Pch.h ";
+			command += "/Yc" + settings.getModuleName() + "Pch.h ";
 
-			command += ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Pch.cpp" ) ).generic_string();
+			command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ) ).generic_string();
 			command += "\n";
 		}
 	}
@@ -514,15 +522,15 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		command += compilerArg + " ";
 	}
 
-	command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+	command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 #if defined( _DEBUG )
-	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
 #endif
 	
 	if( settings.mUsePch ) {
-		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pch" ) ).string() + " ";
-		command += "/Yu" + sourcePath.stem().string() + "Pch.h ";
-		command += "/FI" + sourcePath.stem().string() + "Pch.h ";
+		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
+		command += "/Yu" + settings.getModuleName() + "Pch.h ";
+		command += "/FI" + settings.getModuleName() + "Pch.h ";
 	}
 
 	// main source file
@@ -554,42 +562,42 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
 	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
 	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ) ) {
+	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ) ) {
 		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
-		std::ofstream outputFile( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) );		
+		std::ofstream outputFile( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) );		
 		outputFile << "EXPORTS" << endl;
-		outputFile << "\t??_7" << sourcePath.stem() << "@@6B@\t\tDATA" << endl;
+		outputFile << "\t??_7" << settings.getModuleName() << "@@6B@\t\tDATA" << endl;
 	}
-	command += "/DEF:" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + ".def" ) ).string() + " ";
+	command += "/DEF:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ).string() + " ";
 	
-	auto outputPath = settings.mOutputPath.empty() ? ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".dll" ) ) : settings.mOutputPath;
+	auto outputPath = settings.mOutputPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.mOutputPath;
 	result->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
 	command += "/DEBUG:FASTLINK ";
-	command += settings.mPdbPath.empty() ? "/PDB:" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
-	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/PDB:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";
 
-	result->getObjectFilePaths().push_back( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".obj" ) );
+	result->getObjectFilePaths().push_back( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".obj" ) );
 	for( const auto &obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
 		result->getObjectFilePaths().push_back( obj );
 	}
 	
-	command += ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Pch.obj" ) ).generic_string() + " ";
+	command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Pch.obj" ) ).generic_string() + " ";
 
 	if( settings.mGenerateFactory ) { 
-		command += ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" ) ).generic_string() + " ";
+		command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Factory.obj" ) ).generic_string() + " ";
 	}
 
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( settings.getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
 			if( it->path().extension() == ".obj" ) {
 				// Skip obj for current source and current app
-				if( it->path().filename().string().find( sourcePath.stem().string() + ".obj" ) == string::npos 
+				if( it->path().filename().string().find( settings.getModuleName() + ".obj" ) == string::npos 
 					&& it->path().filename().string().find( getProjectConfiguration().projectPath.stem().string() + "App.obj" ) == string::npos
 					) {
 					command += it->path().generic_string() + " ";
@@ -642,16 +650,16 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	if( ! fs::exists( settings.getIntermediatePath() / "runtime" ) ) {
 		fs::create_directory( settings.getIntermediatePath() / "runtime" );
 	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / sourcePath.stem() ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / sourcePath.stem() );
+	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() ) ) {
+		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() );
 	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" );
+	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" ) ) {
+		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" );
 	}
 
 #if defined( _DEBUG ) && 1
 	// try renaming previous pdb files to prevent errors
-	auto pdb = settings.mPdbPath.empty() ? ( settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + ".pdb" ) ) : settings.mPdbPath;
+	auto pdb = settings.mPdbPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
 	if( fs::exists( pdb ) ) {
 		auto newName = getNextAvailableName( pdb );
 		try {
@@ -664,11 +672,11 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// generate factor if needed and add it to the compiler list
 	auto buildSettings = settings;
 	if( settings.mGenerateFactory ) {
-		auto factoryPath = settings.getIntermediatePath() / "runtime" / sourcePath.stem() / ( sourcePath.stem().string() + "Factory.cpp" );
+		auto factoryPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
-			generateClassFactory( factoryPath, sourcePath.stem().string() );
+			generateClassFactory( factoryPath, settings.getModuleName() );
 		}
-		auto factoryObjPath = settings.getIntermediatePath() / "runtime" / sourcePath.stem() / "build" / ( sourcePath.stem().string() + "Factory.obj" );
+		auto factoryObjPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Factory.obj" );
 		//if( ! fs::exists( factoryObjPath ) ) {
 			buildSettings.additionalSource( factoryPath );
 		//}
