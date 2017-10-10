@@ -128,13 +128,11 @@ namespace {
 
 		if( node.getTag() == "OutDir" ) {
 			auto outDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), config ) );
-			settings->outputPath( outDir.parent_path() );
-					app::console() << "outDir: " << outDir << endl;
+//			settings->outputPath( outDir.parent_path() );
 		}
 		else if( node.getTag() == "IntDir" ) {
 			auto intDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), config ) );
 			settings->intermediatePath( intDir.parent_path() );
-					app::console() << "intDir: " << intDir << " " << intDir.parent_path() << endl;
 		}
 		else if( node.getTag() == "LinkIncremental" ) {
 			//console() << "LinkIncremental = " << node.getValue<string>() << endl;
@@ -143,8 +141,7 @@ namespace {
 			vector<string> includes = ci::split( replaceVcxprojMacros( node.getValue<string>(), config ), ";" );
 			for( const auto &inc : includes ) {
 				if( ! inc.empty() ) {
-//					settings->include( fs::path( inc ) );
-					app::console() << "include: " << inc << endl;
+					settings->include( fs::path( inc ) );
 				}
 			}
 		}
@@ -154,8 +151,7 @@ namespace {
 			vector<string> definitions = ci::split( definitionsString, ";" );
 			for( const auto &def : definitions ) {
 				if( ! def.empty() ) {
-//					settings->define( def );
-					app::console() << "define: " << def << endl;
+					settings->define( def );
 				}
 			}
 		}
@@ -166,8 +162,7 @@ namespace {
 			vector<string> libraries = ci::split( librariesString, ";" );
 			for( const auto &lib : libraries ) {
 				if( ! lib.empty() ) {
-//					settings->library( lib );
-					app::console() << "library: " << lib << endl;
+					settings->library( lib );
 				}
 			}
 		}
@@ -175,8 +170,7 @@ namespace {
 			vector<string> libraryDirectories = ci::split( replaceVcxprojMacros( node.getValue<string>(), config ), ";" );
 			for( auto dir : libraryDirectories ) {
 				if( ! dir.empty() ) {
-//					settings->libraryPath( fs::path( dir ) );
-					app::console() << "libraryPath: " << fs::path( dir ) << endl;
+					settings->libraryPath( fs::path( dir ) );
 				}
 			}
 		}
@@ -247,16 +241,9 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 
 	// cinder-runtime include 
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
-		
-		.include( getProjectConfiguration().projectDir.parent_path() / "include" )
-		.include( getProjectConfiguration().projectDir.parent_path() / "src" )
-		.include( fs::path( "../../../../.." ) / "include" )
-		.libraryPath( fs::path( "../../../../.." ) / "lib/msw" / "x64" )
-		.libraryPath( fs::path( "../../../../.." ) / "lib/msw" / "x64" / "Debug_Shared" / "v140" )
-		.library( "cinder.lib" )
-		//.define( "CINDER_SHARED" ).define( "WIN32" ).define( "_WIN32_WINNT=0x0601" ).define( "_WINDOWS" ).define( "NOMINMAX" ).define( "_UNICODE" ).define( "UNICODE" )
-		
-		;
+	// app src folder
+	.include( "../src" )
+	;
 
 	if( defaultSettings ) {
 		parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
