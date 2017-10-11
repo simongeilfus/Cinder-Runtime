@@ -20,7 +20,6 @@ Test2::Test2()
 void Test2::draw()
 {
 	gl::color( mColor );
-	//gl::drawSolidCircle( mPosition, mSize * 0.75f );
 	vec2 scl = vec2( 2.0f, 0.125f );
 	gl::drawSolidRect( Rectf( mPosition - vec2( mSize ) * scl, mPosition + vec2( mSize ) * scl ) );
 }

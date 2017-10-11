@@ -20,14 +20,6 @@ public:
 	LiveApp();
 	void setup() override;
 	void draw() override;
-	
-	template<class Archive>
-	void serialize( Archive &archive )
-	{
-	    console() << "test" << endl;
-		// archive( mTest );
-	}
-	float mTest;
 };
 
 LiveApp::LiveApp()
@@ -41,8 +33,9 @@ void LiveApp::setup()
 
 void LiveApp::draw()
 {
-	ui::DragFloat( "test", &mTest );
-	gl::clear( Color::gray( 0.75f ) );
+	static float gray = 0.75f;
+	ui::DragFloat( "Background", &gray, 0.01f, 0.0f, 1.0f );
+	gl::clear( Color::gray( gray ) );
 }
 
 CINDER_RUNTIME_APP( LiveApp, RendererGl( RendererGl::Options().msaa( 8 ) ) )
