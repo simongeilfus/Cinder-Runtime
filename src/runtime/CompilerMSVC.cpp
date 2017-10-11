@@ -219,7 +219,7 @@ namespace {
 		else if( node.getTag() == "AdditionalDependencies" ) {
 			string librariesString = node.getValue<string>();
 			replaceAll( librariesString, "%(AdditionalDependencies)", "" );
-			vector<string> libraries = ci::split( replaceVcxprojMacros( node.getValue<string>(), settings, config ), ";" );
+			vector<string> libraries = ci::split( replaceVcxprojMacros( librariesString, settings, config ), ";" );
 			for( const auto &lib : libraries ) {
 				if( ! lib.empty() ) {
 					settings->library( lib );
