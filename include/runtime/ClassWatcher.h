@@ -218,6 +218,51 @@ void ClassWatcher<T>::unwatch( T* ptr )
 	mInstances.erase( std::remove( mInstances.begin(), mInstances.end(), ptr ), mInstances.end() );
 }
 
+// --------------------------------------------------------------
+// Macro helper routines
+// --------------------------------------------------------------
+
+static ci::fs::path makeDllPath( const ci::fs::path &intermediatePath, const char *className )
+{
+	return intermediatePath / "runtime" / className / "build" / ( std::string( className ) + ".dll" );
+}
+
+template<class Class>
+void *makeAndAddClassWatcher( size_t size, const char *fileMacro, const char *className, rt::Compiler::BuildSettings *settings )
+{
+	void * ptr = ::operator new( size );
+	auto headerPath = ci::fs::absolute( ci::fs::path( fileMacro ) );
+	std::vector<ci::fs::path> sources;
+	if( ci::fs::exists( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ) ) {
+		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) );
+	}
+	sources.push_back( headerPath );
+
+	if( ! settings ) {
+		auto buildSettings = rt::Compiler::BuildSettings( true );
+		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, sources, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
+	}
+	else {
+		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, sources, makeDllPath( settings->getIntermediatePath(), className ), *settings );
+	}
+	return ptr;
+}
+
+template<class Class>
+void *makeAndAddClassWatcherWithHeader( size_t size, const char *fileMacro, const char *className, const ci::fs::path &headerPath, rt::Compiler::BuildSettings *settings )
+{
+	void * ptr = ::operator new( size );
+	auto cppPath = ci::fs::absolute( fileMacro );
+	if( ! settings ) {
+		auto buildSettings = rt::Compiler::BuildSettings( true );
+		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
+	}
+	else {
+		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( settings->getIntermediatePath(), className ), *settings );
+	}
+	return ptr;
+}
+
 } // namespace runtime
 
 namespace rt = runtime;
@@ -232,14 +277,12 @@ private: \
 	static const ci::fs::path __rt_getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); } \
 public:
 
+
+
 #define __RT_WATCH_IMPL1( Class ) \
 void* Class::operator new( size_t size ) \
 { \
-	void * ptr = ::operator new( size ); \
-	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	auto buildSettings = rt::Compiler::BuildSettings( true ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
-	return ptr; \
+	return rt::makeAndAddClassWatcherWithHeader<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), nullptr );\
 } \
 void Class::operator delete( void* ptr ) \
 { \
@@ -250,10 +293,7 @@ void Class::operator delete( void* ptr ) \
 #define __RT_WATCH_IMPL2( Class, Settings ) \
 void* Class::operator new( size_t size ) \
 { \
-	void * ptr = ::operator new( size ); \
-	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
-	return ptr; \
+	return rt::makeAndAddClassWatcherWithHeader<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), &Settings );\
 } \
 void Class::operator delete( void* ptr ) \
 { \
@@ -274,20 +314,12 @@ void Class::operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
+
 #define __RT_WATCH_INLINE1( Class ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	void * ptr = ::operator new( size ); \
-	auto headerPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	std::vector<ci::fs::path> sources; \
-	if( ci::fs::exists( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ) ) { \
-		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
-	} \
-	sources.push_back( headerPath ); \
-	auto buildSettings = rt::Compiler::BuildSettings( true ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
-	return ptr; \
+	return rt::makeAndAddClassWatcher<Class>( size, __FILE__, #Class, nullptr );\
 } \
 void operator delete( void* ptr ) \
 { \
@@ -299,15 +331,7 @@ void operator delete( void* ptr ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	void * ptr = ::operator new( size ); \
-	auto headerPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	std::vector<ci::fs::path> sources; \
-	if( ci::fs::exists( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ) ) { \
-		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
-	} \
-	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
-	return ptr; \
+	return rt::makeAndAddClassWatcher<Class>( size, __FILE__, #Class, &Settings );\
 } \
 void operator delete( void* ptr ) \
 { \
