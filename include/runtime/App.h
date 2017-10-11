@@ -4,6 +4,8 @@
 
 #if defined( CINDER_SHARED )
 
+#if ! defined( RT_COMPILED )
+
 #include "runtime/ClassWatcher.h"
 
 namespace runtime {
@@ -15,7 +17,7 @@ public:
 };
 
 template<typename AppT>
-void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn() )
+void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn(), const rt::CompilerMsvc::BuildSettings &buildSettings = rt::CompilerMsvc::BuildSettings( true ) )
 {
 	ci::app::Platform::get()->prepareLaunch();
 
@@ -32,11 +34,9 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	app->dispatchAsync( [=]() {
 		std::vector<ci::fs::path> sources = { ci::fs::absolute( ci::fs::path( sourceFile ) ) };
 		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, 
-			sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::Compiler::BuildSettings().default().generateFactory( false ) );
-		rt::ClassWatcher<AppT>::instance().getModule()->getChangedSignal().connect( [=](const Module& module ) {
-			//app->dispatchAsync( [=]() {
-				app->setup();
-			//} );
+			sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::Compiler::BuildSettings( buildSettings ).generateFactory( false ) );
+		rt::ClassWatcher<AppT>::instance().getModule().getChangedSignal().connect( [=](const Module& module ) {
+			app->setup();
 		} );
 	});
 
@@ -46,8 +46,6 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	rt::ClassWatcher<AppT>::instance().unwatch( static_cast<AppT*>( app ) );
 }
 }
-
-#if ! defined( RT_COMPILED )
 
 #define CINDER_RUNTIME_APP( APP, RENDERER, ... )                                                                        \
 int __stdcall WinMain( HINSTANCE /*hInstance*/, HINSTANCE /*hPrevInstance*/, LPSTR /*lpCmdLine*/, int /*nCmdShow*/ )\

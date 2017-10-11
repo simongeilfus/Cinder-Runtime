@@ -1,0 +1,27 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "App", "App.vcxproj", "{46E840EE-4306-4220-B361-BD37E39B5594}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug_Shared|x64 = Debug_Shared|x64
+		Debug|x64 = Debug|x64
+		Release_Shared|x64 = Release_Shared|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Debug_Shared|x64.ActiveCfg = Debug_Shared|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Debug_Shared|x64.Build.0 = Debug_Shared|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Debug|x64.ActiveCfg = Debug|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Debug|x64.Build.0 = Debug|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Release_Shared|x64.ActiveCfg = Release_Shared|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Release_Shared|x64.Build.0 = Release_Shared|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Release|x64.ActiveCfg = Release|x64
+		{46E840EE-4306-4220-B361-BD37E39B5594}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

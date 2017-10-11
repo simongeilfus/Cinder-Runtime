@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <cinder>
 <block
-	name="Cinder-Runtime"
+	name="Runtime"
 	id="sg.cinder.runtime"
 	author="Simon Geilfus"
 	summary="Runtime Compiled C++ for Cinder"
@@ -10,11 +10,6 @@
 	
 	<includePath>include</includePath>
 	<headerPattern>include/runtime/*.h</headerPattern>	
-    <sourcePattern>src/runtime/*.cpp</sourcePattern>
-
-	<platform os="msw">
-		<buildCopy cinder="true">lib/msw/$(PlatformTarget)/$(Configuration)/$(PlatformToolset)/cinder.dll</buildCopy>
-	</platform>
-    
+    <sourcePattern>src/runtime/*.cpp</sourcePattern>    
 </block>
 </cinder>

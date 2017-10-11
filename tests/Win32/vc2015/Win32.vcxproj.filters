@@ -1,0 +1,103 @@
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Blocks">
+      <UniqueIdentifier>{A323DC01-F68E-4200-952B-9DA02F1804B0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime">
+      <UniqueIdentifier>{E72B14C0-6AB7-46B4-BEB5-69343481A75D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime\include">
+      <UniqueIdentifier>{FD42DFD8-E092-4E6A-824B-BFC735B675B3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime\include\runtime">
+      <UniqueIdentifier>{FD1D6ED7-9F97-40D2-BF38-CE53E207B088}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime\src">
+      <UniqueIdentifier>{0AEB7930-BBE9-4395-AAC3-A9EA101961B0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Runtime\src\runtime">
+      <UniqueIdentifier>{C17708E0-5308-4D26-8B5E-8E42460FDCC9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Win32App.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Win32App.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\App.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ClassFactory.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\make_shared.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Module.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Process.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Virtual.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\CompilerMsvc.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
+      <Filter>Blocks\Runtime\src\runtime</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

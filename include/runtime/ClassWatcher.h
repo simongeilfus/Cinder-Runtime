@@ -8,6 +8,11 @@
 #include "runtime/Module.h"
 #include "runtime/CompilerMsvc.h"
 
+#if defined( CEREAL_CEREAL_HPP_ )
+#include <cereal/details/traits.hpp>
+#include <cereal/archives/binary.hpp>
+#endif
+
 namespace runtime {
 
 template<class T>
@@ -18,7 +23,7 @@ public:
 	static ClassWatcher& instance();
 	
 	//! Adds an instance to the ClassWatcher watch list
-	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() );
+	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) );
 	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
@@ -26,41 +31,45 @@ public:
 
 	class Options {
 	public:
+		Options() : mMethod( Method::SWAP_VTABLE ), mBuildSettings( true ) {}
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& source( const ci::fs::path &path );
+		Options& source( const ci::fs::path &path ) { mSource = path; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& header( const ci::fs::path &path );
+		// Options& header( const ci::fs::path &path );
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& className( const ci::fs::path &path );
+		Options& className( const std::string &name ) { mClassName = name; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& method( Method method );
+		Options& method( Method method ) { mMethod = method; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings );
+		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings ) { mBuildSettings = buildSettings; return *this; }
 		
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& watchAdditionalSources( bool watch = true );
+		// Options& additionalSources( bool watch = true );
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& watchObjectFiles( bool watch = true );
+		// Options& objectFiles( bool watch = true );
 
 	protected:
-		std::string		mClassName;
-		ci::fs::path	mSources;
-		ci::fs::path	mDllPath;
+		std::string					mClassName;
+		ci::fs::path				mSources;
+		Method						mMethod;
+		CompilerMsvc::BuildSettings mBuildSettings;
 		friend class ClassWatcher<T>;
 	};
 	
-	//! Adds an extra include folder to the compiler BuildSettings
-	const Options&	getOptions() const;
-	//! Adds an extra include folder to the compiler BuildSettings
-	void			setOptions( const Options& options );
-	
 	//! Returns the signal used to notify when the Module/Handle is about to be unloaded
-	ci::signals::Signal<void(const Module&)>& getCleanupSignal();
+	ci::signals::Signal<void(const Module&)>& getCleanupSignal() { return mModule->getCleanupSignal(); }
 	//! Returns the signal used to notify Module/Handle changes
-	ci::signals::Signal<void(const Module&)>& getChangedSignal();
-
-	rt::Module*	getModule() const { return mModule.get(); }
-
+	ci::signals::Signal<void(const Module&)>& getChangedSignal() { return mModule->getChangedSignal(); }
+	
+	const rt::Module& getModule() const { return *mModule; }
+	rt::Module& getModule() { return *mModule; }
+	
+	//! Adds an extra include folder to the compiler BuildSettings
+	const Options&	getOptions() const { return mOptions; }
+	//! Adds an extra include folder to the compiler BuildSettings
+	Options&		getOptions() { return mOptions; }
+	//! Adds an extra include folder to the compiler BuildSettings
+	void			setOptions( const Options& options ) { mOptions = options; }
 protected:
 	
 	template<typename, typename C>
@@ -98,6 +107,18 @@ protected:
 
 	template<typename U=T,std::enable_if_t<hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) { t->postRuntimeBuild(); }
 	template<typename U=T,std::enable_if_t<!hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) {} // no-op
+	
+#if defined( CEREAL_CEREAL_HPP_ )
+	template<typename Archive, typename U=T,std::enable_if_t<(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> 
+	void serialize( Archive &archive, U* t ) 
+	{ 
+		try { 
+			archive( *t ); 
+		}
+		catch( const std::exception &exc ) {}
+	}
+	template<typename Archive, typename U=T,std::enable_if_t<!(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> void serialize( Archive &archive, U* t ) {} // no-op
+#endif
 
 	Options			mOptions;
 	rt::ModulePtr	mModule;
@@ -109,11 +130,11 @@ template<class T>
 typename ClassWatcher<T>& ClassWatcher<T>::instance()
 {
 	static std::unique_ptr<ClassWatcher<T>> watcher = std::make_unique<ClassWatcher<T>>();
-	return *watcher.get();
+	return *watcher;
 }
 
 template<class T>
-void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings() )
+void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) )
 {
 	mInstances.push_back( static_cast<T*>( ptr ) );
 	
@@ -132,9 +153,12 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 				if( event.getFile().extension() == ".h" ) {
 					buildSettings.createPrecompiledHeader();
 				}
+				if( buildSettings.getModuleName().empty() ) {
+					buildSettings.moduleName( name );
+				}
 
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,name]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,buildSettings]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->getCleanupSignal().emit( *mModule );
@@ -142,11 +166,20 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 
 						if( event.getFile().extension() == ".cpp" ) {
 							// Find the address of the vtable
-							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + name + "@@6B@" ) ) {
+							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + buildSettings.getModuleName() + "@@6B@" ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									std::stringstream archiveStream;
+									cereal::BinaryOutputArchive outputArchive( archiveStream );
+									serialize( outputArchive, mInstances[i] );
+								#endif
 									*(void **)mInstances[i] = vtableAddress;
 									callPostRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									cereal::BinaryInputArchive inputArchive( archiveStream );
+									serialize( inputArchive, mInstances[i] );
+								#endif
 								}
 							}
 						}
@@ -155,9 +188,18 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 								// use placement new to construct new instances at the current instances addresses
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									std::stringstream archiveStream;
+									cereal::BinaryOutputArchive outputArchive( archiveStream );
+									serialize( outputArchive, mInstances[i] );
+								#endif
 									mInstances[i]->~T();
 									placementNewOperator( mInstances[i] );
 									callPostRuntimeBuild( mInstances[i] );
+								#if defined( CEREAL_CEREAL_HPP_ )
+									cereal::BinaryInputArchive inputArchive( archiveStream );
+									serialize( inputArchive, mInstances[i] );
+								#endif
 								}
 							}
 						}
@@ -174,18 +216,6 @@ template<class T>
 void ClassWatcher<T>::unwatch( T* ptr )
 {
 	mInstances.erase( std::remove( mInstances.begin(), mInstances.end(), ptr ), mInstances.end() );
-}
-
-
-template<class T>
-ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getCleanupSignal()
-{
-	return mModule->getCleanupSignal();
-}
-template<class T>
-ci::signals::Signal<void( const Module& )>& ClassWatcher<T>::getChangedSignal()
-{
-	return mModule->getChangedSignal();
 }
 
 } // namespace runtime
@@ -207,7 +237,8 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
+	auto buildSettings = rt::Compiler::BuildSettings( true ); \
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -221,7 +252,7 @@ void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
 	auto cppPath = ci::fs::absolute( ci::fs::path( __FILE__ ) ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), { cppPath, __rt_getHeaderPath() }, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -254,7 +285,8 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), rt::Compiler::BuildSettings().default() );\
+	auto buildSettings = rt::Compiler::BuildSettings( true ); \
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, buildSettings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ) );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \
@@ -274,7 +306,7 @@ void* operator new( size_t size ) \
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ); \
 	} \
 	sources.push_back( headerPath ); \
-	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, CI_RT_INTERMEDIATE_DIR / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
+	rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), std::string( #Class ), sources, Settings.getIntermediatePath() / "runtime" / std::string( #Class ) / "build" / ( std::string( #Class ) + ".dll" ), Settings );\
 	return ptr; \
 } \
 void operator delete( void* ptr ) \

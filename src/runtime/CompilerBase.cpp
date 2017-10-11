@@ -55,7 +55,7 @@ void CompilerBase::initializeProcess()
 	if( fs::exists( getCompilerPath() ) ) {
 		
 		// create a command line process with the right environment variables and paths
-		mProcess = make_unique<Process>( getCLInitCommand(), CI_RT_PROJECT_DIR.string(), true, true );
+		mProcess = make_unique<Process>( getCLInitCommand(), getCLInitPath().string(), true, true );
 		
 		// start the compiler process
 		mProcess << quote( getCompilerPath().string() ) + " " + getCompilerInitArgs() << endl;
