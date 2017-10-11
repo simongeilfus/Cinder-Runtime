@@ -19,9 +19,10 @@ namespace {
 		ProjectConfiguration()
 		{
 			fs::path appPath = app::getAppPath();
+			const size_t maxDepth = 20;
 			size_t depth = 0;
 			for( fs::path path = appPath; path.has_parent_path() || ( path == appPath ); path = path.parent_path(), ++depth ) {
-				if( depth >= 5 || ! projectPath.empty() )
+				if( depth >= maxDepth || ! projectPath.empty() )
 					break;
 
 				for( fs::directory_iterator it = fs::directory_iterator( path ), end; it != end; ++it ) {
@@ -30,7 +31,13 @@ namespace {
 						break;
 					}
 				}
-			}	
+			}
+
+			if( projectPath.empty() ) {
+				string msg = "Failed to find the .vcxproj path for this executable.";
+				msg += " Searched up " + to_string( maxDepth ) + " levels from app path: " + appPath.string();
+				throw CompilerException( msg );
+			}
 
 			projectDir = projectPath.parent_path();
 
