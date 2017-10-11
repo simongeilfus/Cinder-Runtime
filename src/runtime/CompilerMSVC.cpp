@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 1
+#define RT_VERBOSE_DEFAULT 0
 
 using namespace std;
 using namespace ci;
