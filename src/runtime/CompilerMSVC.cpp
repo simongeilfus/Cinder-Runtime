@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 1
+#define RT_VERBOSE_DEFAULT 0
 
 using namespace std;
 using namespace ci;
@@ -317,11 +317,47 @@ std::string CompilerMsvc::BuildSettings::printToString() const
 {
 	stringstream str;
 
+	str << "link app objs: " << mLinkAppObjs << ", generate factory: " << mGenerateFactory << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
+	str << "precompiled header: " << mPrecompiledHeader << "\n";
+	str << "output path: " << mOutputPath << "\n";
 	str << "intermediate path: " << mIntermediatePath << "\n";
+	str << "pdb path: " << mPdbPath << "\n";
+	str << "module name: " << mModuleName << "\n";
 	str << "includes:\n";
 	for( const auto &include : mIncludes ) {
 		str << "\t- " << include << "\n";
 	}
+	str << "library paths:\n";
+	for( const auto &path : mLibraryPaths ) {
+		str << "\t- " << path << "\n";
+	}
+	str << "libraries:\n";
+	for( const auto &lib : mLibraries ) {
+		str << "\t- " << lib << "\n";
+	}
+	str << "additional sources:\n";
+	for( const auto &src : mAdditionalSources ) {
+		str << "\t- " << src << "\n";
+	}
+	str << "forced includes:\n";
+	for( const auto &include : mForcedIncludes ) {
+		str << "\t- " << include << "\n";
+	}
+	str << "preprocessor definitions: ";
+	for( const auto &ppDefine : mPpDefinitions ) {
+		str << ppDefine << " ";
+	}
+	str << endl;
+	str << "compiler options: ";
+	for( const auto &flag : mCompilerOptions ) {
+		str << flag << " ";
+	}
+	str << endl;
+	str << "linker options: ";
+	for( const auto &flag : mLinkerOptions ) {
+		str << flag << " ";
+	}
+	str << endl;
 
 	return str.str();
 }
