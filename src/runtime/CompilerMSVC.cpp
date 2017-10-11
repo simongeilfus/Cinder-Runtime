@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 0
+#define RT_VERBOSE_DEFAULT 1
 
 using namespace std;
 using namespace ci;
@@ -139,6 +139,33 @@ namespace {
 		return output;
 	}
 
+	void parsePropertySheet( CompilerMsvc::BuildSettings* settings, const fs::path &fullPath )
+	{
+		if( ! fs::exists( fullPath ) ) {
+			CI_LOG_E( "expected property sheet doesn't exist at: " << fullPath << ", skipping." );
+			return;
+		}
+
+		auto propSheet = XmlTree( loadFile( fullPath ) );
+		const auto &projectNode = propSheet.getChild( "Project" );
+
+		for( const auto &child : projectNode.getChildren() ) {			
+			if( child->getTag() != "PropertyGroup" )
+				continue;
+
+			if( child->hasAttribute( "Label" ) ) {
+				// skip base template prop sheet
+				if( child->getAttributeValue<string>( "Label" ) == "UserMacros" ) {
+					for( const auto &macroNode : child->getChildren() ) {
+						auto name = "$(" + macroNode->getTag() + ")";
+						auto value = macroNode->getValue<string>();
+						settings->userMacro( name, value );
+					}
+				}
+			}
+		}
+	}
+
 	void parseVcxproj( CompilerMsvc::BuildSettings* settings, const XmlTree &node, const ProjectConfiguration &config, bool matched = false )
 	{
 		if( ! matched && node.hasAttribute( "Condition" ) ) {
@@ -194,6 +221,25 @@ namespace {
 			for( auto dir : libraryDirectories ) {
 				if( ! dir.empty() ) {
 					settings->libraryPath( fs::path( dir ) );
+				}
+			}
+		}
+		else if( node.getTag() == "ImportGroup" ) {
+			// parse user property sheets
+			// TODO: document limitations
+			if( node.getAttributeValue<string>( "Label" ) == "PropertySheets" ) {
+				for( const auto &child : node.getChildren() ) {
+					if( child->hasAttribute( "Label" ) ) {
+						// skip base template prop sheet
+						if( child->getAttributeValue<string>( "Label" ) == "LocalAppDataPlatform")
+							continue;
+					}
+
+					string fileName = child->getAttributeValue<string>( "Project" );
+					fs::path propSheetFullPath = config.projectDir / fileName;
+
+					CI_LOG_I( "Parsing property sheet at: " << propSheetFullPath );
+					parsePropertySheet( settings, propSheetFullPath );
 				}
 			}
 		}
@@ -358,6 +404,11 @@ std::string CompilerMsvc::BuildSettings::printToString() const
 		str << flag << " ";
 	}
 	str << endl;
+	str << "user macros:\n";
+	for( const auto &macro : mUserMacros ) {
+		str << "\t- " << macro.first << " = " << macro.second << "\n";
+	}
+	str << endl;
 
 	return str.str();
 }
@@ -418,6 +469,12 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::linkerOption( const st
 	mLinkerOptions.push_back( option );
 	return *this;
 }
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::userMacro( const std::string &name, const std::string &value )
+{
+	mUserMacros[name] = value;
+	return *this;
+}
+
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::verbose( bool enabled )
 {
 	mVerbose = enabled;
