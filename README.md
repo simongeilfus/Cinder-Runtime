@@ -1,6 +1,6 @@
 # Runtime
 
-**A runtime compiler for [libcinder](https://libcinder.org). **   
+**A runtime compiler for [libcinder](https://libcinder.org).**   
 
 *Previous implementations have moved to [msvc_old](https://github.com/simongeilfus/Cinder-Runtime/tree/msvc_old) and [mac_cling](https://github.com/simongeilfus/Cinder-Runtime/tree/mac_cling) branches.*
 
