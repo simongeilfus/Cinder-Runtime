@@ -50,7 +50,7 @@ void LiveApp::setup()
 
 void LiveApp::draw()
 {
-	gl::clear( Color::gray( 0.125f ) );
+	gl::clear( Color::gray( 0.25f ) );
 	gl::setMatrices( mCamera );
 	mBatch->draw();
 }

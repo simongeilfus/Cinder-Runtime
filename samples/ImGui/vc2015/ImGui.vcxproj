@@ -121,7 +121,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include;..\..\..\..\Cinder-ImGui\include;..\..\..\..\Cinder-ImGui\lib\imgui</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
@@ -183,7 +183,7 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">
     <ClCompile>
       <AdditionalIncludeDirectories>..\include;..\..\..\..\..\include;..\..\..\include;..\..\..\..\Cinder-ImGui\include;..\..\..\..\Cinder-ImGui\lib\imgui</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions);CI_RT_CINDER_PATH=ci::fs::path( "../../../../.." );CI_RT_PROJECT_ROOT=ci::fs::path( R"($(ProjectDir))" ) / "..";CI_RT_PROJECT_DIR=ci::fs::path( R"($(ProjectDir))" );CI_RT_PROJECT_PATH=ci::fs::path( R"($(ProjectPath))" );CI_RT_PLATFORM_TARGET=R"($(PlatformTarget))";CI_RT_CONFIGURATION=R"($(Configuration))";CI_RT_PLATFORM_TOOLSET=R"($(PlatformToolset))";CI_RT_INTERMEDIATE_DIR=ci::fs::path( R"($(IntDir))" );CI_RT_OUTPUT_DIR=ci::fs::path( R"($(OutDir))" )</PreprocessorDefinitions>
+      <PreprocessorDefinitions>CINDER_SHARED;WIN32;_WIN32_WINNT=0x0601;_WINDOWS;NOMINMAX;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
@@ -233,7 +233,10 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\src\CinderImGui.cpp" />
+    <ClCompile Include="..\..\..\..\Cinder-ImGui\src\CinderImGui.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
