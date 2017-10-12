@@ -97,6 +97,8 @@ public:
 		BuildSettings& compilerOption( const std::string &option );
 		//! Adds an additional linker option
 		BuildSettings& linkerOption( const std::string &option );
+		//! Adds a user macro that will be string replaced in other settings.
+		BuildSettings& userMacro( const std::string &name, const std::string &value );
 
 		//! Enables verbose mode. Disabled by default.
 		BuildSettings& verbose( bool enabled = true );
@@ -120,6 +122,8 @@ public:
 		const std::vector<std::string>& 	getCompilerOptions() const { return mCompilerOptions; }
 		const std::vector<std::string>& 	getLinkerOptions() const { return mLinkerOptions; }
 		const std::vector<ci::fs::path>& 	getObjPaths() const { return mObjPaths; }
+
+		const std::map<std::string, std::string>&	getUserMacros() const	{ return mUserMacros; };
 
 		//! Method meant for debugging purposes to write a pretty string of all settings
 		std::string printToString() const;
@@ -149,6 +153,7 @@ public:
 		std::vector<std::string> mCompilerOptions;
 		std::vector<std::string> mLinkerOptions;
 		std::vector<ci::fs::path> mObjPaths;
+		std::map<std::string, std::string>	mUserMacros;
 	};
 	
 	void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) override;

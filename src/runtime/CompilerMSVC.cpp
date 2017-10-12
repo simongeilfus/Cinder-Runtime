@@ -128,15 +128,52 @@ namespace {
 		return ( conditionLhs == conditionRhs );
 	};
 
-	string replaceVcxprojMacros( const std::string &input, const ProjectConfiguration &config )
+	string replaceVcxprojMacros( const std::string &input, CompilerMsvc::BuildSettings* settings, const ProjectConfiguration &config )
 	{
 		string output = input;
+
+		// TODO: we may want these to be added to a map of Macros, which includes both user and system (similar to Visual Studio's 'Macros' pane)
 		replaceAll( output, "$(Configuration)", config.configuration );
 		replaceAll( output, "$(Platform)", config.platform );
 		replaceAll( output, "$(PlatformTarget)", config.platformTarget );
 		replaceAll( output, "$(PlatformToolset)", config.platformToolset );
 		replaceAll( output, "$(ProjectDir)", config.projectDir.string() + "/" );
+
+		// replace user macros
+		for( const auto &macro : settings->getUserMacros() ) {
+			replaceAll( output, macro.first, macro.second );
+		}
+
 		return output;
+	}
+
+	// Note: currently only supporting parsing UserMacros for property sheets, and each property sheet parsed overrides the previous one.
+	// TODO: look into supporting the rest of prop sheet features
+	void parsePropertySheet( CompilerMsvc::BuildSettings* settings, const fs::path &fullPath )
+	{
+		if( ! fs::exists( fullPath ) ) {
+			CI_LOG_E( "expected property sheet doesn't exist at: " << fullPath << ", skipping." );
+			return;
+		}
+
+		auto propSheet = XmlTree( loadFile( fullPath ) );
+		const auto &projectNode = propSheet.getChild( "Project" );
+
+		for( const auto &child : projectNode.getChildren() ) {			
+			if( child->getTag() != "PropertyGroup" )
+				continue;
+
+			if( child->hasAttribute( "Label" ) ) {
+				// skip base template prop sheet
+				if( child->getAttributeValue<string>( "Label" ) == "UserMacros" ) {
+					for( const auto &macroNode : child->getChildren() ) {
+						auto name = "$(" + macroNode->getTag() + ")";
+						auto value = macroNode->getValue<string>();
+						settings->userMacro( name, value );
+					}
+				}
+			}
+		}
 	}
 
 	void parseVcxproj( CompilerMsvc::BuildSettings* settings, const XmlTree &node, const ProjectConfiguration &config, bool matched = false )
@@ -150,18 +187,18 @@ namespace {
 		}
 
 		if( node.getTag() == "OutDir" ) {
-			auto outDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), config ) );
+			auto outDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), settings, config ) );
 //			settings->outputPath( outDir.parent_path() );
 		}
 		else if( node.getTag() == "IntDir" ) {
-			auto intDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), config ) );
+			auto intDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), settings, config ) );
 			settings->intermediatePath( intDir.parent_path() );
 		}
 		else if( node.getTag() == "LinkIncremental" ) {
 			//console() << "LinkIncremental = " << node.getValue<string>() << endl;
 		}
 		else if( node.getTag() == "AdditionalIncludeDirectories" ) {
-			vector<string> includes = ci::split( replaceVcxprojMacros( node.getValue<string>(), config ), ";" );
+			vector<string> includes = ci::split( replaceVcxprojMacros( node.getValue<string>(), settings, config ), ";" );
 			for( const auto &inc : includes ) {
 				if( ! inc.empty() ) {
 					settings->include( fs::path( inc ) );
@@ -182,7 +219,7 @@ namespace {
 		else if( node.getTag() == "AdditionalDependencies" ) {
 			string librariesString = node.getValue<string>();
 			replaceAll( librariesString, "%(AdditionalDependencies)", "" );
-			vector<string> libraries = ci::split( librariesString, ";" );
+			vector<string> libraries = ci::split( replaceVcxprojMacros( librariesString, settings, config ), ";" );
 			for( const auto &lib : libraries ) {
 				if( ! lib.empty() ) {
 					settings->library( lib );
@@ -190,10 +227,28 @@ namespace {
 			}
 		}
 		else if( node.getTag() == "AdditionalLibraryDirectories" ) {
-			vector<string> libraryDirectories = ci::split( replaceVcxprojMacros( node.getValue<string>(), config ), ";" );
+			vector<string> libraryDirectories = ci::split( replaceVcxprojMacros( node.getValue<string>(), settings, config ), ";" );
 			for( auto dir : libraryDirectories ) {
 				if( ! dir.empty() ) {
 					settings->libraryPath( fs::path( dir ) );
+				}
+			}
+		}
+		else if( node.getTag() == "ImportGroup" ) {
+			// parse user property sheets
+			if( node.getAttributeValue<string>( "Label" ) == "PropertySheets" ) {
+				for( const auto &child : node.getChildren() ) {
+					if( child->hasAttribute( "Label" ) ) {
+						// skip base template prop sheet
+						if( child->getAttributeValue<string>( "Label" ) == "LocalAppDataPlatform")
+							continue;
+					}
+
+					string fileName = child->getAttributeValue<string>( "Project" );
+					fs::path propSheetFullPath = config.projectDir / fileName;
+
+					CI_LOG_I( "Parsing property sheet at: " << propSheetFullPath );
+					parsePropertySheet( settings, propSheetFullPath );
 				}
 			}
 		}
@@ -358,6 +413,11 @@ std::string CompilerMsvc::BuildSettings::printToString() const
 		str << flag << " ";
 	}
 	str << endl;
+	str << "user macros:\n";
+	for( const auto &macro : mUserMacros ) {
+		str << "\t- " << macro.first << " = " << macro.second << "\n";
+	}
+	str << endl;
 
 	return str.str();
 }
@@ -418,6 +478,12 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::linkerOption( const st
 	mLinkerOptions.push_back( option );
 	return *this;
 }
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::userMacro( const std::string &name, const std::string &value )
+{
+	mUserMacros[name] = value;
+	return *this;
+}
+
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::verbose( bool enabled )
 {
 	mVerbose = enabled;
