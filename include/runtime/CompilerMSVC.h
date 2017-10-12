@@ -121,6 +121,9 @@ public:
 		const std::vector<std::string>& 	getLinkerOptions() const { return mLinkerOptions; }
 		const std::vector<ci::fs::path>& 	getObjPaths() const { return mObjPaths; }
 
+		//! Method meant for debugging purposes to write a pretty string of all settings
+		std::string printToString() const;
+
 	protected:
 		friend class CompilerMsvc;
 		bool mVerbose;

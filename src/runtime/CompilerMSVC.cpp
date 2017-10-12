@@ -8,6 +8,8 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
+#define RT_VERBOSE_DEFAULT 0
+
 using namespace std;
 using namespace ci;
 
@@ -66,6 +68,17 @@ namespace {
 	#else
 			platformToolset = "v120";
 	#endif
+
+		}
+
+		string printToString() const
+		{
+			stringstream str;
+
+			str << "projectPath: " << projectPath
+				<< "\n\t- configuration: " << configuration << ", platform: " << platform << ", platformTarget: " << platformTarget << ", platformToolset: " << platformToolset;
+
+			return str.str();
 		}
 
 		string configuration;
@@ -253,10 +266,16 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
 	// app src folder
 	.include( "../src" )
+	.verbose( RT_VERBOSE_DEFAULT )
 	;
 
 	if( defaultSettings ) {
 		parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
+	}
+
+	if( mVerbose ) {
+		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
+		CI_LOG_I( "BuildSettings: " << printToString() );
 	}
 }
 
@@ -281,11 +300,66 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	//.linkerOption( "/INCREMENTAL:NO" )
 	.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
 	.define( "RT_COMPILED" )
+	.verbose( RT_VERBOSE_DEFAULT )
 
 	// cinder-runtime include 
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) );
 
 	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
+
+	if( mVerbose ) {
+		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
+		CI_LOG_I( "BuildSettings: " << printToString() );
+	}
+}
+
+std::string CompilerMsvc::BuildSettings::printToString() const
+{
+	stringstream str;
+
+	str << "link app objs: " << mLinkAppObjs << ", generate factory: " << mGenerateFactory << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
+	str << "precompiled header: " << mPrecompiledHeader << "\n";
+	str << "output path: " << mOutputPath << "\n";
+	str << "intermediate path: " << mIntermediatePath << "\n";
+	str << "pdb path: " << mPdbPath << "\n";
+	str << "module name: " << mModuleName << "\n";
+	str << "includes:\n";
+	for( const auto &include : mIncludes ) {
+		str << "\t- " << include << "\n";
+	}
+	str << "library paths:\n";
+	for( const auto &path : mLibraryPaths ) {
+		str << "\t- " << path << "\n";
+	}
+	str << "libraries:\n";
+	for( const auto &lib : mLibraries ) {
+		str << "\t- " << lib << "\n";
+	}
+	str << "additional sources:\n";
+	for( const auto &src : mAdditionalSources ) {
+		str << "\t- " << src << "\n";
+	}
+	str << "forced includes:\n";
+	for( const auto &include : mForcedIncludes ) {
+		str << "\t- " << include << "\n";
+	}
+	str << "preprocessor definitions: ";
+	for( const auto &ppDefine : mPpDefinitions ) {
+		str << ppDefine << " ";
+	}
+	str << endl;
+	str << "compiler options: ";
+	for( const auto &flag : mCompilerOptions ) {
+		str << flag << " ";
+	}
+	str << endl;
+	str << "linker options: ";
+	for( const auto &flag : mLinkerOptions ) {
+		str << flag << " ";
+	}
+	str << endl;
+
+	return str.str();
 }
 
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::include( const ci::fs::path &path )
