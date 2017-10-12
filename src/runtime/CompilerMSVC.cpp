@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 0
+#define RT_VERBOSE_DEFAULT 1
 
 using namespace std;
 using namespace ci;
@@ -263,36 +263,6 @@ namespace {
 	}
 }
 
-/*CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::default( )
-{
-	return include( CI_RT_PROJECT_ROOT / "include" )
-		.include( CI_RT_PROJECT_ROOT / "src" )
-		.include( CI_RT_CINDER_PATH / "include" )
-		.libraryPath( CI_RT_CINDER_PATH / "lib/msw" / CI_RT_PLATFORM_TARGET )
-		.libraryPath( CI_RT_CINDER_PATH / "lib/msw" / CI_RT_PLATFORM_TARGET / CI_RT_CONFIGURATION / CI_RT_PLATFORM_TOOLSET )
-		.library( "cinder.lib" )
-		.define( "CINDER_SHARED" ).define( "WIN32" ).define( "_WIN32_WINNT=0x0601" ).define( "_WINDOWS" ).define( "NOMINMAX" ).define( "_UNICODE" ).define( "UNICODE" )
-		.compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
-		.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
-		//.compilerOption( "/Gm" )
-		
-#if defined( _DEBUG )
-		.compilerOption( "/Od" )
-		.compilerOption( "/Zi" )
-		.define( "_DEBUG" )
-		.compilerOption( "/MDd" )
-#else
-		.compilerOption( "/MD" )
-#endif
-		//.linkerOption( "/INCREMENTAL:NO" )
-		.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
-		.define( "RT_COMPILED" )
-
-		// cinder-runtime include 
-		.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
-		;
-}*/
-
 CompilerMsvc::BuildSettings::BuildSettings()
 : mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
@@ -329,8 +299,9 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	}
 
 	if( mVerbose ) {
-		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
-		CI_LOG_I( "BuildSettings: " << printToString() );
+		CI_LOG_I( "Compiler Settings: \n" << CompilerMsvc::instance().printToString() );
+		CI_LOG_I( "ProjectConfiguration: \n" << getProjectConfiguration().printToString() );
+		CI_LOG_I( "BuildSettings: \n" << printToString() );
 	}
 }
 
@@ -363,11 +334,22 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
 
 	if( mVerbose ) {
+		CI_LOG_I( "Compiler Settings: " << CompilerMsvc::instance().printToString() );
 		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
 		CI_LOG_I( "BuildSettings: " << printToString() );
 	}
 }
+std::string CompilerMsvc::printToString() const
+{
+	stringstream str;
+	
+	str << "Compiler path: " << getCompilerPath() << endl;
+	str << "Compiler arguments: " << getCompilerInitArgs() << endl;
+	str << "Subprocess command: " << getCLInitCommand() << endl;
+	str << "Subprocess path: " << getCLInitPath() << endl;
 
+	return str.str();
+}
 std::string CompilerMsvc::BuildSettings::printToString() const
 {
 	stringstream str;
@@ -556,7 +538,7 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::generateFactory( bool 
 CompilerMsvc::CompilerMsvc()
 {
 	CI_LOG_V( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
-
+	
 	initializeProcess();
 }
 
