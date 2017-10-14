@@ -2,6 +2,7 @@
 
 #if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
 
+#include "cinder/Exception.h"
 #include "cinder/Filesystem.h"
 #include "cinder/FileWatcher.h"
 
@@ -125,6 +126,10 @@ protected:
 	std::vector<T*> mInstances;
 };
 
+class ClassWatcherException : public ci::Exception {
+public:
+	ClassWatcherException( const std::string &message ) : ci::Exception( message ) {}
+};
 
 template<class T>
 typename ClassWatcher<T>& ClassWatcher<T>::instance()
@@ -205,6 +210,9 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 						}
 						
 						mModule->getChangedSignal().emit( *mModule );
+					}
+					else {
+						throw ClassWatcherException( "Module " + buildSettings.getModuleName() + " not found at " + mModule->getPath().string() );
 					}
 				} );
 			} 
