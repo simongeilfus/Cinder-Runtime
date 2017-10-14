@@ -299,7 +299,6 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	}
 
 	if( mVerbose ) {
-		CI_LOG_I( "Compiler Settings: \n" << CompilerMsvc::instance().printToString() );
 		CI_LOG_I( "ProjectConfiguration: \n" << getProjectConfiguration().printToString() );
 		CI_LOG_I( "BuildSettings: \n" << printToString() );
 	}
@@ -343,9 +342,7 @@ std::string CompilerMsvc::printToString() const
 {
 	stringstream str;
 	
-	str << "Compiler path: " << getCompilerPath() << endl;
-	str << "Compiler arguments: " << getCompilerInitArgs() << endl;
-	str << "Subprocess command: " << getCLInitCommand() << endl;
+	str << "Compiler path: " << getCompilerPath() << " " << getCompilerInitArgs() << endl;
 	str << "Subprocess path: " << getCLInitPath() << endl;
 
 	return str.str();
@@ -539,6 +536,10 @@ CompilerMsvc::CompilerMsvc()
 {
 	CI_LOG_V( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
 	
+	if( mVerbose ) {
+		CI_LOG_I( "Compiler Settings: \n" << CompilerMsvc::instance().printToString() );
+	}
+
 	initializeProcess();
 }
 
