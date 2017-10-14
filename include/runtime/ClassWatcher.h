@@ -31,7 +31,7 @@ public:
 
 	class Options {
 	public:
-		Options() : mMethod( Method::SWAP_VTABLE ), mBuildSettings( true ) {}
+		Options() : mMethod(  Method::SWAP_VTABLE )	{}
 		//! Adds an extra include folder to the compiler BuildSettings
 		Options& source( const ci::fs::path &path ) { mSource = path; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
