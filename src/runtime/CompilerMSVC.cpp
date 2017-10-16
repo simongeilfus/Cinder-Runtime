@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 1
+#define RT_VERBOSE_DEFAULT 0
 
 using namespace std;
 using namespace ci;
@@ -296,11 +296,6 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	if( defaultSettings ) {
 		parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
 	}
-
-	if( mVerbose ) {
-		CI_LOG_I( "ProjectConfiguration: \n" << getProjectConfiguration().printToString() );
-		CI_LOG_I( "BuildSettings: \n" << printToString() );
-	}
 }
 
 CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
@@ -329,13 +324,8 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) );
 
 	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
-
-	if( mVerbose ) {
-		CI_LOG_I( "Compiler Settings: " << CompilerMsvc::instance().printToString() );
-		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
-		CI_LOG_I( "BuildSettings: " << printToString() );
-	}
 }
+
 std::string CompilerMsvc::printToString() const
 {
 	stringstream str;
@@ -345,6 +335,17 @@ std::string CompilerMsvc::printToString() const
 
 	return str.str();
 }
+
+void CompilerMsvc::debugLog( BuildSettings *settings ) const
+{
+	CI_LOG_I( "Compiler Settings: " << Compiler::instance().printToString() );
+	CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
+
+	if( settings ) {
+		CI_LOG_I( "BuildSettings: " << settings->printToString() );
+	}
+}
+
 std::string CompilerMsvc::BuildSettings::printToString() const
 {
 	stringstream str;
