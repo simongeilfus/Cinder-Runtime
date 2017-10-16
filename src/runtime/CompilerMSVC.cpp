@@ -264,12 +264,12 @@ namespace {
 }
 
 CompilerMsvc::BuildSettings::BuildSettings()
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 }
 
 CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 	compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
 	.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
@@ -291,7 +291,6 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
 	// app src folder
 	.include( "../src" )
-	.verbose( RT_VERBOSE_DEFAULT )
 	;
 
 	if( defaultSettings ) {
@@ -305,7 +304,7 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 }
 
 CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 	getProjectConfiguration().projectPath = vcxProjPath;
 	getProjectConfiguration().projectDir = vcxProjPath.parent_path();
@@ -325,7 +324,6 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	//.linkerOption( "/INCREMENTAL:NO" )
 	.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
 	.define( "RT_COMPILED" )
-	.verbose( RT_VERBOSE_DEFAULT )
 
 	// cinder-runtime include 
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) );
