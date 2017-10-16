@@ -125,6 +125,8 @@ public:
 
 		const std::map<std::string, std::string>&	getUserMacros() const	{ return mUserMacros; };
 
+		bool isVerboseEnabled() const	{ return mVerbose; }
+
 		//! Method meant for debugging purposes to write a pretty string of all settings
 		std::string printToString() const;
 

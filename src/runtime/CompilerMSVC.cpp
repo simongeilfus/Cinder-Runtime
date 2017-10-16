@@ -671,6 +671,10 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		result->getFilePaths().push_back( path );
 	}
 
+	if( settings.isVerboseEnabled() ) {
+		CI_LOG_I( "command:\n" << command );
+	}
+
 	return command;
 }
 std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
@@ -742,7 +746,15 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 
 std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
-	return generateCompilerCommand( sourcePath, settings, result ) + generateLinkerCommand( sourcePath, settings, result );
+	auto compilerCommand = generateCompilerCommand( sourcePath, settings, result );
+	auto linkerCommand = generateLinkerCommand( sourcePath, settings, result );
+
+	if( settings.isVerboseEnabled() ) {
+		CI_LOG_I( "compiler command:\n" << compilerCommand );
+		CI_LOG_I( "linker command:\n" << linkerCommand );
+	}
+
+	return compilerCommand + linkerCommand;
 }
 
 namespace {
