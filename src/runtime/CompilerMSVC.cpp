@@ -788,20 +788,14 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	CompilationResult result;
 	result.getFilePaths().push_back( sourcePath );
 
-	// make sure the intermediate directories exists
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" );
-	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() );
-	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" );
+	auto buildDir = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build";
+	if( ! fs::exists( buildDir ) ) {
+		fs::create_directories( buildDir );
 	}
 
 #if defined( _DEBUG ) && 1
 	// try renaming previous pdb files to prevent errors
-	auto pdb = settings.mPdbPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
+	auto pdb = settings.mPdbPath.empty() ? ( buildDir / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
 	if( fs::exists( pdb ) ) {
 		auto newName = getNextAvailableName( pdb );
 		try {
@@ -814,11 +808,11 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// generate factor if needed and add it to the compiler list
 	auto buildSettings = settings;
 	if( settings.mGenerateFactory ) {
-		auto factoryPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Factory.cpp" );
+		auto factoryPath = buildDir / ( settings.getModuleName() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
 			generateClassFactory( factoryPath, settings.getModuleName() );
 		}
-		auto factoryObjPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Factory.obj" );
+		auto factoryObjPath = buildDir / ( settings.getModuleName() + "Factory.obj" );
 		//if( ! fs::exists( factoryObjPath ) ) {
 			buildSettings.additionalSource( factoryPath );
 		//}
@@ -833,7 +827,6 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << getProjectConfiguration().projectPath.stem() << ", Configuration: " << getProjectConfiguration().configuration << " " << getProjectConfiguration().platform << " ------" << endl;
 	app::console() << "1>  " << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
-
 }
 
 void CompilerMsvc::build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void( const CompilationResult& )> &onBuildFinish )
