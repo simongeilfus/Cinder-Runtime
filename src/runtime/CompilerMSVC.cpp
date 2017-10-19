@@ -326,6 +326,21 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
 }
 
+// Examples: turns 'MyClass' into '??_7MyClass@@6B@', or 'a::b::MyClass' into '??_7MyClass@b@a@@6B@'
+// See docs in generateLinkerCommand()
+// See MS Doc "Decorated Names": https://msdn.microsoft.com/en-us/library/56h2zst2.aspx?f=255&MSPPError=-2147217396#Format
+std::string	CompilerMsvc::getSymbolForVTable( const std::string &typeName ) const
+{
+	auto parts = ci::split( typeName, "::" );
+	string decoratedName;
+	for( auto rIt = parts.rbegin(); rIt != parts.rend(); ++rIt ) {
+		if( ! rIt->empty() ) // handle leading "::" case, which results in any empty part
+			decoratedName += *rIt + "@";
+	}
+
+	return "??_7" + decoratedName + "@6B@";
+}
+
 std::string CompilerMsvc::printToString() const
 {
 	stringstream str;
@@ -356,6 +371,7 @@ std::string CompilerMsvc::BuildSettings::printToString() const
 	str << "intermediate path: " << mIntermediatePath << "\n";
 	str << "pdb path: " << mPdbPath << "\n";
 	str << "module name: " << mModuleName << "\n";
+	str << "type name: " << mTypeName << "\n";
 	str << "includes:\n";
 	for( const auto &include : mIncludes ) {
 		str << "\t- " << include << "\n";
@@ -497,6 +513,12 @@ CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::moduleName( const std:
 	mModuleName = name;
 	return *this;
 }
+CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::typeName( const std::string &typeName )
+{ 
+	mTypeName = typeName;
+	return *this;
+}
+
 CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::forceInclude( const std::string &filename )
 {
 	mForcedIncludes.push_back( filename );
@@ -699,7 +721,7 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
 		std::ofstream outputFile( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) );		
 		outputFile << "EXPORTS" << endl;
-		outputFile << "\t??_7" << settings.getModuleName() << "@@6B@\t\tDATA" << endl;
+		outputFile << "\t" << getSymbolForVTable( settings.getTypeName() ) << "\t\tDATA" << endl;
 	}
 	command += "/DEF:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ).string() + " ";
 	
@@ -809,7 +831,8 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	if( settings.mGenerateFactory ) {
 		auto factoryPath = buildDir / ( settings.getModuleName() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
-			generateClassFactory( factoryPath, settings.getModuleName() );
+			string headerName = settings.getModuleName() + ".h";
+			generateClassFactory( factoryPath, settings.getTypeName(), headerName );
 		}
 		auto factoryObjPath = buildDir / ( settings.getModuleName() + "Factory.obj" );
 		//if( ! fs::exists( factoryObjPath ) ) {

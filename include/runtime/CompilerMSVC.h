@@ -82,8 +82,10 @@ public:
 		//! Specifies the target platform toolset (v120, v140, v141, etc..)
 		BuildSettings& platformToolset( const std::string &option );
 				
-		//! Specifies the class or function name (used for code generation and paths names)
+		//! Specifies the name of the module (.dll). Also used for path generation.
 		BuildSettings& moduleName( const std::string &name );
+		//! Specifies the typename of something that is reloadable
+		BuildSettings& typeName( const std::string &typeName );
 
 		//! Adds an obj files to be linked
 		BuildSettings& linkObj( const ci::fs::path &path );
@@ -112,6 +114,7 @@ public:
 		const std::string&		getPlatform() const { return mPlatform; }
 		const std::string&		getPlatformToolset() const { return mPlatformToolset; }
 		const std::string&		getModuleName() const { return mModuleName; }
+		const std::string&		getTypeName() const { return mTypeName; }
 
 		const std::vector<ci::fs::path>& 	getIncludes() const { return mIncludes; }
 		const std::vector<ci::fs::path>& 	getLibraryPaths() const { return mLibraryPaths; }
@@ -146,6 +149,7 @@ public:
 		std::string	mPlatform;
 		std::string	mPlatformToolset;
 		std::string mModuleName;
+		std::string mTypeName;
 		std::vector<ci::fs::path> mIncludes;
 		std::vector<ci::fs::path> mLibraryPaths;
 		std::vector<ci::fs::path> mAdditionalSources;
@@ -161,7 +165,10 @@ public:
 	void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) override;
 	void build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
 	void build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
-	
+
+	//! Returns the compiler-decorated symbol of typeName's vtable.
+	std::string	getSymbolForVTable( const std::string &typeName ) const;
+
 	//! Method meant for debugging purposes to write a pretty string of all settings
 	std::string printToString() const;
 	//! This logs Compiler, ProjectConfiguration, and BuildSettings to ci::log
