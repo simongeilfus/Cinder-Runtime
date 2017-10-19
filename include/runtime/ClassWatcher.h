@@ -24,7 +24,7 @@ public:
 	static ClassWatcher& instance();
 	
 	//! Adds an instance to the ClassWatcher watch list
-	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) );
+	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::Compiler::BuildSettings settings = rt::Compiler::BuildSettings( true ) );
 	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
@@ -139,9 +139,17 @@ typename ClassWatcher<T>& ClassWatcher<T>::instance()
 }
 
 template<class T>
-void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, const rt::Compiler::BuildSettings &settings = rt::Compiler::BuildSettings( true ) )
+void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::Compiler::BuildSettings settings = rt::Compiler::BuildSettings( true ) )
 {
 	mInstances.push_back( static_cast<T*>( ptr ) );
+
+	if( settings.getModuleName().empty() ) {
+		settings.moduleName( name );
+	}
+
+	if( settings.isVerboseEnabled() ) {
+		Compiler::instance().debugLog( &settings );
+	}
 	
 	if( ! mModule ) {
 		mModule = std::make_unique<rt::Module>( dllPath );
@@ -157,9 +165,6 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 				rt::Compiler::BuildSettings buildSettings = settings;
 				if( event.getFile().extension() == ".h" ) {
 					buildSettings.createPrecompiledHeader();
-				}
-				if( buildSettings.getModuleName().empty() ) {
-					buildSettings.moduleName( name );
 				}
 
 				// initiate the build

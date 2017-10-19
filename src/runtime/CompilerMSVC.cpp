@@ -8,7 +8,7 @@
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 1
+#define RT_VERBOSE_DEFAULT 0
 
 using namespace std;
 using namespace ci;
@@ -264,12 +264,12 @@ namespace {
 }
 
 CompilerMsvc::BuildSettings::BuildSettings()
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 }
 
 CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 	compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
 	.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
@@ -291,21 +291,15 @@ CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
 	// app src folder
 	.include( "../src" )
-	.verbose( RT_VERBOSE_DEFAULT )
 	;
 
 	if( defaultSettings ) {
 		parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
 	}
-
-	if( mVerbose ) {
-		CI_LOG_I( "ProjectConfiguration: \n" << getProjectConfiguration().printToString() );
-		CI_LOG_I( "BuildSettings: \n" << printToString() );
-	}
 }
 
 CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
-: mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
+: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
 {
 	getProjectConfiguration().projectPath = vcxProjPath;
 	getProjectConfiguration().projectDir = vcxProjPath.parent_path();
@@ -325,19 +319,13 @@ CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
 	//.linkerOption( "/INCREMENTAL:NO" )
 	.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
 	.define( "RT_COMPILED" )
-	.verbose( RT_VERBOSE_DEFAULT )
 
 	// cinder-runtime include 
 	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) );
 
 	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
-
-	if( mVerbose ) {
-		CI_LOG_I( "Compiler Settings: " << CompilerMsvc::instance().printToString() );
-		CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
-		CI_LOG_I( "BuildSettings: " << printToString() );
-	}
 }
+
 std::string CompilerMsvc::printToString() const
 {
 	stringstream str;
@@ -347,6 +335,17 @@ std::string CompilerMsvc::printToString() const
 
 	return str.str();
 }
+
+void CompilerMsvc::debugLog( BuildSettings *settings ) const
+{
+	CI_LOG_I( "Compiler Settings: " << Compiler::instance().printToString() );
+	CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
+
+	if( settings ) {
+		CI_LOG_I( "BuildSettings: " << settings->printToString() );
+	}
+}
+
 std::string CompilerMsvc::BuildSettings::printToString() const
 {
 	stringstream str;
@@ -671,6 +670,10 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		result->getFilePaths().push_back( path );
 	}
 
+	if( settings.isVerboseEnabled() ) {
+		CI_LOG_I( "command:\n" << command );
+	}
+
 	return command;
 }
 std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
@@ -742,7 +745,15 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 
 std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
 {
-	return generateCompilerCommand( sourcePath, settings, result ) + generateLinkerCommand( sourcePath, settings, result );
+	auto compilerCommand = generateCompilerCommand( sourcePath, settings, result );
+	auto linkerCommand = generateLinkerCommand( sourcePath, settings, result );
+
+	if( settings.isVerboseEnabled() ) {
+		CI_LOG_I( "compiler command:\n" << compilerCommand );
+		CI_LOG_I( "linker command:\n" << linkerCommand );
+	}
+
+	return compilerCommand + linkerCommand;
 }
 
 namespace {
@@ -776,20 +787,14 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	CompilationResult result;
 	result.getFilePaths().push_back( sourcePath );
 
-	// make sure the intermediate directories exists
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" );
-	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() );
-	}
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" ) ) {
-		fs::create_directory( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" );
+	auto buildDir = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build";
+	if( ! fs::exists( buildDir ) ) {
+		fs::create_directories( buildDir );
 	}
 
 #if defined( _DEBUG ) && 1
 	// try renaming previous pdb files to prevent errors
-	auto pdb = settings.mPdbPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
+	auto pdb = settings.mPdbPath.empty() ? ( buildDir / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
 	if( fs::exists( pdb ) ) {
 		auto newName = getNextAvailableName( pdb );
 		try {
@@ -802,11 +807,11 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// generate factor if needed and add it to the compiler list
 	auto buildSettings = settings;
 	if( settings.mGenerateFactory ) {
-		auto factoryPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Factory.cpp" );
+		auto factoryPath = buildDir / ( settings.getModuleName() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
 			generateClassFactory( factoryPath, settings.getModuleName() );
 		}
-		auto factoryObjPath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Factory.obj" );
+		auto factoryObjPath = buildDir / ( settings.getModuleName() + "Factory.obj" );
 		//if( ! fs::exists( factoryObjPath ) ) {
 			buildSettings.additionalSource( factoryPath );
 		//}
@@ -821,7 +826,6 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << getProjectConfiguration().projectPath.stem() << ", Configuration: " << getProjectConfiguration().configuration << " " << getProjectConfiguration().platform << " ------" << endl;
 	app::console() << "1>  " << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
-
 }
 
 void CompilerMsvc::build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void( const CompilationResult& )> &onBuildFinish )

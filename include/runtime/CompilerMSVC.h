@@ -125,6 +125,8 @@ public:
 
 		const std::map<std::string, std::string>&	getUserMacros() const	{ return mUserMacros; };
 
+		bool isVerboseEnabled() const	{ return mVerbose; }
+
 		//! Method meant for debugging purposes to write a pretty string of all settings
 		std::string printToString() const;
 
@@ -162,6 +164,9 @@ public:
 	
 	//! Method meant for debugging purposes to write a pretty string of all settings
 	std::string printToString() const;
+	//! This logs Compiler, ProjectConfiguration, and BuildSettings to ci::log
+	void debugLog( BuildSettings *settings = nullptr ) const;
+
 protected:
 	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
 	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
