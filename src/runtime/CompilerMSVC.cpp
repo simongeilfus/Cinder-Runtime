@@ -807,7 +807,7 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// generate factor if needed and add it to the compiler list
 	auto buildSettings = settings;
 	if( settings.mGenerateFactory ) {
-		auto factoryPath = buildDir / ( settings.getModuleName() + "Factory.cpp" );
+		auto factoryPath = buildDir.parent_path() / ( settings.getModuleName() + "Factory.cpp" );
 		if( ! fs::exists( factoryPath ) ) {
 			generateClassFactory( factoryPath, settings.getModuleName() );
 		}
