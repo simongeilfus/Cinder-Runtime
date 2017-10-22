@@ -16,6 +16,20 @@
 
 namespace runtime {
 
+namespace {
+
+static std::string stripNamespace( const std::string &className )
+{
+	auto pos = className.find_last_of( "::" );
+	if( pos == std::string::npos )
+		return className;
+
+	std::string result = className.substr( pos + 1, className.size() - pos - 1 );
+	return result;
+}
+
+} // anonymous namespace
+
 template<class T>
 class ClassWatcher {
 public:
@@ -144,7 +158,10 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 	mInstances.push_back( static_cast<T*>( ptr ) );
 
 	if( settings.getModuleName().empty() ) {
-		settings.moduleName( name );
+		settings.moduleName( stripNamespace( name ) );
+	}
+	if( settings.getTypeName().empty() ) {
+		settings.typeName( name );
 	}
 
 	if( settings.isVerboseEnabled() ) {
@@ -167,8 +184,10 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 					buildSettings.createPrecompiledHeader();
 				}
 
+				auto vtableSym = rt::CompilerMsvc::instance().getSymbolForVTable( buildSettings.getTypeName() );
+
 				// initiate the build
-				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,buildSettings]( const rt::CompilationResult &result ) {
+				rt::CompilerMsvc::instance().build( source, buildSettings, [&,event,buildSettings, vtableSym]( const rt::CompilationResult &result ) {
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->getCleanupSignal().emit( *mModule );
@@ -176,7 +195,7 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 
 						if( event.getFile().extension() == ".cpp" ) {
 							// Find the address of the vtable
-							if( void* vtableAddress = mModule->getSymbolAddress( "??_7" + buildSettings.getModuleName() + "@@6B@" ) ) {
+							if( void* vtableAddress = mModule->getSymbolAddress( vtableSym ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
 									callPreRuntimeBuild( mInstances[i] );
 								#if defined( CEREAL_CEREAL_HPP_ )
@@ -237,7 +256,8 @@ void ClassWatcher<T>::unwatch( T* ptr )
 
 static ci::fs::path makeDllPath( const ci::fs::path &intermediatePath, const char *className )
 {
-	return intermediatePath / "runtime" / className / "build" / ( std::string( className ) + ".dll" );
+	auto strippedClassName = stripNamespace( className );
+	return intermediatePath / "runtime" / strippedClassName / "build" / ( strippedClassName + ".dll" );
 }
 
 template<class Class>
