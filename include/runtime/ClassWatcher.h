@@ -14,6 +14,14 @@
 #include <cereal/archives/binary.hpp>
 #endif
 
+#if ! defined( RT_PRE_BUILD_METHOD_NAME )
+#define RT_PRE_BUILD_METHOD_NAME cleanup
+#endif
+
+#if ! defined( RT_POST_BUILD_METHOD_NAME )
+#define RT_POST_BUILD_METHOD_NAME setup
+#endif
+
 namespace runtime {
 
 namespace {
@@ -88,40 +96,40 @@ public:
 protected:
 	
 	template<typename, typename C>
-	struct hasPreRuntimeBuild {
+	struct hasPreBuildMethod {
 		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
 	};
 
 	template<typename C, typename Ret, typename... Args>
-	struct hasPreRuntimeBuild<C, Ret(Args...)> {
+	struct hasPreBuildMethod<C, Ret(Args...)> {
 	private:
-		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().preRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().RT_PRE_BUILD_METHOD_NAME( std::declval<Args>()... ) ),Ret>::type;
 		template<typename> static constexpr std::false_type check(...);
 		typedef decltype(check<C>(0)) type;
 	public:
 		static constexpr bool value = type::value;
 	};
 
-	template<typename U=T,std::enable_if_t<hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) { t->preRuntimeBuild(); }
-	template<typename U=T,std::enable_if_t<!hasPreRuntimeBuild<U,void()>::value,int> = 0> void callPreRuntimeBuild( U* t ) {} // no-op
+	template<typename U=T,std::enable_if_t<hasPreBuildMethod<U,void()>::value,int> = 0> void callPreBuildMethod( U* t ) { t->RT_PRE_BUILD_METHOD_NAME(); }
+	template<typename U=T,std::enable_if_t<!hasPreBuildMethod<U,void()>::value,int> = 0> void callPreBuildMethod( U* t ) {} // no-op
 	
 	template<typename, typename C>
-	struct hasPostRuntimeBuild {
+	struct hasPostBuildMethod {
 		static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
 	};
 
 	template<typename C, typename Ret, typename... Args>
-	struct hasPostRuntimeBuild <C, Ret(Args...)> {
+	struct hasPostBuildMethod <C, Ret(Args...)> {
 	private:
-		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().postRuntimeBuild( std::declval<Args>()... ) ),Ret>::type;
+		template<typename U> static constexpr auto check(U*) -> typename std::is_same<decltype( std::declval<U>().RT_POST_BUILD_METHOD_NAME( std::declval<Args>()... ) ),Ret>::type;
 		template<typename> static constexpr std::false_type check(...);
 		typedef decltype(check<C>(0)) type;
 	public:
 		static constexpr bool value = type::value;
 	};
 
-	template<typename U=T,std::enable_if_t<hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) { t->postRuntimeBuild(); }
-	template<typename U=T,std::enable_if_t<!hasPostRuntimeBuild<U,void()>::value,int> = 0> void callPostRuntimeBuild( U* t ) {} // no-op
+	template<typename U=T,std::enable_if_t<hasPostBuildMethod<U,void()>::value,int> = 0> void callPostBuildMethod( U* t ) { t->RT_POST_BUILD_METHOD_NAME(); }
+	template<typename U=T,std::enable_if_t<!hasPostBuildMethod<U,void()>::value,int> = 0> void callPostBuildMethod( U* t ) {} // no-op
 	
 #if defined( CEREAL_CEREAL_HPP_ )
 	template<typename Archive, typename U=T,std::enable_if_t<(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> 
@@ -191,20 +199,22 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 					// if a new dll exists update the handle
 					if( ci::fs::exists( mModule->getPath() ) ) {
 						mModule->getCleanupSignal().emit( *mModule );
+						for( size_t i = 0; i < mInstances.size(); ++i ) {
+							callPreBuildMethod( mInstances[i] );
+						}
 						mModule->updateHandle();
 
 						if( event.getFile().extension() == ".cpp" ) {
 							// Find the address of the vtable
 							if( void* vtableAddress = mModule->getSymbolAddress( vtableSym ) ) {
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
-									callPreRuntimeBuild( mInstances[i] );
 								#if defined( CEREAL_CEREAL_HPP_ )
 									std::stringstream archiveStream;
 									cereal::BinaryOutputArchive outputArchive( archiveStream );
 									serialize( outputArchive, mInstances[i] );
 								#endif
 									*(void **)mInstances[i] = vtableAddress;
-									callPostRuntimeBuild( mInstances[i] );
+									callPostBuildMethod( mInstances[i] );
 								#if defined( CEREAL_CEREAL_HPP_ )
 									cereal::BinaryInputArchive inputArchive( archiveStream );
 									serialize( inputArchive, mInstances[i] );
@@ -216,7 +226,6 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 							if( auto placementNewOperator = static_cast<T*(__cdecl*)(T*)>( mModule->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
 								// use placement new to construct new instances at the current instances addresses
 								for( size_t i = 0; i < mInstances.size(); ++i ) {
-									callPreRuntimeBuild( mInstances[i] );
 								#if defined( CEREAL_CEREAL_HPP_ )
 									std::stringstream archiveStream;
 									cereal::BinaryOutputArchive outputArchive( archiveStream );
@@ -224,7 +233,7 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 								#endif
 									mInstances[i]->~T();
 									placementNewOperator( mInstances[i] );
-									callPostRuntimeBuild( mInstances[i] );
+									callPostBuildMethod( mInstances[i] );
 								#if defined( CEREAL_CEREAL_HPP_ )
 									cereal::BinaryInputArchive inputArchive( archiveStream );
 									serialize( inputArchive, mInstances[i] );

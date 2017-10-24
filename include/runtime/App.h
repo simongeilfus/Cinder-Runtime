@@ -33,11 +33,7 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	RtApp<AppT>* app = new RtApp<AppT>;
 	app->dispatchAsync( [=]() {
 		std::vector<ci::fs::path> sources = { ci::fs::absolute( ci::fs::path( sourceFile ) ) };
-		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, 
-			sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::BuildSettings( buildSettings ).generateFactory( false ) );
-		rt::ClassWatcher<AppT>::instance().getModule().getChangedSignal().connect( [=](const Module& module ) {
-			app->setup();
-		} );
+		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::BuildSettings( buildSettings ).generateFactory( false ) );
 	});
 
 	app->rtExecuteLaunch();
