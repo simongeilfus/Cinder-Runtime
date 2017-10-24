@@ -20,9 +20,11 @@
 */
 #pragma once
 
+#include <map>
+#include <functional>
+
 #include "BuildStep.h"
 #include "cinder/Filesystem.h"
-#include <map>
 
 namespace runtime {
 
