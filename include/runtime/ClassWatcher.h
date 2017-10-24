@@ -302,7 +302,7 @@ namespace rt = runtime;
 
 #include "cinder/app/App.h"
 
-#define RT_WATCH_HEADER \
+#define RT_DECL \
 public: \
 	void* operator new( size_t size ); \
 	void operator delete( void* ptr ); \
@@ -312,7 +312,7 @@ public:
 
 
 
-#define __RT_WATCH_IMPL1( Class ) \
+#define __RT_IMPL1( Class ) \
 void* Class::operator new( size_t size ) \
 { \
 	return rt::makeAndAddClassWatcherWithHeader<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), nullptr );\
@@ -323,7 +323,7 @@ void Class::operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
-#define __RT_WATCH_IMPL2( Class, Settings ) \
+#define __RT_IMPL2( Class, Settings ) \
 void* Class::operator new( size_t size ) \
 { \
 	return rt::makeAndAddClassWatcherWithHeader<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), &Settings );\
@@ -334,7 +334,7 @@ void Class::operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
-#define __RT_WATCH_IMPL3( Class, Header, Source, Dll, Settings ) \
+#define __RT_IMPL3( Class, Header, Source, Dll, Settings ) \
 void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
@@ -348,7 +348,7 @@ void Class::operator delete( void* ptr ) \
 } \
 
 
-#define __RT_WATCH_INLINE1( Class ) \
+#define __RT_IMPL_INLINE1( Class ) \
 public: \
 void* operator new( size_t size ) \
 { \
@@ -360,7 +360,7 @@ void operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
-#define __RT_WATCH_INLINE2( Class, Settings ) \
+#define __RT_IMPL_INLINE2( Class, Settings ) \
 public: \
 void* operator new( size_t size ) \
 { \
@@ -372,21 +372,21 @@ void operator delete( void* ptr ) \
 	::operator delete( ptr ); \
 } \
 
-#define __RT_WATCH_IMPL_SWITCH(_1,_2,_3,NAME,...) NAME
-#define __RT_WATCH_INLINE_SWITCH(_1,_2,NAME,...) NAME
-#define __RT_WATCH_EXPAND(x) x
-#define RT_WATCH_IMPL( ... ) __RT_WATCH_EXPAND(__RT_WATCH_IMPL_SWITCH(__VA_ARGS__,__RT_WATCH_IMPL3,__RT_WATCH_IMPL2,__RT_WATCH_IMPL1))__RT_WATCH_EXPAND((__VA_ARGS__))
-#define RT_WATCH_INLINE( ... ) __RT_WATCH_EXPAND(__RT_WATCH_INLINE_SWITCH(__VA_ARGS__,__RT_WATCH_INLINE2,__RT_WATCH_INLINE1))__RT_WATCH_EXPAND((__VA_ARGS__))
+#define __RT_IMPL_SWITCH(_1,_2,_3,NAME,...) NAME
+#define __RT_IMPL_INLINE_SWITCH(_1,_2,NAME,...) NAME
+#define __RT_IMPL_EXPAND(x) x
+#define RT_IMPL( ... ) __RT_IMPL_EXPAND(__RT_IMPL_SWITCH(__VA_ARGS__,__RT_IMPL3,__RT_IMPL2,__RT_IMPL1))__RT_IMPL_EXPAND((__VA_ARGS__))
+#define RT_IMPL_INLINE( ... ) __RT_IMPL_EXPAND(__RT_IMPL_INLINE_SWITCH(__VA_ARGS__,__RT_IMPL_INLINE2,__RT_IMPL_INLINE1))__RT_IMPL_EXPAND((__VA_ARGS__))
 
 #else
 
 #include "cinder/Filesystem.h"
 #include "cinder/FileWatcher.h"
-#define RT_WATCH_HEADER \
+#define RT_DECL \
 private: \
 	static const ci::fs::path __rt_getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); } \
 public:
-#define RT_WATCH_IMPL( ... )
-#define RT_WATCH_INLINE( ... )
+#define RT_IMPL( ... )
+#define RT_IMPL_INLINE( ... )
 
 #endif

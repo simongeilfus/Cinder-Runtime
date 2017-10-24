@@ -3,7 +3,7 @@
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
 
-RT_WATCH_IMPL( foo::bar::TypeWithNamespace,  rt::BuildSettings().vcxproj().verbose( true ) );
+RT_IMPL( foo::bar::TypeWithNamespace,  rt::BuildSettings().vcxproj().verbose( true ) );
 
 using namespace std;
 using namespace ci;

@@ -11,5 +11,5 @@ public:
 		ci::gl::clear( ci::ColorA( 0, 0, 0, 1 ) );
 	}
 
-	RT_WATCH_INLINE( Clear )
+	RT_IMPL_INLINE( Clear )
 };

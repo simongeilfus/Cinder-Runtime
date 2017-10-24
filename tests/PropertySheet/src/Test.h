@@ -11,5 +11,5 @@ public:
 	
 protected:
 
-	RT_WATCH_HEADER
+	RT_DECL
 };

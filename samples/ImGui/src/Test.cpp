@@ -30,6 +30,6 @@ void Test::draw()
 	gl::clear( background );
 }
 
-// RT_WATCH_IMPL has to be added to mark the class
+// RT_IMPL has to be added to mark the class
 // as runtime reloadable. 
-RT_WATCH_IMPL( Test );
+RT_IMPL( Test );

@@ -4,7 +4,7 @@
 #include "cinder/gl/wrapper.h"
 #include "cinder/Rand.h"
 
-RT_WATCH_IMPL( Test2 );
+RT_IMPL( Test2 );
 
 using namespace std;
 using namespace ci;

@@ -16,9 +16,9 @@ public:
 	
 protected:
 
-	// otherwise RT_WATCH_HEADER is the only thing
+	// otherwise RT_DECL is the only thing
 	// needed in the class declaration to mark the class
 	// as runtime reloadable. Modifying the header is 
 	// usually slower than modifying the cpp file.
-	RT_WATCH_HEADER
+	RT_DECL
 };

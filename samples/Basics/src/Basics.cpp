@@ -22,9 +22,9 @@ void Basics::draw()
 	gl::clear( Color::gray( 0.75f ) );
 }
 
-// RT_WATCH_IMPL has to be added to mark the class
+// RT_IMPL has to be added to mark the class
 // as runtime reloadable. a rt::Compiler::BuildSettings
 // can be added as the second paramater of the macro to
 // specify custom settings, include paths, libraries, ...
 // Modifying the cpp file is usually much faster
-RT_WATCH_IMPL( Basics );
+RT_IMPL( Basics );

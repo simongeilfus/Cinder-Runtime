@@ -17,4 +17,4 @@ void Test::draw()
 	gl::clear( Color( 0, 1, 0 ) );
 }
 
-RT_WATCH_IMPL( Test );
+RT_IMPL( Test );

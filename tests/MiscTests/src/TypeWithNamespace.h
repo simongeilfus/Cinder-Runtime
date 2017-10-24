@@ -6,7 +6,7 @@
 namespace foo { namespace bar {
 
 class TypeWithNamespace {
-	RT_WATCH_HEADER
+	RT_DECL
 public:
 	TypeWithNamespace();
 
