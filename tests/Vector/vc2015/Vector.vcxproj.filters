@@ -42,37 +42,34 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\App.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Memory.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Module.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
+    <ClCompile Include="..\src\Test2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\BuildSettings.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\BuildStep.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
+    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerMsvc.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Test2.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
+    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
+      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\ProjectConfiguration.cpp">
       <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,32 +77,50 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Process.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h">
-      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Test2.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
+    <ClInclude Include="..\src\Clear.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\App.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\BuildSettings.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\BuildStep.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\ClassFactory.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\Virtual.h">
+    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
+    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerMSVC.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\make_shared.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Clear.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\..\..\include\runtime\Module.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Process.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ProjectConfiguration.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Virtual.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
