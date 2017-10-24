@@ -24,7 +24,7 @@ The easiest way to get a `class` watched by the runtime compiler is to use the f
 class MyClass {
 public:
 	MyClass();
-protected:
+
 	RT_DECL
 };
 ```
@@ -66,12 +66,11 @@ Now you probably want to call `MyClass` member functions from outside the class 
 #include "runtime/ClassWatcher.h"
 
 class MyClass {
+RT_DECL
 public:
 	MyClass();
 
 	virtual void draw();
-protected:
-	RT_DECL
 };
 ```
   
@@ -85,12 +84,11 @@ You probably don't want to deploy code with unecessary virtual calls everywhere.
 #include "runtime/Virtual.h"
 
 class MyClass {
+RT_DECL
 public:
 	MyClass();
 
 	rt_virtual void draw();
-protected:
-	RT_DECL
 };
 ```
   
@@ -104,25 +102,20 @@ When working on a header only class `RT_IMPL_INLINE` can be used instead of the 
 #include "runtime/Virtual.h"
 
 class MyClass {
+RT_IMPL_INLINE( MyClass );
 public:
-	MyClass();
+	MyClass() {}
 
 	rt_virtual void draw()
 	{
 		// ...
 	}
-protected:
-	RT_IMPL_INLINE( MyClass );
 };
-
-MyClass::MyClass() 
-{
-}
 ```
 
 #### `std::make_shared`
 
-Unfortunately `std::make_shared` works differently underhood, making a seemless integration more difficult. At the moment the only way to make a `std::shared_ptr` runtime reloadable is to use the `operator new` or the following :  
+Unfortunately `std::make_shared` works differently under the hood, making a seemless integration more difficult. At the moment the only way to make a `std::shared_ptr` runtime reloadable is to use the `operator new` or the following wrapper :  
   
 ```c++
 #include "runtime/make_shared.h"
