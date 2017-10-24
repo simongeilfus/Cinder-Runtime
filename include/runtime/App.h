@@ -17,7 +17,7 @@ public:
 };
 
 template<typename AppT>
-void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn(), const rt::BuildSettings &buildSettings = rt::BuildSettings().vcxProj() )
+void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn(), const rt::BuildSettings &buildSettings = rt::BuildSettings().vcxproj() )
 {
 	ci::app::Platform::get()->prepareLaunch();
 
