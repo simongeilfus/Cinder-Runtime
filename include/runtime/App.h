@@ -17,7 +17,7 @@ public:
 };
 
 template<typename AppT>
-void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn(), const rt::CompilerMsvc::BuildSettings &buildSettings = rt::CompilerMsvc::BuildSettings( true ) )
+void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title, const char *sourceFile, const ci::app::AppMsw::SettingsFn &settingsFn = ci::app::AppMsw::SettingsFn(), const rt::BuildSettings &buildSettings = rt::BuildSettings().vcxProj() )
 {
 	ci::app::Platform::get()->prepareLaunch();
 
@@ -34,7 +34,7 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	app->dispatchAsync( [=]() {
 		std::vector<ci::fs::path> sources = { ci::fs::absolute( ci::fs::path( sourceFile ) ) };
 		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, 
-			sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::Compiler::BuildSettings( buildSettings ).generateFactory( false ) );
+			sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::BuildSettings( buildSettings ).generateFactory( false ) );
 		rt::ClassWatcher<AppT>::instance().getModule().getChangedSignal().connect( [=](const Module& module ) {
 			app->setup();
 		} );

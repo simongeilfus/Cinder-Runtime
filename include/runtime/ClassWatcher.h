@@ -38,7 +38,7 @@ public:
 	static ClassWatcher& instance();
 	
 	//! Adds an instance to the ClassWatcher watch list
-	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::Compiler::BuildSettings settings = rt::Compiler::BuildSettings( true ) );
+	void watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj() );
 	//! Removes an instance from ClassWatcher watch list
 	void unwatch( T* ptr );
 
@@ -56,7 +56,7 @@ public:
 		//! Adds an extra include folder to the compiler BuildSettings
 		Options& method( Method method ) { mMethod = method; return *this; }
 		//! Adds an extra include folder to the compiler BuildSettings
-		Options& buildSettings( const CompilerMsvc::BuildSettings &buildSettings ) { mBuildSettings = buildSettings; return *this; }
+		Options& buildSettings( const BuildSettings &buildSettings ) { mBuildSettings = buildSettings; return *this; }
 		
 		//! Adds an extra include folder to the compiler BuildSettings
 		// Options& additionalSources( bool watch = true );
@@ -67,7 +67,7 @@ public:
 		std::string					mClassName;
 		ci::fs::path				mSources;
 		Method						mMethod;
-		CompilerMsvc::BuildSettings mBuildSettings;
+		BuildSettings mBuildSettings;
 		friend class ClassWatcher<T>;
 	};
 	
@@ -153,7 +153,7 @@ typename ClassWatcher<T>& ClassWatcher<T>::instance()
 }
 
 template<class T>
-void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::Compiler::BuildSettings settings = rt::Compiler::BuildSettings( true ) )
+void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj() )
 {
 	mInstances.push_back( static_cast<T*>( ptr ) );
 
@@ -179,7 +179,7 @@ void ClassWatcher<T>::watch( T* ptr, const std::string &name, const std::vector<
 				mModule->unlockHandle();
 				
 				// force precompiled-header re-generation on header change
-				rt::Compiler::BuildSettings buildSettings = settings;
+				rt::BuildSettings buildSettings = settings;
 				if( event.getFile().extension() == ".h" ) {
 					buildSettings.createPrecompiledHeader();
 				}
@@ -261,7 +261,7 @@ static ci::fs::path makeDllPath( const ci::fs::path &intermediatePath, const cha
 }
 
 template<class Class>
-void *makeAndAddClassWatcher( size_t size, const char *fileMacro, const char *className, rt::Compiler::BuildSettings *settings )
+void *makeAndAddClassWatcher( size_t size, const char *fileMacro, const char *className, rt::BuildSettings *settings )
 {
 	void * ptr = ::operator new( size );
 	auto headerPath = ci::fs::absolute( ci::fs::path( fileMacro ) );
@@ -272,7 +272,7 @@ void *makeAndAddClassWatcher( size_t size, const char *fileMacro, const char *cl
 	sources.push_back( headerPath );
 
 	if( ! settings ) {
-		auto buildSettings = rt::Compiler::BuildSettings( true );
+		auto buildSettings = rt::BuildSettings().vcxproj();
 		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, sources, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
 	}
 	else {
@@ -282,12 +282,12 @@ void *makeAndAddClassWatcher( size_t size, const char *fileMacro, const char *cl
 }
 
 template<class Class>
-void *makeAndAddClassWatcherWithHeader( size_t size, const char *fileMacro, const char *className, const ci::fs::path &headerPath, rt::Compiler::BuildSettings *settings )
+void *makeAndAddClassWatcherWithHeader( size_t size, const char *fileMacro, const char *className, const ci::fs::path &headerPath, rt::BuildSettings *settings )
 {
 	void * ptr = ::operator new( size );
 	auto cppPath = ci::fs::absolute( fileMacro );
 	if( ! settings ) {
-		auto buildSettings = rt::Compiler::BuildSettings( true );
+		auto buildSettings = rt::BuildSettings().vcxproj();
 		rt::ClassWatcher<Class>::instance().watch( static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
 	}
 	else {

@@ -2,329 +2,17 @@
 #include "runtime/ClassFactory.h"
 #include "runtime/PrecompiledHeader.h"
 #include "runtime/Process.h"
+#include "runtime/ProjectConfiguration.h"
 
 #include "cinder/app/App.h"
 #include "cinder/Xml.h"
 #include "cinder/Log.h"
 #include "cinder/Utilities.h"
 
-#define RT_VERBOSE_DEFAULT 0
-
 using namespace std;
 using namespace ci;
 
 namespace runtime {
-
-namespace {
-
-	struct ProjectConfiguration {
-		ProjectConfiguration()
-		{
-			fs::path appPath = app::getAppPath();
-			const size_t maxDepth = 20;
-			size_t depth = 0;
-			for( fs::path path = appPath; path.has_parent_path() || ( path == appPath ); path = path.parent_path(), ++depth ) {
-				if( depth >= maxDepth || ! projectPath.empty() )
-					break;
-
-				for( fs::directory_iterator it = fs::directory_iterator( path ), end; it != end; ++it ) {
-					if( it->path().extension() == ".vcxproj" ) {
-						projectPath = it->path();
-						break;
-					}
-				}
-			}
-
-			if( projectPath.empty() ) {
-				string msg = "Failed to find the .vcxproj path for this executable.";
-				msg += " Searched up " + to_string( maxDepth ) + " levels from app path: " + appPath.string();
-				throw CompilerException( msg );
-			}
-
-			projectDir = projectPath.parent_path();
-
-	#ifdef _WIN64
-			platform = "x64";
-			platformTarget = "x64";
-	#else
-			platform = "Win32";
-			platformTarget = "x86";
-	#endif
-
-	#if defined( _DEBUG )
-			configuration = "Debug";
-	#else
-			configuration = "Release";
-	#endif
-
-	#if defined( CINDER_SHARED )
-			configuration += "_Shared";
-	#endif
-		
-	#if _MSC_VER == 1900
-			platformToolset = "v140";
-	#elif _MSC_VER >= 1910
-			platformToolset = "v141";
-	#else
-			platformToolset = "v120";
-	#endif
-
-		}
-
-		string printToString() const
-		{
-			stringstream str;
-
-			str << "projectPath: " << projectPath
-				<< "\n\t- configuration: " << configuration << ", platform: " << platform << ", platformTarget: " << platformTarget << ", platformToolset: " << platformToolset;
-
-			return str.str();
-		}
-
-		string configuration;
-		string platform;
-		string platformTarget;
-		string platformToolset;
-		fs::path projectPath;
-		fs::path projectDir;
-	};
-
-	ProjectConfiguration& getProjectConfiguration()
-	{
-		static ProjectConfiguration config;
-		return config;
-	}
-
-	// http://stackoverflow.com/questions/5343190/how-do-i-replace-all-instances-of-a-string-with-another-string
-	void replaceAll( string& str, const string& from, const string& to ) 
-	{
-		if(from.empty())
-			return;
-		string wsRet;
-		wsRet.reserve(str.length());
-		size_t start_pos = 0, pos;
-		while((pos = str.find(from, start_pos)) != string::npos) {
-			wsRet += str.substr(start_pos, pos - start_pos);
-			wsRet += to;
-			pos += from.length();
-			start_pos = pos;
-		}
-		wsRet += str.substr(start_pos);
-		str.swap(wsRet); // faster than str = wsRet;
-	}
-
-	bool matchCondition( const std::string &condition, const ProjectConfiguration &config ) 
-	{
-		if( condition.find( "==" ) == string::npos || condition.find( "$(Configuration)" ) == string::npos || condition.find( "$(Platform)" ) == string::npos ) {
-			return false;
-		}
-		// extract left and right part of the condition
-		string conditionLhs = condition.substr( 1, condition.find_last_of( "==" ) - 3 );
-		string conditionRhs = condition.substr( condition.find_last_of( "==" ) + 2 );
-		conditionRhs = conditionRhs.substr( 0, conditionRhs.length() - 1 );
-		// replace macros
-		replaceAll( conditionLhs, "$(Configuration)", config.configuration );
-		replaceAll( conditionLhs, "$(Platform)", config.platform );
-		return ( conditionLhs == conditionRhs );
-	};
-
-	string replaceVcxprojMacros( const std::string &input, CompilerMsvc::BuildSettings* settings, const ProjectConfiguration &config )
-	{
-		string output = input;
-
-		// TODO: we may want these to be added to a map of Macros, which includes both user and system (similar to Visual Studio's 'Macros' pane)
-		replaceAll( output, "$(Configuration)", config.configuration );
-		replaceAll( output, "$(Platform)", config.platform );
-		replaceAll( output, "$(PlatformTarget)", config.platformTarget );
-		replaceAll( output, "$(PlatformToolset)", config.platformToolset );
-		replaceAll( output, "$(ProjectDir)", config.projectDir.string() + "/" );
-
-		// replace user macros
-		for( const auto &macro : settings->getUserMacros() ) {
-			replaceAll( output, macro.first, macro.second );
-		}
-
-		return output;
-	}
-
-	// Note: currently only supporting parsing UserMacros for property sheets, and each property sheet parsed overrides the previous one.
-	// TODO: look into supporting the rest of prop sheet features
-	void parsePropertySheet( CompilerMsvc::BuildSettings* settings, const fs::path &fullPath )
-	{
-		if( ! fs::exists( fullPath ) ) {
-			CI_LOG_E( "expected property sheet doesn't exist at: " << fullPath << ", skipping." );
-			return;
-		}
-
-		auto propSheet = XmlTree( loadFile( fullPath ) );
-		const auto &projectNode = propSheet.getChild( "Project" );
-
-		for( const auto &child : projectNode.getChildren() ) {			
-			if( child->getTag() != "PropertyGroup" )
-				continue;
-
-			if( child->hasAttribute( "Label" ) ) {
-				// skip base template prop sheet
-				if( child->getAttributeValue<string>( "Label" ) == "UserMacros" ) {
-					for( const auto &macroNode : child->getChildren() ) {
-						auto name = "$(" + macroNode->getTag() + ")";
-						auto value = macroNode->getValue<string>();
-						settings->userMacro( name, value );
-					}
-				}
-			}
-		}
-	}
-
-	void parseVcxproj( CompilerMsvc::BuildSettings* settings, const XmlTree &node, const ProjectConfiguration &config, bool matched = false )
-	{
-		if( ! matched && node.hasAttribute( "Condition" ) ) {
-			matched = matchCondition( node.getAttributeValue<string>( "Condition" ), config );
-
-			if( ! matched ) {
-				return;
-			}
-		}
-
-		if( node.getTag() == "OutDir" ) {
-			auto outDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), settings, config ) );
-//			settings->outputPath( outDir.parent_path() );
-		}
-		else if( node.getTag() == "IntDir" ) {
-			auto intDir = fs::path( replaceVcxprojMacros( node.getValue<string>(), settings, config ) );
-			settings->intermediatePath( intDir.parent_path() );
-		}
-		else if( node.getTag() == "LinkIncremental" ) {
-			//console() << "LinkIncremental = " << node.getValue<string>() << endl;
-		}
-		else if( node.getTag() == "AdditionalIncludeDirectories" ) {
-			vector<string> includes = ci::split( replaceVcxprojMacros( node.getValue<string>(), settings, config ), ";" );
-			for( const auto &inc : includes ) {
-				if( ! inc.empty() ) {
-					settings->include( fs::path( inc ) );
-				}
-			}
-		}
-		else if( node.getTag() == "PreprocessorDefinitions" ) {
-			string definitionsString = node.getValue<string>();
-			replaceAll( definitionsString, "%(PreprocessorDefinitions)", "" );
-			vector<string> definitions = ci::split( definitionsString, ";" );
-			for( const auto &def : definitions ) {
-				if( ! def.empty() ) {
-					settings->define( def );
-				}
-			}
-		}
-
-		else if( node.getTag() == "AdditionalDependencies" ) {
-			string librariesString = node.getValue<string>();
-			replaceAll( librariesString, "%(AdditionalDependencies)", "" );
-			vector<string> libraries = ci::split( replaceVcxprojMacros( librariesString, settings, config ), ";" );
-			for( const auto &lib : libraries ) {
-				if( ! lib.empty() ) {
-					settings->library( lib );
-				}
-			}
-		}
-		else if( node.getTag() == "AdditionalLibraryDirectories" ) {
-			vector<string> libraryDirectories = ci::split( replaceVcxprojMacros( node.getValue<string>(), settings, config ), ";" );
-			for( auto dir : libraryDirectories ) {
-				if( ! dir.empty() ) {
-					settings->libraryPath( fs::path( dir ) );
-				}
-			}
-		}
-		else if( node.getTag() == "ImportGroup" ) {
-			// parse user property sheets
-			if( node.getAttributeValue<string>( "Label" ) == "PropertySheets" ) {
-				for( const auto &child : node.getChildren() ) {
-					if( child->hasAttribute( "Label" ) ) {
-						// skip base template prop sheet
-						if( child->getAttributeValue<string>( "Label" ) == "LocalAppDataPlatform")
-							continue;
-					}
-
-					string fileName = child->getAttributeValue<string>( "Project" );
-					fs::path propSheetFullPath = config.projectDir / fileName;
-
-					CI_LOG_I( "Parsing property sheet at: " << propSheetFullPath );
-					parsePropertySheet( settings, propSheetFullPath );
-				}
-			}
-		}
-		// skip
-		else if( node.getTag() == "ResourceCompile" ) {
-			return;
-		}
-			
-		for( const auto &child : node.getChildren() ) {
-			parseVcxproj( settings, *child, config, matched );
-		}
-	}
-}
-
-CompilerMsvc::BuildSettings::BuildSettings()
-: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
-{
-}
-
-CompilerMsvc::BuildSettings::BuildSettings( bool defaultSettings )
-: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
-{
-	compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
-	.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
-	//.compilerOption( "/Gm" )
-		
-#if defined( _DEBUG )
-	.compilerOption( "/Od" )
-	.compilerOption( "/Zi" )
-	.define( "_DEBUG" )
-	.compilerOption( "/MDd" )
-#else
-	.compilerOption( "/MD" )
-#endif
-	//.linkerOption( "/INCREMENTAL:NO" )
-	.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
-	.define( "RT_COMPILED" )
-
-	// cinder-runtime include 
-	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) )
-	// app src folder
-	.include( "../src" )
-	;
-
-	if( defaultSettings ) {
-		parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
-	}
-}
-
-CompilerMsvc::BuildSettings::BuildSettings( const ci::fs::path &vcxProjPath )
-: mVerbose( RT_VERBOSE_DEFAULT ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true ), mConfiguration( getProjectConfiguration().configuration ), mPlatform( getProjectConfiguration().platform ), mPlatformToolset( getProjectConfiguration().platformToolset )
-{
-	getProjectConfiguration().projectPath = vcxProjPath;
-	getProjectConfiguration().projectDir = vcxProjPath.parent_path();
-	
-	compilerOption( "/nologo" ).compilerOption( "/W3" ).compilerOption( "/WX-" ).compilerOption( "/EHsc" ).compilerOption( "/RTC1" ).compilerOption( "/GS" )
-	.compilerOption( "/fp:precise" ).compilerOption( "/Zc:wchar_t" ).compilerOption( "/Zc:forScope" ).compilerOption( "/Zc:inline" ).compilerOption( "/Gd" ).compilerOption( "/TP" )
-	//.compilerOption( "/Gm" )
-		
-#if defined( _DEBUG )
-	.compilerOption( "/Od" )
-	.compilerOption( "/Zi" )
-	.define( "_DEBUG" )
-	.compilerOption( "/MDd" )
-#else
-	.compilerOption( "/MD" )
-#endif
-	//.linkerOption( "/INCREMENTAL:NO" )
-	.linkerOption( "/NOLOGO" ).linkerOption( "/NODEFAULTLIB:LIBCMT" ).linkerOption( "/NODEFAULTLIB:LIBCPMT" )
-	.define( "RT_COMPILED" )
-
-	// cinder-runtime include 
-	.include( fs::absolute(  fs::path( __FILE__ ).parent_path().parent_path().parent_path() / "include" ) );
-
-	parseVcxproj( this, XmlTree( loadFile( getProjectConfiguration().projectPath ) ), getProjectConfiguration() );
-}
 
 // Examples: turns 'MyClass' into '??_7MyClass@@6B@', or 'a::b::MyClass' into '??_7MyClass@b@a@@6B@'
 // See docs in generateLinkerCommand()
@@ -354,203 +42,11 @@ std::string CompilerMsvc::printToString() const
 void CompilerMsvc::debugLog( BuildSettings *settings ) const
 {
 	CI_LOG_I( "Compiler Settings: " << Compiler::instance().printToString() );
-	CI_LOG_I( "ProjectConfiguration: " << getProjectConfiguration().printToString() );
+	CI_LOG_I( "ProjectConfiguration: " << ProjectConfiguration::instance().printToString() );
 
 	if( settings ) {
 		CI_LOG_I( "BuildSettings: " << settings->printToString() );
 	}
-}
-
-std::string CompilerMsvc::BuildSettings::printToString() const
-{
-	stringstream str;
-
-	str << "link app objs: " << mLinkAppObjs << ", generate factory: " << mGenerateFactory << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
-	str << "precompiled header: " << mPrecompiledHeader << "\n";
-	str << "output path: " << mOutputPath << "\n";
-	str << "intermediate path: " << mIntermediatePath << "\n";
-	str << "pdb path: " << mPdbPath << "\n";
-	str << "module name: " << mModuleName << "\n";
-	str << "type name: " << mTypeName << "\n";
-	str << "includes:\n";
-	for( const auto &include : mIncludes ) {
-		str << "\t- " << include << "\n";
-	}
-	str << "library paths:\n";
-	for( const auto &path : mLibraryPaths ) {
-		str << "\t- " << path << "\n";
-	}
-	str << "libraries:\n";
-	for( const auto &lib : mLibraries ) {
-		str << "\t- " << lib << "\n";
-	}
-	str << "additional sources:\n";
-	for( const auto &src : mAdditionalSources ) {
-		str << "\t- " << src << "\n";
-	}
-	str << "forced includes:\n";
-	for( const auto &include : mForcedIncludes ) {
-		str << "\t- " << include << "\n";
-	}
-	str << "preprocessor definitions: ";
-	for( const auto &ppDefine : mPpDefinitions ) {
-		str << ppDefine << " ";
-	}
-	str << endl;
-	str << "compiler options: ";
-	for( const auto &flag : mCompilerOptions ) {
-		str << flag << " ";
-	}
-	str << endl;
-	str << "linker options: ";
-	for( const auto &flag : mLinkerOptions ) {
-		str << flag << " ";
-	}
-	str << endl;
-	str << "user macros:\n";
-	for( const auto &macro : mUserMacros ) {
-		str << "\t- " << macro.first << " = " << macro.second << "\n";
-	}
-	str << endl;
-
-	return str.str();
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::include( const ci::fs::path &path )
-{
-	mIncludes.push_back( path );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::libraryPath( const ci::fs::path &path )
-{
-	mLibraryPaths.push_back( path );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::library( const std::string &library )
-{
-	mLibraries.push_back( library );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::define( const std::string &definition )
-{
-	mPpDefinitions.push_back( definition );
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::usePrecompiledHeader( bool use /*const ci::fs::path &path*/ )
-{
-	mUsePch = use;
-	//mPrecompiledHeader = path;
-	return *this;
-}
-		
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::createPrecompiledHeader( bool create /*const ci::fs::path &path*/ )
-{
-	mGeneratePch = create;
-	//mPrecompiledHeader = path;
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::objectFile( const ci::fs::path &path )
-{
-	mObjectFilePath = path;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::programDatabase( const ci::fs::path &path )
-{
-	mPdbPath = path;
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::compilerOption( const std::string &option )
-{
-	mCompilerOptions.push_back( option );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::linkerOption( const std::string &option )
-{
-	mLinkerOptions.push_back( option );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::userMacro( const std::string &name, const std::string &value )
-{
-	mUserMacros[name] = value;
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::verbose( bool enabled )
-{
-	mVerbose = enabled;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::outputPath( const ci::fs::path &path )
-{
-	mOutputPath = path;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::intermediatePath( const ci::fs::path &path )
-{
-	mIntermediatePath = path;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::configuration( const std::string &option )
-{
-	mConfiguration = option;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::platform( const std::string &option )
-{
-	mPlatform = option;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::platformToolset( const std::string &option )
-{
-	mPlatformToolset = option;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::moduleName( const std::string &name )
-{
-	mModuleName = name;
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::typeName( const std::string &typeName )
-{ 
-	mTypeName = typeName;
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::forceInclude( const std::string &filename )
-{
-	mForcedIncludes.push_back( filename );
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::additionalSource( const ci::fs::path &cppFile )
-{
-	mAdditionalSources.push_back( cppFile );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::additionalSources( const std::vector<ci::fs::path> &cppFiles )
-{
-	mAdditionalSources.insert( mAdditionalSources.begin(), cppFiles.begin(), cppFiles.end() );
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::linkObj( const ci::fs::path &path )
-{
-	mObjPaths.push_back( path );
-	return *this;
-}
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::linkAppObjs( bool link )
-{
-	mLinkAppObjs = link;
-	return *this;
-}
-
-CompilerMsvc::BuildSettings& CompilerMsvc::BuildSettings::generateFactory( bool generate )
-{
-	mGenerateFactory = generate;
-	return *this;
 }
 
 CompilerMsvc::CompilerMsvc()
@@ -594,7 +90,7 @@ std::string CompilerMsvc::getCLInitCommand() const
 
 ci::fs::path CompilerMsvc::getCLInitPath() const
 {
-	return getProjectConfiguration().projectDir;
+	return ProjectConfiguration::instance().getProjectDir();
 }
 
 ci::fs::path CompilerMsvc::getCompilerPath() const
@@ -753,7 +249,7 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 			if( it->path().extension() == ".obj" ) {
 				// Skip obj for current source and current app
 				if( it->path().filename().string().find( settings.getModuleName() + ".obj" ) == string::npos 
-					&& it->path().filename().string().find( getProjectConfiguration().projectPath.stem().string() + "App.obj" ) == string::npos
+					&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos
 					) {
 					command += it->path().generic_string() + " ";
 					result->getObjectFilePaths().push_back( it->path() );
@@ -846,7 +342,7 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 	// issue the build command with a completion token
 	auto command = generateBuildCommand( sourcePath, buildSettings, &result );
 	mBuilds.insert( make_pair( sourcePath.filename(), make_tuple( result, onBuildFinish, timePoint ) ) );
-	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << getProjectConfiguration().projectPath.stem() << ", Configuration: " << getProjectConfiguration().configuration << " " << getProjectConfiguration().platform << " ------" << endl;
+	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << ProjectConfiguration::instance().getProjectPath().stem() << ", Configuration: " << ProjectConfiguration::instance().getConfiguration() << " " << ProjectConfiguration::instance().getPlatform() << " ------" << endl;
 	app::console() << "1>  " << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
 }
@@ -878,9 +374,9 @@ namespace {
 namespace {
 std::string trimProjectDir( const std::string &s )
 {
-	auto it = s.find( getProjectConfiguration().projectDir.generic_string() );
+	auto it = s.find( ProjectConfiguration::instance().getProjectDir().generic_string() );
 	if( it != std::string::npos ) {
-		return s.substr( getProjectConfiguration().projectDir.generic_string().length() );
+		return s.substr( ProjectConfiguration::instance().getProjectDir().generic_string().length() );
 	}
 	else {
 		return s;
