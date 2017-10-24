@@ -8,11 +8,11 @@
 
 *Runtime* is a developement tool that enables fast iteration and prototyping through c++ code hot-swapping. It is lightweight, use your native compiler and is integrated with your IDE and debugger. *Runtime* compilation happens as seamlessly as possible using your IDE error report system and debugger tools.  
 
-One of the core principle of this library is to be able to disappear completly when you don't need it. Every pieces of *Runtime* are designed to become *no-op* when building in `Release` or `Debug` mode. There's a very light setup code to get things running and all of it disappear as soon as you switch to a non runtime target. This makes integrating *Runtime* in production without the fears and investments of big dependencies.   
+One of the core principle of this library is to be able to disappear completly when you don't need it. Every pieces of *Runtime* are designed to become *no-op* when building in `Release` or `Debug` mode. There's a very light setup code to get things running and all of it disappear as soon as you switch to a non runtime target. This makes it easier to integrate *Runtime* in production without the fears and investments of big dependencies.   
 
 ### Making a `class` runtime-compilable.
 
-#### `RT_WATCH_HEADER` / `RT_WATCH_IMPL`
+#### `RT_DECL` / `RT_IMPL`
 The easiest way to get a `class` watched by the runtime compiler is to use the following macros in both your header and implementation file:
   
 `MyClass.h`  
@@ -25,7 +25,7 @@ class MyClass {
 public:
 	MyClass();
 protected:
-	RT_WATCH_HEADER
+	RT_DECL
 };
 ```
   
@@ -37,7 +37,7 @@ MyClass::MyClass()
 {
 }
 
-RT_WATCH_IMPL( MyClass );
+RT_IMPL( MyClass );
 ```
 
 From that point, any instance of the class `MyClass` **allocated on the heap** will be automatically reloaded when saving the header or the implementation file. Which means that you can use any flavor of smart or raw pointer (the only exception being `std::make_shared`... more on that later). 
@@ -71,7 +71,7 @@ public:
 
 	virtual void draw();
 protected:
-	RT_WATCH_HEADER
+	RT_DECL
 };
 ```
   
@@ -90,12 +90,12 @@ public:
 
 	rt_virtual void draw();
 protected:
-	RT_WATCH_HEADER
+	RT_DECL
 };
 ```
   
-#### `RT_WATCH_INLINE`
-When working on a header only class `RT_WATCH_INLINE` can be used instead of the `RT_WATCH_HEADER` / `RT_WATCH_IMPL` pair:  
+#### `RT_IMPL_INLINE`
+When working on a header only class `RT_IMPL_INLINE` can be used instead of the `RT_DECL` / `RT_IMPL` pair:  
   
 ```c++
 #pragma once
@@ -112,7 +112,7 @@ public:
 		// ...
 	}
 protected:
-	RT_WATCH_INLINE( MyClass );
+	RT_IMPL_INLINE( MyClass );
 };
 
 MyClass::MyClass() 
@@ -120,18 +120,19 @@ MyClass::MyClass()
 }
 ```
 
-#### `rt::Compiler::BuildSettings`
-
-TODO   
-
 #### `std::make_shared`
 
-TODO   
+Unfortunately `std::make_shared` works differently underhood, making a seemless integration more difficult. At the moment the only way to make a `std::shared_ptr` runtime reloadable is to use the `operator new` or the following :  
+  
 ```c++
 #include "runtime/make_shared.h"
 
 rt::make_shared<MyClass>( ... );
 ```
+
+#### `rt::Compiler::BuildSettings`
+
+TODO   
 
 ### Using `rt::Compiler` and `rt::Module` directly
 
