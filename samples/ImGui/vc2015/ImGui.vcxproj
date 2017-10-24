@@ -237,37 +237,16 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerMsvc.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\..\..\src\runtime\BuildSettings.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\BuildStep.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\Module.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\Process.cpp" />
+    <ClCompile Include="..\..\..\src\runtime\ProjectConfiguration.cpp" />
     <ClCompile Include="..\src\ImGuiApp.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\Test.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -276,18 +255,20 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
     <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imconfig.h" />
     <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.h" />
     <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\..\include\runtime\App.h" />
+    <ClInclude Include="..\..\..\include\runtime\BuildSettings.h" />
+    <ClInclude Include="..\..\..\include\runtime\BuildStep.h" />
     <ClInclude Include="..\..\..\include\runtime\ClassFactory.h" />
     <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h" />
-    <ClInclude Include="..\..\..\include\runtime\CompilerMsvc.h" />
+    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h" />
+    <ClInclude Include="..\..\..\include\runtime\CompilerMSVC.h" />
     <ClInclude Include="..\..\..\include\runtime\make_shared.h" />
+    <ClInclude Include="..\..\..\include\runtime\Module.h" />
     <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h" />
     <ClInclude Include="..\..\..\include\runtime\Process.h" />
+    <ClInclude Include="..\..\..\include\runtime\ProjectConfiguration.h" />
     <ClInclude Include="..\..\..\include\runtime\Virtual.h" />
     <ClInclude Include="..\include\Resources.h" />
-    <ClInclude Include="..\..\..\include\runtime\App.h" />
-    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h" />
-    <ClInclude Include="..\..\..\include\runtime\Memory.h" />
-    <ClInclude Include="..\..\..\include\runtime\Module.h" />
     <ClInclude Include="..\src\Test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
