@@ -124,6 +124,10 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.h" ),
 			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ), false ) || settings.mGeneratePch;
 
+		auto outputPchFilePath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ); 
+		if( ! fs::exists( outputPchFilePath ) )
+			createPch = true;
+
 		if( createPch ) {
 			command += "cl /c ";
 
@@ -141,7 +145,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 			}
 			
 			command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
-			command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
+			command += "/Fp" + outputPchFilePath.string() + " ";
 		#if defined( _DEBUG )
 			command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
 		#endif
