@@ -54,7 +54,7 @@ CompilerMsvc::CompilerMsvc()
 	CI_LOG_V( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
 	
 	if( mVerbose ) {
-		CI_LOG_I( "Compiler Settings: \n" << CompilerMsvc::instance().printToString() );
+		CI_LOG_I( "Compiler Settings: \n" << printToString() );
 	}
 
 	initializeProcess();
