@@ -23,13 +23,14 @@
 #include <map>
 #include <functional>
 
-#include "BuildStep.h"
+#include "runtime/Export.h"
+#include "runtime/BuildStep.h"
 #include "cinder/Filesystem.h"
 
 namespace runtime {
 
 //! Describes the list of Options and arguments available when building a file
-class BuildSettings {
+class CI_RT_API BuildSettings {
 public:
 	BuildSettings();
 	

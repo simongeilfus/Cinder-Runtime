@@ -20,30 +20,21 @@
 */
 #pragma once
 
-#include "runtime/Export.h"
+#if defined( CINDER_SHARED ) && ! defined( CINDER_RT_SHARED )
+	//#define CINDER_RT_SHARED
+#endif
 
-namespace runtime {
+#if defined( CINDER_RT_SHARED_BUILD )
+	#define CI_RT_API __declspec(dllexport)
+#elif defined( CINDER_RT_SHARED )
+	#define CI_RT_API __declspec(dllimport)
+#else
+	#define CI_RT_API
+#endif
 
-class CI_RT_API BuildSettings;
-
-class CI_RT_API BuildStep {
-public:
-	~BuildStep() {}
-	virtual void execute( BuildSettings* settings ) = 0;
-};
-
-class CI_RT_API CodeGeneration : public BuildStep {
-public:
-	
-	void execute( BuildSettings* settings ) override;
-};
-
-class CI_RT_API BuildCommand : public BuildStep {
-public:
-	
-	void execute( BuildSettings* settings ) override;
-};
-
-} // namespace runtime
-
-namespace rt = runtime;
+#if defined( CINDER_RT_SHARED_BUILD ) || defined( CINDER_SHARED ) 
+	// "needs to have dll-interface to be used by clients of class" warning
+	#pragma warning (disable: 4251)
+	// "non dll-interface class 'std::exception' used as base for dll-interface class" (Mostly for cinder::Exception)
+	#pragma warning (disable: 4275)
+#endif

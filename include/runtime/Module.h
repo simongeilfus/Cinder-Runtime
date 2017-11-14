@@ -23,12 +23,14 @@
 #include "cinder/Filesystem.h"
 #include "cinder/Signals.h"
 
+#include "runtime/Export.h"
+
 namespace runtime {
 
 using ModulePtr = std::unique_ptr<class Module>;
 using ModuleRef = std::shared_ptr<class Module>;
 
-class Module : public std::enable_shared_from_this<Module> {
+class CI_RT_API Module : public std::enable_shared_from_this<Module> {
 public:
 	//! Constructs a new Module object
 	Module( const ci::fs::path &path );

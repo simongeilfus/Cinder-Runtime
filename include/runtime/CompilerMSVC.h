@@ -31,7 +31,7 @@ using CompilerPtr = std::unique_ptr<class CompilerMsvc>; // temp shortcut
 using CompilerMsvcRef = std::shared_ptr<class CompilerMsvc>;
 using CompilerMsvcPtr = std::unique_ptr<class CompilerMsvc>;
 
-class CompilerMsvc : public CompilerBase {
+class CI_RT_API CompilerMsvc : public CompilerBase {
 public:
 	CompilerMsvc();
 	~CompilerMsvc();

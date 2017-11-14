@@ -23,9 +23,11 @@
 #include "cinder/Exception.h"
 #include "cinder/Filesystem.h"
 
+#include "runtime/Export.h"
+
 namespace runtime {
 
-class ProjectConfiguration {
+class CI_RT_API ProjectConfiguration {
 public:
 	ProjectConfiguration( const ci::fs::path &path = ci::fs::path() );
 
@@ -56,7 +58,7 @@ protected:
 	ci::fs::path mProjectDir;
 };
 
-class ProjectConfigurationException : public ci::Exception {
+class CI_RT_API ProjectConfigurationException : public ci::Exception {
 public:
 	ProjectConfigurationException( const std::string &message ) : ci::Exception( message ) {}
 };

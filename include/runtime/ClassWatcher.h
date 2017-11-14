@@ -8,6 +8,7 @@
 #include "cinder/Filesystem.h"
 #include "cinder/FileWatcher.h"
 
+#include "runtime/Export.h"
 #include "runtime/Module.h"
 #include "runtime/CompilerMsvc.h"
 
@@ -26,7 +27,7 @@
 
 namespace runtime {
 
-class ClassWatcher {
+class CI_RT_API ClassWatcher {
 public:
 	//! Returns the global ClassWatcher instance
 	static ClassWatcher& instance();
