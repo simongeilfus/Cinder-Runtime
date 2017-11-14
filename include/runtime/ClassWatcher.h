@@ -41,6 +41,10 @@ protected:
 	template<typename T>
 	void initCallbacks( const std::type_index &typeIndex );
 	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj() );
+	void sourceChanged( const ci::WatchEvent &event, const std::type_index &typeIndex, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings );
+	void handleBuild( const rt::CompilationResult &result, const std::type_index &typeIndex, const std::string &vtableSym );
+	void swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym );
+	void reconstructInstances( const std::type_index &typeIndex );
 	
 	class Callbacks {
 	public:
