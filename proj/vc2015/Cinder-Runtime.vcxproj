@@ -19,23 +19,32 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\runtime\App.h" />
+    <ClInclude Include="..\..\include\runtime\BuildSettings.h" />
+    <ClInclude Include="..\..\include\runtime\BuildStep.h" />
     <ClInclude Include="..\..\include\runtime\ClassFactory.h" />
     <ClInclude Include="..\..\include\runtime\ClassWatcher.h" />
     <ClInclude Include="..\..\include\runtime\CompilerBase.h" />
     <ClInclude Include="..\..\include\runtime\CompilerMsvc.h" />
+    <ClInclude Include="..\..\include\runtime\Export.h" />
     <ClInclude Include="..\..\include\runtime\make_shared.h" />
     <ClInclude Include="..\..\include\runtime\Module.h" />
     <ClInclude Include="..\..\include\runtime\PrecompiledHeader.h" />
     <ClInclude Include="..\..\include\runtime\Process.h" />
+    <ClInclude Include="..\..\include\runtime\ProjectConfiguration.h" />
     <ClInclude Include="..\..\include\runtime\Virtual.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\runtime\BuildSettings.cpp" />
+    <ClCompile Include="..\..\src\runtime\BuildStep.cpp" />
     <ClCompile Include="..\..\src\runtime\ClassFactory.cpp" />
+    <ClCompile Include="..\..\src\runtime\ClassWatcher.cpp" />
     <ClCompile Include="..\..\src\runtime\CompilerBase.cpp" />
-    <ClCompile Include="..\..\src\runtime\CompilerMsvc.cpp" />
+    <ClCompile Include="..\..\src\runtime\CompilerMSVC.cpp" />
     <ClCompile Include="..\..\src\runtime\Module.cpp" />
     <ClCompile Include="..\..\src\runtime\PrecompiledHeader.cpp" />
     <ClCompile Include="..\..\src\runtime\Process.cpp" />
+    <ClCompile Include="..\..\src\runtime\ProjectConfiguration.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EA0394F8-2C52-4D5F-8554-93E885EA2465}</ProjectGuid>
@@ -127,7 +136,7 @@
       </SDLCheck>
       <AdditionalIncludeDirectories>..\..\include;..\..\..\..\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <PreprocessorDefinitions>WIN32;CINDER_SHARED_BUILD;_DEBUG;NOMINMAX;_WIN32_WINNT=0x0601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;CINDER_RT_SHARED_BUILD;_DEBUG;NOMINMAX;_WIN32_WINNT=0x0601;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
@@ -168,7 +177,7 @@
       <AdditionalIncludeDirectories>..\..\include;..\..\..\..\include</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <WholeProgramOptimization>false</WholeProgramOptimization>
-      <PreprocessorDefinitions>WIN32;CINDER_SHARED_BUILD;NDEBUG;_LIB;NOMINMAX;_WIN32_WINNT=0x0601;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);FT2_BUILD_LIBRARY=1;FT_DEBUG_LEVEL_TRACE=1</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;CINDER_RT_SHARED_BUILD;NDEBUG;_LIB;NOMINMAX;_WIN32_WINNT=0x0601;_CRT_SECURE_NO_WARNINGS;_SCL_SECURE_NO_WARNINGS;%(PreprocessorDefinitions);FT2_BUILD_LIBRARY=1;FT_DEBUG_LEVEL_TRACE=1</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
