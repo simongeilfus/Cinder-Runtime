@@ -21,8 +21,12 @@ build/
 *.pdb
 Debug/
 Release/
-Debug_DLL/
-Release_DLL/
+Debug_Shared/
+Release_Shared/
 Debug_ANGLE/
 Release_ANGLE/
 ipch/
+
+
+# Libraries
+lib/
