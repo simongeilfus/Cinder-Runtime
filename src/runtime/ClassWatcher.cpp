@@ -31,7 +31,6 @@ ClassWatcher& ClassWatcher::instance()
 	static ClassWatcher classWatcher;
 	return classWatcher;
 }
-	
 
 namespace {
 
@@ -68,6 +67,7 @@ void ClassWatcher::watchImpl( const std::type_index &typeIndex, void* address, c
 
 		// initialize the class module
 		mModules[typeIndex] = std::make_unique<rt::Module>( dllPath );
+
 		// and start watching the source files
 		FileWatcher::instance().watch( filePaths, FileWatcher::Options().callOnWatch( false ), bind( &ClassWatcher::sourceChanged, this, placeholders::_1, typeIndex, filePaths, settings ) );
 	}
@@ -83,7 +83,8 @@ void ClassWatcher::unwatch( const std::type_index &typeIndex, void* address )
 void ClassWatcher::sourceChanged( const WatchEvent &event, const std::type_index &typeIndex, const std::vector<fs::path> &filePaths, const rt::BuildSettings &settings )
 {
 	// unlock the dll-handle before building
-	mModules[typeIndex]->unlockHandle();
+	const auto &module = mModules[typeIndex];
+	module->unlockHandle();
 				
 	// force precompiled-header re-generation on header change
 	rt::BuildSettings buildSettings = settings;
@@ -99,19 +100,21 @@ void ClassWatcher::sourceChanged( const WatchEvent &event, const std::type_index
 void ClassWatcher::handleBuild( const rt::CompilationResult &result, const std::type_index &typeIndex, const std::string &vtableSym )
 {
 	// if a new dll exists update the handle
-	if( fs::exists( mModules[typeIndex]->getPath() ) ) {
+	const auto &module = mModules[typeIndex];
+	const auto &instances = mInstances[typeIndex];
+	if( fs::exists( module->getPath() ) ) {
 
 		// call cleanup / pre-build callbacks
 		const auto &callbacks = mCallbacks[typeIndex];
-		mModules[typeIndex]->getCleanupSignal().emit( *mModules[typeIndex] );
-		for( size_t i = 0; i < mInstances[typeIndex].size(); ++i ) {
+		module->getCleanupSignal().emit( *module );
+		for( size_t i = 0; i < instances.size(); ++i ) {
 			if( callbacks.getPreBuild() ) {
-				callbacks.getPreBuild()( mInstances[typeIndex][i] );
+				callbacks.getPreBuild()( instances[i] );
 			}
 		}
 
 		// swap module's dll
-		mModules[typeIndex]->updateHandle();
+		module->updateHandle();
 
 		// update the instances or swap vtables depending on which file has been modified
 		if( ! vtableSym.empty() ) {
@@ -121,32 +124,35 @@ void ClassWatcher::handleBuild( const rt::CompilationResult &result, const std::
 			reconstructInstances( typeIndex );
 		}
 						
-		mModules[typeIndex]->getChangedSignal().emit( *mModules[typeIndex] );
+		module->getChangedSignal().emit( *module );
 	}
 	else {
-		//throw ClassWatcherException( "Module " + buildSettings.getModuleName() + " not found at " + mModules[typeIndex]->getPath().string() );
+		//throw ClassWatcherException( "Module " + buildSettings.getModuleName() + " not found at " + module->getPath().string() );
 	}
 }
 
 void ClassWatcher::swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym )
 {
 	const auto &callbacks = mCallbacks[typeIndex];
+	const auto &module = mModules[typeIndex];
+	const auto &instances = mInstances[typeIndex];
+
 	// Find the address of the vtable
-	if( void* vtableAddress = mModules[typeIndex]->getSymbolAddress( vtableSym ) ) {
-		for( size_t i = 0; i < mInstances[typeIndex].size(); ++i ) {
+	if( void* vtableAddress = module->getSymbolAddress( vtableSym ) ) {
+		for( size_t i = 0; i < instances.size(); ++i ) {
 		#if defined( CEREAL_CEREAL_HPP_ )
 			std::stringstream archiveStream;
 			cereal::BinaryOutputArchive outputArchive( archiveStream );
-			serialize( outputArchive, mInstances[typeIndex][i] );
+			serialize( outputArchive, instances[i] );
 		#endif
-			*(void **)mInstances[typeIndex][i] = vtableAddress;
+			*(void **) instances[i] = vtableAddress;
 									
 			if( callbacks.getPostBuild() ) {
-				callbacks.getPostBuild()( mInstances[typeIndex][i] );
+				callbacks.getPostBuild()( instances[i] );
 			}
 		#if defined( CEREAL_CEREAL_HPP_ )
 			cereal::BinaryInputArchive inputArchive( archiveStream );
-			serialize( inputArchive, mInstances[typeIndex][i] );
+			serialize( inputArchive, instances[i] );
 		#endif
 		}
 	}
@@ -154,24 +160,26 @@ void ClassWatcher::swapInstancesVtables( const std::type_index &typeIndex, const
 void ClassWatcher::reconstructInstances( const std::type_index &typeIndex )
 {
 	const auto &callbacks = mCallbacks[typeIndex];
-	if( auto placementNewOperator = static_cast<void*(__cdecl*)(void*)>( mModules[typeIndex]->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
+	const auto &module = mModules[typeIndex];
+	const auto &instances = mInstances[typeIndex];
+	if( auto placementNewOperator = static_cast<void*(__cdecl*)(void*)>( module->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
 		// use placement new to construct new instances at the current instances addresses
-		for( size_t i = 0; i < mInstances[typeIndex].size(); ++i ) {
+		for( size_t i = 0; i < instances.size(); ++i ) {
 		#if defined( CEREAL_CEREAL_HPP_ )
 			std::stringstream archiveStream;
 			cereal::BinaryOutputArchive outputArchive( archiveStream );
-			serialize( outputArchive, mInstances[typeIndex][i] );
+			serialize( outputArchive, instances[i] );
 		#endif
 			if( callbacks.getDestructor() ) {
-				callbacks.getDestructor()( mInstances[typeIndex][i] );
+				callbacks.getDestructor()( instances[i] );
 			}
-			placementNewOperator( mInstances[typeIndex][i] );
+			placementNewOperator( instances[i] );
 			if( callbacks.getPostBuild() ) {
-				callbacks.getPostBuild()( mInstances[typeIndex][i] );
+				callbacks.getPostBuild()( instances[i] );
 			}
 		#if defined( CEREAL_CEREAL_HPP_ )
 			cereal::BinaryInputArchive inputArchive( archiveStream );
-			serialize( inputArchive, mInstances[typeIndex][i] );
+			serialize( inputArchive, instances[i] );
 		#endif
 		}
 	}

@@ -32,17 +32,17 @@ public:
 	virtual void execute( BuildSettings* settings ) = 0;
 };
 
-class CI_RT_API CodeGeneration : public BuildStep {
-public:
-	
-	void execute( BuildSettings* settings ) override;
-};
-
-class CI_RT_API BuildCommand : public BuildStep {
-public:
-	
-	void execute( BuildSettings* settings ) override;
-};
+//class CI_RT_API CodeGeneration : public BuildStep {
+//public:
+//	
+//	void execute( BuildSettings* settings ) override;
+//};
+//
+//class CI_RT_API BuildCommand : public BuildStep {
+//public:
+//	
+//	void execute( BuildSettings* settings ) override;
+//};
 
 } // namespace runtime
 

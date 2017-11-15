@@ -1,12 +1,31 @@
+/*
+ Copyright (c) 2017, Simon Geilfus
+ All rights reserved.
+ 
+ This code is designed for use with the Cinder C++ library, http://libcinder.org
+ Redistribution and use in source and binary forms, with or without modification, are permitted provided that
+ the following conditions are met:
+    * Redistributions of source code must retain the above copyright notice, this list of conditions and
+	the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and
+	the following disclaimer in the documentation and/or other materials provided with the distribution.
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+ WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+ ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
+ TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+*/
 #pragma once
-
-#if ! defined( RT_COMPILED ) && defined( CINDER_SHARED )
 
 #include <typeindex>
 
 #include "cinder/Exception.h"
 #include "cinder/Filesystem.h"
 #include "cinder/FileWatcher.h"
+#include "cinder/Noncopyable.h"
 
 #include "runtime/Export.h"
 #include "runtime/Module.h"
@@ -27,7 +46,7 @@
 
 namespace runtime {
 
-class CI_RT_API ClassWatcher {
+class CI_RT_API ClassWatcher : public ci::Noncopyable {
 public:
 	//! Returns the global ClassWatcher instance
 	static ClassWatcher& instance();
@@ -213,8 +232,6 @@ namespace details {
 
 namespace rt = runtime;
 
-#include "cinder/app/App.h"
-
 #define RT_DECL \
 public: \
 	void* operator new( size_t size ); \
@@ -222,8 +239,6 @@ public: \
 private: \
 	static const ci::fs::path __rt_getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); } \
 public:
-
-
 
 #define __RT_IMPL1( Class ) \
 void* Class::operator new( size_t size ) \
@@ -290,16 +305,3 @@ void operator delete( void* ptr ) \
 #define __RT_IMPL_EXPAND(x) x
 #define RT_IMPL( ... ) __RT_IMPL_EXPAND(__RT_IMPL_SWITCH(__VA_ARGS__,__RT_IMPL3,__RT_IMPL2,__RT_IMPL1))__RT_IMPL_EXPAND((__VA_ARGS__))
 #define RT_IMPL_INLINE( ... ) __RT_IMPL_EXPAND(__RT_IMPL_INLINE_SWITCH(__VA_ARGS__,__RT_IMPL_INLINE2,__RT_IMPL_INLINE1))__RT_IMPL_EXPAND((__VA_ARGS__))
-
-#else
-
-#include "cinder/Filesystem.h"
-#include "cinder/FileWatcher.h"
-#define RT_DECL \
-private: \
-	static const ci::fs::path __rt_getHeaderPath() { return ci::fs::absolute( ci::fs::path( __FILE__ ) ); } \
-public:
-#define RT_IMPL( ... )
-#define RT_IMPL_INLINE( ... )
-
-#endif

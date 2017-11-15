@@ -21,7 +21,7 @@
 #pragma once
 
 #if defined( CINDER_SHARED ) && ! defined( CINDER_RT_SHARED )
-	//#define CINDER_RT_SHARED
+	#define CINDER_RT_SHARED
 #endif
 
 #if defined( CINDER_RT_SHARED_BUILD )
