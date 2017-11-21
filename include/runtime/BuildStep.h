@@ -20,29 +20,69 @@
 */
 #pragma once
 
+#include <vector>
+#include <string>
+
 #include "runtime/Export.h"
+#include "cinder/Filesystem.h"
 
 namespace runtime {
 
 class CI_RT_API BuildSettings;
 
+using BuildStepRef = std::shared_ptr<class BuildStep>;
+
+//! Represents a custom operation executed before or after a build
 class CI_RT_API BuildStep {
 public:
-	~BuildStep() {}
-	virtual void execute( BuildSettings* settings ) = 0;
+	virtual ~BuildStep();
+	virtual void execute( BuildSettings* settings ) const = 0;
 };
 
-//class CI_RT_API CodeGeneration : public BuildStep {
-//public:
-//	
-//	void execute( BuildSettings* settings ) override;
-//};
-//
-//class CI_RT_API BuildCommand : public BuildStep {
-//public:
-//	
-//	void execute( BuildSettings* settings ) override;
-//};
+//! BuildStep used to generate the factory source
+class CI_RT_API CodeGeneration : public BuildStep {
+public:
+	class Options {
+	public:
+		//! Exposes the className class new operator
+		Options& newOperator( const std::string &className );
+		//! Exposes the className class placement new operator
+		Options& placementNewOperator( const std::string &className );
+		//! Adds an include at the top of the source
+		Options& include( const std::string &filename );
+
+	protected:
+		friend class CodeGeneration;
+		std::vector<std::string> mNewOperators;
+		std::vector<std::string> mPlacementNewOperators;
+		std::vector<std::string> mIncludes;
+	};
+
+	CodeGeneration( const Options &options );
+	void execute( BuildSettings* settings ) const override;
+protected:
+	Options mOptions;
+};
+
+//! BuildStep used to parse source, extract includes and generate the source for a precompiled header
+class CI_RT_API PrecompiledHeader : public BuildStep {
+public:
+	class Options {
+	public:
+		//! Extracts include from source at path
+		Options& parseSource( const ci::fs::path &path );
+		//! Adds an include to the list of precompiled headers
+		Options& include( const std::string &filename );
+	protected:
+		friend class PrecompiledHeader;
+		std::vector<std::string> mIncludes;
+	};
+	
+	PrecompiledHeader( const Options &options );
+	void execute( BuildSettings* settings ) const override;
+protected:
+	Options mOptions;
+};
 
 } // namespace runtime
 

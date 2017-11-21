@@ -19,17 +19,18 @@
  POSSIBILITY OF SUCH DAMAGE.
 */
 
-#include "runtime/ClassWatcher.h"
+#include "runtime/Factory.h"
+#include "cinder/Log.h"
 
 using namespace std;
 using namespace ci;
 
 namespace runtime {
 
-ClassWatcher& ClassWatcher::instance()
+Factory& Factory::instance()
 {
-	static ClassWatcher classWatcher;
-	return classWatcher;
+	static Factory factory;
+	return factory;
 }
 
 namespace {
@@ -46,13 +47,22 @@ namespace {
 
 } // anonymous namespace
 
-void ClassWatcher::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings )
+void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 {
-	if( ! mInstances.count( typeIndex ) ) {
-		mInstances[typeIndex].push_back( address );
+	void* instance;
+	if( ! mTypes.count( typeIndex ) ) {
+		instance = ::operator new( size );
+	}
+	else if( auto newOperator = static_cast<void*(__cdecl*)(const std::string &)>( mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) ) ) {
+		instance = newOperator( mTypes[typeIndex].getName() );
 	}
 
-	if( ! mModules.count( typeIndex ) ) {
+	return instance;
+}
+
+void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings )
+{
+	if( ! mTypes.count( typeIndex ) ) {
 		
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
@@ -60,30 +70,39 @@ void ClassWatcher::watchImpl( const std::type_index &typeIndex, void* address, c
 		if( settings.getTypeName().empty() ) {
 			settings.typeName( name );
 		}
+		
+		// add class factory code generation as a prebuild step
+		auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
+		for( const auto &path : filePaths ) {
+			if( path.extension() == ".h" || path.extension() == ".hpp" ) {
+				codeGenOptions.include( path.filename().string() ); // TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+			}
+		}
+		settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
 
 		if( settings.isVerboseEnabled() ) {
 			Compiler::instance().debugLog( &settings );
 		}
 
-		// initialize the class module
-		mModules[typeIndex] = std::make_unique<rt::Module>( dllPath );
-
 		// and start watching the source files
-		FileWatcher::instance().watch( filePaths, FileWatcher::Options().callOnWatch( false ), bind( &ClassWatcher::sourceChanged, this, placeholders::_1, typeIndex, filePaths, settings ) );
+		FileWatcher::instance().watch( filePaths, FileWatcher::Options().callOnWatch( false ), bind( &Factory::sourceChanged, this, placeholders::_1, typeIndex, filePaths, settings ) );
 	}
+
+	mTypes[typeIndex].getInstances().push_back( address );
 }
 
-void ClassWatcher::unwatch( const std::type_index &typeIndex, void* address )
+void Factory::unwatch( const std::type_index &typeIndex, void* address )
 {
-	if( mInstances.count( typeIndex ) ) {
-		mInstances[typeIndex].erase( std::remove( mInstances[typeIndex].begin(), mInstances[typeIndex].end(), address ), mInstances[typeIndex].end() );
+	if( mTypes.count( typeIndex ) ) {
+		auto &instances = mTypes[typeIndex].getInstances();
+		instances.erase( std::remove( instances.begin(), instances.end(), address ), instances.end() );
 	}
 }
 
-void ClassWatcher::sourceChanged( const WatchEvent &event, const std::type_index &typeIndex, const std::vector<fs::path> &filePaths, const rt::BuildSettings &settings )
+void Factory::sourceChanged( const WatchEvent &event, const std::type_index &typeIndex, const std::vector<fs::path> &filePaths, const rt::BuildSettings &settings )
 {
 	// unlock the dll-handle before building
-	const auto &module = mModules[typeIndex];
+	const auto &module = mTypes[typeIndex].getModule();
 	module->unlockHandle();
 				
 	// force precompiled-header re-generation on header change
@@ -94,27 +113,26 @@ void ClassWatcher::sourceChanged( const WatchEvent &event, const std::type_index
 	
 	// initiate the build
 	rt::CompilerMsvc::instance().build( filePaths.front(), buildSettings, 
-		bind( &ClassWatcher::handleBuild, this, placeholders::_1, typeIndex, ( event.getFile().extension() == ".cpp" ? rt::CompilerMsvc::instance().getSymbolForVTable( buildSettings.getTypeName() ) : "" ) ) );
+		bind( &Factory::handleBuild, this, placeholders::_1, typeIndex, ( event.getFile().extension() == ".cpp" ? rt::CompilerMsvc::instance().getSymbolForVTable( buildSettings.getTypeName() ) : "" ) ) );
 }
 
-void ClassWatcher::handleBuild( const rt::CompilationResult &result, const std::type_index &typeIndex, const std::string &vtableSym )
+void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym )
 {
 	// if a new dll exists update the handle
-	const auto &module = mModules[typeIndex];
-	const auto &instances = mInstances[typeIndex];
-	if( fs::exists( module->getPath() ) ) {
+	const auto &type = mTypes[typeIndex];
+	if( fs::exists( type.getModule()->getPath() ) ) {
 
 		// call cleanup / pre-build callbacks
-		const auto &callbacks = mCallbacks[typeIndex];
-		module->getCleanupSignal().emit( *module );
+		type.getModule()->getCleanupSignal().emit( *type.getModule() );
+		const auto &instances = type.getInstances();
 		for( size_t i = 0; i < instances.size(); ++i ) {
-			if( callbacks.getPreBuild() ) {
-				callbacks.getPreBuild()( instances[i] );
+			if( type.getPreBuild() ) {
+				type.getPreBuild()( instances[i] );
 			}
 		}
 
 		// swap module's dll
-		module->updateHandle();
+		type.getModule()->updateHandle();
 
 		// update the instances or swap vtables depending on which file has been modified
 		if( ! vtableSym.empty() ) {
@@ -124,18 +142,18 @@ void ClassWatcher::handleBuild( const rt::CompilationResult &result, const std::
 			reconstructInstances( typeIndex );
 		}
 						
-		module->getChangedSignal().emit( *module );
+		type.getModule()->getChangedSignal().emit( *type.getModule() );
 	}
 	else {
 		//throw ClassWatcherException( "Module " + buildSettings.getModuleName() + " not found at " + module->getPath().string() );
 	}
 }
 
-void ClassWatcher::swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym )
+void Factory::swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym )
 {
-	const auto &callbacks = mCallbacks[typeIndex];
-	const auto &module = mModules[typeIndex];
-	const auto &instances = mInstances[typeIndex];
+	const auto &type = mTypes[typeIndex];
+	const auto &module = type.getModule();
+	const auto &instances = type.getInstances();
 
 	// Find the address of the vtable
 	if( void* vtableAddress = module->getSymbolAddress( vtableSym ) ) {
@@ -147,8 +165,8 @@ void ClassWatcher::swapInstancesVtables( const std::type_index &typeIndex, const
 		#endif
 			*(void **) instances[i] = vtableAddress;
 									
-			if( callbacks.getPostBuild() ) {
-				callbacks.getPostBuild()( instances[i] );
+			if( type.getPostBuild() ) {
+				type.getPostBuild()( instances[i] );
 			}
 		#if defined( CEREAL_CEREAL_HPP_ )
 			cereal::BinaryInputArchive inputArchive( archiveStream );
@@ -157,12 +175,13 @@ void ClassWatcher::swapInstancesVtables( const std::type_index &typeIndex, const
 		}
 	}
 }
-void ClassWatcher::reconstructInstances( const std::type_index &typeIndex )
+void Factory::reconstructInstances( const std::type_index &typeIndex )
 {
-	const auto &callbacks = mCallbacks[typeIndex];
-	const auto &module = mModules[typeIndex];
-	const auto &instances = mInstances[typeIndex];
-	if( auto placementNewOperator = static_cast<void*(__cdecl*)(void*)>( module->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
+	const auto &type = mTypes[typeIndex];
+	const auto &module = type.getModule();
+	const auto &instances = type.getInstances();
+
+	if( auto placementNewOperator = static_cast<void*(__cdecl*)(const std::string&,void*)>( module->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
 		// use placement new to construct new instances at the current instances addresses
 		for( size_t i = 0; i < instances.size(); ++i ) {
 		#if defined( CEREAL_CEREAL_HPP_ )
@@ -170,12 +189,12 @@ void ClassWatcher::reconstructInstances( const std::type_index &typeIndex )
 			cereal::BinaryOutputArchive outputArchive( archiveStream );
 			serialize( outputArchive, instances[i] );
 		#endif
-			if( callbacks.getDestructor() ) {
-				callbacks.getDestructor()( instances[i] );
+			if( type.getDestructor() ) {
+				type.getDestructor()( instances[i] );
 			}
-			placementNewOperator( instances[i] );
-			if( callbacks.getPostBuild() ) {
-				callbacks.getPostBuild()( instances[i] );
+			placementNewOperator( type.getName(), instances[i] );
+			if( type.getPostBuild() ) {
+				type.getPostBuild()( instances[i] );
 			}
 		#if defined( CEREAL_CEREAL_HPP_ )
 			cereal::BinaryInputArchive inputArchive( archiveStream );
@@ -183,6 +202,22 @@ void ClassWatcher::reconstructInstances( const std::type_index &typeIndex )
 		#endif
 		}
 	}
+}
+
+std::string Factory::stripNamespace( const std::string &className )
+{
+	auto pos = className.find_last_of( "::" );
+	if( pos == std::string::npos )
+		return className;
+
+	std::string result = className.substr( pos + 1, className.size() - pos - 1 );
+	return result;
+}
+
+ci::fs::path Factory::makeDllPath( const ci::fs::path &intermediatePath, const char *className )
+{
+	auto strippedClassName = stripNamespace( className );
+	return intermediatePath / "runtime" / strippedClassName / "build" / ( strippedClassName + ".dll" );
 }
 
 } // namespace runtime

@@ -26,7 +26,7 @@
 
 #if ! defined( RT_COMPILED )
 
-#include "runtime/ClassWatcher.h"
+#include "runtime/Factory.h"
 
 namespace runtime {
 
@@ -53,13 +53,13 @@ void AppMswMain( const ci::app::RendererRef &defaultRenderer, const char *title,
 	RtApp<AppT>* app = new RtApp<AppT>;
 	app->dispatchAsync( [=]() {
 		std::vector<ci::fs::path> sources = { ci::fs::absolute( ci::fs::path( sourceFile ) ) };
-		rt::ClassWatcher<AppT>::instance().watch( static_cast<AppT*>( app ), title, sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::BuildSettings( buildSettings ).generateFactory( false ) );
+		rt::Factory::instance().watch<AppT>( std::type_index(typeid(AppT)), static_cast<AppT*>( app ), title, sources, buildSettings.getIntermediatePath() / "runtime" / std::string( title ) / "build" / ( std::string( title ) + ".dll" ), rt::BuildSettings( buildSettings ).generateFactory( false ) );
 	});
 
 	app->rtExecuteLaunch();
 
 	ci::app::Platform::get()->cleanupLaunch();
-	rt::ClassWatcher<AppT>::instance().unwatch( static_cast<AppT*>( app ) );
+	rt::Factory::instance().unwatch( std::type_index(typeid(AppT)), static_cast<AppT*>( app ) );
 }
 }
 
