@@ -145,7 +145,7 @@ void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index 
 		type.getModule()->getChangedSignal().emit( *type.getModule() );
 	}
 	else {
-		//throw ClassWatcherException( "Module " + buildSettings.getModuleName() + " not found at " + module->getPath().string() );
+		throw FactoryException( "Module " + output.getBuildSettings().getModuleName() + " not found at " + type.getModule()->getPath().string() );
 	}
 }
 

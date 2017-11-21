@@ -245,9 +245,9 @@ void* Factory::allocate()
 	return allocate( sizeof(Class), std::type_index(typeid(Class)) );
 }
 
-class ClassWatcherException : public ci::Exception {
+class FactoryException : public ci::Exception {
 public:
-	ClassWatcherException( const std::string &message ) : ci::Exception( message ) {}
+	FactoryException( const std::string &message ) : ci::Exception( message ) {}
 };
 
 } // namespace runtime
