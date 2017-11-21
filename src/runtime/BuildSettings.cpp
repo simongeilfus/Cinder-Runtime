@@ -30,7 +30,7 @@ using namespace ci;
 namespace runtime {
 
 BuildSettings::BuildSettings()
-: mVerbose( false ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true )
+: mVerbose( false ), mLinkAppObjs( true ), mGeneratePch( false ), mUsePch( true )
 {
 }
 namespace {
@@ -246,7 +246,7 @@ std::string BuildSettings::printToString() const
 {
 	stringstream str;
 
-	str << "link app objs: " << mLinkAppObjs << ", generate factory: " << mGenerateFactory << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
+	str << "link app objs: " << mLinkAppObjs << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
 	str << "precompiled header: " << mPrecompiledHeader << "\n";
 	str << "output path: " << mOutputPath << "\n";
 	str << "intermediate path: " << mIntermediatePath << "\n";
@@ -427,10 +427,16 @@ BuildSettings& BuildSettings::linkAppObjs( bool link )
 	mLinkAppObjs = link;
 	return *this;
 }
-
-BuildSettings& BuildSettings::generateFactory( bool generate )
+	
+BuildSettings& BuildSettings::preBuildStep( const BuildStepRef &customStep ) 
 {
-	mGenerateFactory = generate;
+	mPreBuildSteps.push_back( customStep );
+	return *this;
+}
+
+BuildSettings& BuildSettings::postBuildStep( const BuildStepRef &customStep ) 
+{
+	mPostBuildSteps.push_back( customStep );
 	return *this;
 }
 

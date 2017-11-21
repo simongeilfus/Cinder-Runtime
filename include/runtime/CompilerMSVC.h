@@ -38,9 +38,9 @@ public:
 
 	static CompilerMsvc& instance();
 	
-	void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) override;
-	void build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
-	void build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr );
+	void build( const std::string &arguments, const std::function<void(const BuildOutput&)> &onBuildFinish = nullptr ) override;
+	void build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const BuildOutput&)> &onBuildFinish = nullptr );
+	void build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void(const BuildOutput&)> &onBuildFinish = nullptr );
 
 	//! Returns the compiler-decorated symbol of typeName's vtable.
 	std::string	getSymbolForVTable( const std::string &typeName ) const;
@@ -51,9 +51,9 @@ public:
 	void debugLog( BuildSettings *settings = nullptr ) const;
 
 protected:
-	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
-	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
-	std::string generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const;
+	std::string generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const;
+	std::string generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const;
+	std::string generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const;
 
 	void parseProcessOutput() override;
 
@@ -61,11 +61,10 @@ protected:
 	ci::fs::path	getCLInitPath() const override;
 	ci::fs::path	getCompilerPath() const override;
 	std::string		getCompilerInitArgs() const override;
-	
-	using Build = std::tuple<CompilationResult,std::function<void(const CompilationResult&)>,std::chrono::steady_clock::time_point>;
-	using BuildMap = std::map<ci::fs::path,Build>;
 
-	BuildMap mBuilds;
+	using Build = std::pair<BuildOutput,std::function<void(const BuildOutput&)>>;
+
+	std::map<ci::fs::path,Build> mBuilds;
 };
 
 } // namespace runtime

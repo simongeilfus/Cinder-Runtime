@@ -21,6 +21,7 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <functional>
 
 #include "runtime/Export.h"
@@ -43,15 +44,6 @@ public:
 	BuildSettings& vcxprojLinker( const ci::fs::path &path = ci::fs::path() );
 #endif
 	
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& preBuildStep( const BuildStep &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& preBuildStep( const std::function<BuildStep*> &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& postBuildStep( const BuildStep &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& postBuildStep( const std::function<BuildStep*> &customStep );
-
 	//! Adds an extra include folder to the compiler BuildSettings
 	BuildSettings& include( const ci::fs::path &path );
 	//! Adds an extra include folder to the compiler BuildSettings
@@ -99,9 +91,11 @@ public:
 	BuildSettings& linkObj( const ci::fs::path &path );
 	//! Adds the app's generated .obj files to be linked. Default to true
 	BuildSettings& linkAppObjs( bool link );
-		
-	//! Generates a class Factory source. Default to true
-	BuildSettings& generateFactory( bool generate );
+
+	//! Adds an extra include folder to the compiler BuildSettings
+	BuildSettings& preBuildStep( const BuildStepRef &customStep );
+	//! Adds an extra include folder to the compiler BuildSettings
+	BuildSettings& postBuildStep( const BuildStepRef &customStep );
 		
 	//! Adds an additional compiler option
 	BuildSettings& compilerOption( const std::string &option );
@@ -145,7 +139,6 @@ protected:
 	friend class CompilerMsvc;
 	bool mVerbose;
 	bool mLinkAppObjs;
-	bool mGenerateFactory;
 	bool mGeneratePch;
 	bool mUsePch;
 	ci::fs::path mPrecompiledHeader;
@@ -168,6 +161,9 @@ protected:
 	std::vector<std::string> mLinkerOptions;
 	std::vector<ci::fs::path> mObjPaths;
 	std::map<std::string, std::string>	mUserMacros;
+	
+	std::vector<BuildStepRef> mPreBuildSteps;
+	std::vector<BuildStepRef> mPostBuildSteps;
 };
 
 } // namespace runtime
