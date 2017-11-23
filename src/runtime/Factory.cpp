@@ -62,7 +62,7 @@ void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 
 void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings )
 {
-	if( ! mTypes.count( typeIndex ) ) {
+	if( ! mTypes[typeIndex].getInstances().size() ) {
 		
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
