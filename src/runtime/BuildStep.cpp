@@ -70,9 +70,8 @@ void CodeGeneration::execute( BuildSettings* settings ) const
 	}
 		
 	if( generate ) {
-		// update the build settings
+		// update the compiler build settings
 		settings->additionalSource( outputPath );
-		settings->linkObj( outputPath.parent_path() / "build" / ( settings->getModuleName() + "Factory.obj" ) );
 
 		// generate the source
 		std::ofstream outputFile( outputPath );
@@ -109,6 +108,10 @@ void CodeGeneration::execute( BuildSettings* settings ) const
 			outputFile << "}" << endl;
 			outputFile << endl;
 		}
+	}
+	else {
+		// update the linker build settings
+		settings->linkObj( outputPath.parent_path() / "build" / ( settings->getModuleName() + "Factory.obj" ) );
 	}
 }
 
