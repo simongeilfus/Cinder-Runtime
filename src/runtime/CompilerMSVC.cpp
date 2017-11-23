@@ -191,10 +191,6 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		output->getFilePaths().push_back( path );
 	}
 
-	if( settings.isVerboseEnabled() ) {
-		CI_LOG_I( "command:\n" << command );
-	}
-
 	return command;
 }
 std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const
@@ -234,8 +230,11 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";
-
+	
+	// main source file obj
 	output->getObjectFilePaths().push_back( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".obj" ) );
+
+	// additional objs to link
 	for( const auto &obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
 		output->getObjectFilePaths().push_back( obj );
