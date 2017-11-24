@@ -72,10 +72,13 @@ public:
 		//! Extracts include from source at path
 		Options& parseSource( const ci::fs::path &path );
 		//! Adds an include to the list of precompiled headers
-		Options& include( const std::string &filename );
+		Options& include( const std::string &filename, bool angleBrackets = false );
+		//! Adds an include to be ignored by the list of precompiled headers
+		Options& ignore( const std::string &filename, bool angleBrackets = false );
 	protected:
 		friend class PrecompiledHeader;
-		std::vector<std::string> mIncludes;
+		mutable std::vector<std::string> mIncludes;
+		std::vector<std::string> mIgnoredIncludes;
 	};
 	
 	PrecompiledHeader( const Options &options );
@@ -83,6 +86,34 @@ public:
 protected:
 	Options mOptions;
 };
+
+class CI_RT_API ModuleDefinition : public BuildStep {
+public:
+	class Options {
+	public:
+		//! 
+		Options& exportSymbol( const std::string &symbol );
+		//! 
+		Options& exportVftable( const std::string &className );
+	protected:
+		friend class ModuleDefinition;
+		std::vector<std::string> mIncludes;
+	};
+	
+	//! Returns the compiler-decorated symbol of typeName's vftable.
+	static std::string getVftableSymbol( const std::string &typeName );
+	
+	ModuleDefinition( const Options &options );
+	void execute( BuildSettings* settings ) const override;
+protected:
+	Options mOptions;
+};
+//
+//class CI_RT_API LinkAppObjs : public BuildStep {
+//public:
+//	void execute( BuildSettings* settings ) const override;
+//protected:
+//};
 
 } // namespace runtime
 

@@ -71,14 +71,21 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			settings.typeName( name );
 		}
 		
-		// add class factory code generation as a prebuild step
+		// add precompiled header and class factory code generation as a prebuild step
 		auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
+		auto pchOptions = rt::PrecompiledHeader::Options();
 		for( const auto &path : filePaths ) {
 			if( path.extension() == ".h" || path.extension() == ".hpp" ) {
 				codeGenOptions.include( path.filename().string() ); // TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+				pchOptions.ignore( path.filename().string() );
+				pchOptions.parseSource( path );
+			}
+			else if( path.extension() == ".cpp" ) {
+				pchOptions.parseSource( path );
 			}
 		}
 		settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
+		settings.preBuildStep( make_shared<rt::PrecompiledHeader>( pchOptions ) );
 
 		if( settings.isVerboseEnabled() ) {
 			Compiler::instance().debugLog( &settings );

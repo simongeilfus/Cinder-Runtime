@@ -24,6 +24,7 @@
 #include <fstream>
 
 #include "cinder/app/App.h"
+#include "cinder/Utilities.h"
 
 using namespace std;
 using namespace ci;
@@ -115,15 +116,44 @@ void CodeGeneration::execute( BuildSettings* settings ) const
 	}
 }
 
+namespace {
+	std::vector<string> extractHeaderLines( const ci::fs::path &inputPath )
+	{
+		std::vector<string> includes;
+		if( ci::fs::exists( inputPath ) ) {
+			std::ifstream inputFile( inputPath );
+			for( string line; std::getline( inputFile, line ); ) {
+				// if line is an include
+				if( line.find( "#include" ) != string::npos ) {
+					includes.push_back( line );
+				}
+				// #pragma hdrstop support
+				else if( line.find( "#pragma") != string::npos && line.find( "hdrstop" ) != string::npos ) {
+					break;
+				}
+			}
+		}
+		return includes;
+	}
+} // anonymous namespace
+
 PrecompiledHeader::Options& PrecompiledHeader::Options::parseSource( const ci::fs::path &path )
 {
-	//mIncludes.push_back( filename );
+	for( const auto &filename : extractHeaderLines( path ) ) {
+		mIncludes.push_back( filename );
+	}
 	return *this;
 }
 	
-PrecompiledHeader::Options& PrecompiledHeader::Options::include( const std::string &filename )
+PrecompiledHeader::Options& PrecompiledHeader::Options::include( const std::string &filename, bool angleBrackets )
 {
-	mIncludes.push_back( filename );
+	mIncludes.push_back( string( "#include " ) + ( angleBrackets ? "<" : "\"" ) + filename + ( angleBrackets ? ">" : "\"" ) );
+	return *this;
+}
+
+PrecompiledHeader::Options& PrecompiledHeader::Options::ignore( const std::string &filename, bool angleBrackets )
+{
+	mIgnoredIncludes.push_back( string( "#include " ) + ( angleBrackets ? "<" : "\"" ) + filename + ( angleBrackets ? ">" : "\"" ) );
 	return *this;
 }
 
@@ -134,7 +164,84 @@ PrecompiledHeader::PrecompiledHeader( const Options &options )
 
 void PrecompiledHeader::execute( BuildSettings* settings ) const
 {
+	auto outputHeader = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.h" ); 
+	auto outputCpp = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.cpp" ); 
+	auto outputPch = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + ".pch" ); 
 
+	// filter out ignored includes
+	mOptions.mIncludes.erase( remove_if( mOptions.mIncludes.begin(), mOptions.mIncludes.end(), [this](const std::string &filename) -> bool {
+		 return std::find( mOptions.mIgnoredIncludes.begin(), mOptions.mIgnoredIncludes.end(), filename ) != mOptions.mIgnoredIncludes.end();
+	} ), mOptions.mIncludes.end() );
+
+	// don't generate anything if the include list is empty
+	bool createPch = false;
+	if( mOptions.mIncludes.size() ) {
+		
+		// check if the pch header needs to be written for the first time or updated
+		auto pchIncludes = extractHeaderLines( outputHeader );
+		if( pchIncludes != mOptions.mIncludes || ! ci::fs::exists( outputHeader ) ) {
+			std::ofstream pchHeaderFile( outputHeader );
+			pchHeaderFile << "#pragma once" << endl << endl;
+			for( auto inc : mOptions.mIncludes ) {
+				pchHeaderFile << inc << endl;
+			}
+			createPch = true;
+		}
+	
+		// check if the pch source file needs to be written for the first time
+		if( ! ci::fs::exists( outputCpp ) ) {
+			std::ofstream pchSourceFile( outputCpp );
+			pchSourceFile << "#include \"" << ( settings->getModuleName() + "Pch.h" ) << "\"" << endl;
+			createPch = true;
+		}
+	}
+	
+	// update build settings accordingly
+	if( createPch || ( fs::exists( outputCpp ) && ! fs::exists( outputPch ) ) ) {
+		settings->createPrecompiledHeader( true );
+		settings->usePrecompiledHeader( true );
+		settings->forceInclude( settings->getModuleName() + "Pch.h" );
+		settings->linkObj( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + "Pch.obj" ) );
+		app::console() << "Create and Use!!!" << endl;
+	}
+	else if( fs::exists( outputPch ) ) {
+		settings->usePrecompiledHeader( true );
+		settings->forceInclude( settings->getModuleName() + "Pch.h" );
+		settings->linkObj( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + "Pch.obj" ) );
+		app::console() << "Use!!!" << endl;
+	}
+}
+
+ModuleDefinition::Options& ModuleDefinition::Options::exportSymbol( const std::string &symbol )
+{
+	return *this;
+}
+ModuleDefinition::Options& ModuleDefinition::Options::exportVftable( const std::string &className )
+{
+	return *this;
+}
+
+// Examples: turns 'MyClass' into '??_7MyClass@@6B@', or 'a::b::MyClass' into '??_7MyClass@b@a@@6B@'
+// See docs in generateLinkerCommand()
+// See MS Doc "Decorated Names": https://msdn.microsoft.com/en-us/library/56h2zst2.aspx?f=255&MSPPError=-2147217396#Format
+std::string ModuleDefinition::getVftableSymbol( const std::string &typeName )
+{
+	auto parts = ci::split( typeName, "::" );
+	string decoratedName;
+	for( auto rIt = parts.rbegin(); rIt != parts.rend(); ++rIt ) {
+		if( ! rIt->empty() ) // handle leading "::" case, which results in any empty part
+			decoratedName += *rIt + "@";
+	}
+
+	return "??_7" + decoratedName + "@6B@";
+}
+	
+ModuleDefinition::ModuleDefinition( const Options &options )
+{
+}
+
+void ModuleDefinition::execute( BuildSettings* settings ) const
+{
 }
 
 } // namespace runtime

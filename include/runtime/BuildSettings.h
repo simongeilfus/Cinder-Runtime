@@ -139,7 +139,7 @@ protected:
 	friend class CompilerMsvc;
 	bool mVerbose;
 	bool mLinkAppObjs;
-	bool mGeneratePch;
+	bool mCreatePch;
 	bool mUsePch;
 	ci::fs::path mPrecompiledHeader;
 	ci::fs::path mOutputPath;

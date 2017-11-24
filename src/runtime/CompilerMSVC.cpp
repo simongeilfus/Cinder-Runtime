@@ -117,43 +117,33 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	string command;
 
 	// generate precompile header
-	if( settings.mUsePch ) {
-		
-		bool createPch = generatePrecompiledHeader( sourcePath, 
-			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.h" ),
-			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ), false ) || settings.mGeneratePch;
+	// TODO: This should ideally be handled in a separate build
+	if( settings.mCreatePch ) {
+		command += "cl /c ";
 
-		auto outputPchFilePath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ); 
-		if( ! fs::exists( outputPchFilePath ) )
-			createPch = true;
-
-		if( createPch ) {
-			command += "cl /c ";
-
-			for( const auto &define : settings.mPpDefinitions ) {
-				command += "/D " + define + " ";
-			}
-			for( const auto &include : settings.mIncludes ) {
-				command += "/I" + include.generic_string() + " ";
-			}
-			for( const auto &include : settings.mForcedIncludes ) {
-				command += "/FI " + include + " ";
-			}
-			for( const auto &compilerArg : settings.mCompilerOptions ) {
-				command += compilerArg + " ";
-			}
-			
-			command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
-			command += "/Fp" + outputPchFilePath.string() + " ";
-		#if defined( _DEBUG )
-			command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
-		#endif
-
-			command += "/Yc" + settings.getModuleName() + "Pch.h ";
-
-			command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ) ).generic_string();
-			command += "\n";
+		for( const auto &define : settings.mPpDefinitions ) {
+			command += "/D " + define + " ";
 		}
+		for( const auto &include : settings.mIncludes ) {
+			command += "/I" + include.generic_string() + " ";
+		}
+		for( const auto &include : settings.mForcedIncludes ) {
+			command += "/FI " + include + " ";
+		}
+		for( const auto &compilerArg : settings.mCompilerOptions ) {
+			command += compilerArg + " ";
+		}
+			
+		command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
+	#if defined( _DEBUG )
+		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
+	#endif
+
+		command += "/Yc" + settings.getModuleName() + "Pch.h ";
+
+		command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ) ).generic_string();
+		command += "\n";
 	}
 
 	command += "cl ";
@@ -180,7 +170,6 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	if( settings.mUsePch ) {
 		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
 		command += "/Yu" + settings.getModuleName() + "Pch.h ";
-		command += "/FI" + settings.getModuleName() + "Pch.h ";
 	}
 
 	// main source file
@@ -240,8 +229,6 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		output->getObjectFilePaths().push_back( obj );
 	}
 	
-	command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Pch.obj" ) ).generic_string() + " ";
-
 	if( settings.mLinkAppObjs ) {
 		for( auto it = fs::directory_iterator( settings.getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
 			if( it->path().extension() == ".obj" ) {

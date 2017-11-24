@@ -30,7 +30,7 @@ using namespace ci;
 namespace runtime {
 
 BuildSettings::BuildSettings()
-: mVerbose( false ), mLinkAppObjs( true ), mGeneratePch( false ), mUsePch( true )
+: mVerbose( false ), mLinkAppObjs( true ), mCreatePch( false ), mUsePch( false )
 {
 }
 namespace {
@@ -246,7 +246,7 @@ std::string BuildSettings::printToString() const
 {
 	stringstream str;
 
-	str << "link app objs: " << mLinkAppObjs << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
+	str << "link app objs: " << mLinkAppObjs << ", create pch: " << mCreatePch << ", use pch: " << mUsePch << "\n";
 	str << "precompiled header: " << mPrecompiledHeader << "\n";
 	str << "output path: " << mOutputPath << "\n";
 	str << "intermediate path: " << mIntermediatePath << "\n";
@@ -327,7 +327,7 @@ BuildSettings& BuildSettings::usePrecompiledHeader( bool use /*const ci::fs::pat
 		
 BuildSettings& BuildSettings::createPrecompiledHeader( bool create /*const ci::fs::path &path*/ )
 {
-	mGeneratePch = create;
+	mCreatePch = create;
 	//mPrecompiledHeader = path;
 	return *this;
 }
