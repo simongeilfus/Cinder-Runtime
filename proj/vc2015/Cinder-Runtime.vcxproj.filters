@@ -24,12 +24,6 @@
     <ClInclude Include="..\..\include\runtime\BuildStep.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\runtime\ClassFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\runtime\ClassWatcher.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\runtime\CompilerBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -45,9 +39,6 @@
     <ClInclude Include="..\..\include\runtime\Module.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\runtime\PrecompiledHeader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\runtime\Process.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -57,18 +48,18 @@
     <ClInclude Include="..\..\include\runtime\Virtual.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\include\runtime\BuildOutput.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\runtime\Factory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\runtime\BuildSettings.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\runtime\BuildStep.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\runtime\ClassFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\runtime\ClassWatcher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\runtime\CompilerBase.cpp">
@@ -80,13 +71,16 @@
     <ClCompile Include="..\..\src\runtime\Module.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\runtime\PrecompiledHeader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\runtime\Process.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\runtime\ProjectConfiguration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\runtime\BuildOutput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\runtime\Factory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
