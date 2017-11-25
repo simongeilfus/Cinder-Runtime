@@ -97,7 +97,7 @@ public:
 		Options& exportVftable( const std::string &className );
 	protected:
 		friend class ModuleDefinition;
-		std::vector<std::string> mIncludes;
+		std::vector<std::string> mExportSymbols;
 	};
 	
 	//! Returns the compiler-decorated symbol of typeName's vftable.

@@ -67,9 +67,6 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
 		}
-		if( settings.getTypeName().empty() ) {
-			settings.typeName( name );
-		}
 		
 		// add precompiled header and class factory code generation as a prebuild step
 		auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
@@ -86,6 +83,7 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 		}
 		settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
 		settings.preBuildStep( make_shared<rt::PrecompiledHeader>( pchOptions ) );
+		settings.preBuildStep( make_shared<rt::ModuleDefinition>( rt::ModuleDefinition::Options().exportVftable( name ) ) );
 
 		if( settings.isVerboseEnabled() ) {
 			Compiler::instance().debugLog( &settings );
@@ -119,8 +117,9 @@ void Factory::sourceChanged( const WatchEvent &event, const std::type_index &typ
 	}
 	
 	// initiate the build
+	const auto &type = mTypes[typeIndex];
 	rt::CompilerMsvc::instance().build( filePaths.front(), buildSettings, 
-		bind( &Factory::handleBuild, this, placeholders::_1, typeIndex, ( event.getFile().extension() == ".cpp" ? rt::CompilerMsvc::instance().getSymbolForVTable( buildSettings.getTypeName() ) : "" ) ) );
+		bind( &Factory::handleBuild, this, placeholders::_1, typeIndex, ( event.getFile().extension() == ".cpp" ? rt::ModuleDefinition::getVftableSymbol( type.getName() ) : "" ) ) );
 }
 
 void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym )

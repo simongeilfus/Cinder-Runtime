@@ -202,23 +202,22 @@ void PrecompiledHeader::execute( BuildSettings* settings ) const
 		settings->usePrecompiledHeader( true );
 		settings->forceInclude( settings->getModuleName() + "Pch.h" );
 		settings->linkObj( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + "Pch.obj" ) );
-		app::console() << "Create and Use!!!" << endl;
 	}
 	else if( fs::exists( outputPch ) ) {
 		settings->usePrecompiledHeader( true );
 		settings->forceInclude( settings->getModuleName() + "Pch.h" );
 		settings->linkObj( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + "Pch.obj" ) );
-		app::console() << "Use!!!" << endl;
 	}
 }
 
 ModuleDefinition::Options& ModuleDefinition::Options::exportSymbol( const std::string &symbol )
 {
+	mExportSymbols.push_back( symbol );
 	return *this;
 }
 ModuleDefinition::Options& ModuleDefinition::Options::exportVftable( const std::string &className )
 {
-	return *this;
+	return exportSymbol( getVftableSymbol( className ) );
 }
 
 // Examples: turns 'MyClass' into '??_7MyClass@@6B@', or 'a::b::MyClass' into '??_7MyClass@b@a@@6B@'
@@ -237,11 +236,28 @@ std::string ModuleDefinition::getVftableSymbol( const std::string &typeName )
 }
 	
 ModuleDefinition::ModuleDefinition( const Options &options )
+	: mOptions( options )
 {
 }
 
 void ModuleDefinition::execute( BuildSettings* settings ) const
 {
+	// TODO: Make this optional
+	// vtable symbol export
+	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
+	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
+	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
+	fs::path outputPath = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + ".def" );
+	if( ! fs::exists( outputPath ) ) {
+		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
+		std::ofstream outputFile( outputPath );		
+		outputFile << "EXPORTS" << endl;
+		for( const auto &symbol : mOptions.mExportSymbols ) {
+			outputFile << "\t" << symbol << "\t\tDATA" << endl;
+		}
+	}
+
+	settings->moduleDef( outputPath );
 }
 
 } // namespace runtime

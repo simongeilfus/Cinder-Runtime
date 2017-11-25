@@ -1,5 +1,4 @@
 #include "runtime/CompilerMsvc.h"
-#include "runtime/PrecompiledHeader.h"
 #include "runtime/Process.h"
 #include "runtime/ProjectConfiguration.h"
 
@@ -196,18 +195,9 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += linkerArg + " ";
 	}
 	
-	// TODO: Make this optional
-	// vtable symbol export
-	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
-	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
-	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ) ) {
-		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
-		std::ofstream outputFile( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) );		
-		outputFile << "EXPORTS" << endl;
-		outputFile << "\t" << getSymbolForVTable( settings.getTypeName() ) << "\t\tDATA" << endl;
+	if( ! settings.mModuleDefPath.empty() ) {
+		command += "/DEF:" + settings.mModuleDefPath.string() + " ";
 	}
-	command += "/DEF:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ).string() + " ";
 	
 	auto outputPath = settings.mOutputPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.mOutputPath;
 	output->setOutputPath( outputPath );

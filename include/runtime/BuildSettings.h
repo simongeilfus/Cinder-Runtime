@@ -84,13 +84,13 @@ public:
 				
 	//! Specifies the name of the module (.dll). Also used for path generation.
 	BuildSettings& moduleName( const std::string &name );
-	//! Specifies the typename of something that is reloadable
-	BuildSettings& typeName( const std::string &typeName );
 
 	//! Adds an obj files to be linked
 	BuildSettings& linkObj( const ci::fs::path &path );
 	//! Adds the app's generated .obj files to be linked. Default to true
 	BuildSettings& linkAppObjs( bool link );
+	//! Specifies a module definition file to be used by the linker
+	BuildSettings& moduleDef( const ci::fs::path &path );
 
 	//! Adds an extra include folder to the compiler BuildSettings
 	BuildSettings& preBuildStep( const BuildStepRef &customStep );
@@ -116,7 +116,6 @@ public:
 	const std::string&		getPlatform() const { return mPlatform; }
 	const std::string&		getPlatformToolset() const { return mPlatformToolset; }
 	const std::string&		getModuleName() const { return mModuleName; }
-	const std::string&		getTypeName() const { return mTypeName; }
 
 	const std::vector<ci::fs::path>& 	getIncludes() const { return mIncludes; }
 	const std::vector<ci::fs::path>& 	getLibraryPaths() const { return mLibraryPaths; }
@@ -146,11 +145,11 @@ protected:
 	ci::fs::path mIntermediatePath;
 	ci::fs::path mObjectFilePath;
 	ci::fs::path mPdbPath;
+	ci::fs::path mModuleDefPath;
 	std::string	mConfiguration;
 	std::string	mPlatform;
 	std::string	mPlatformToolset;
 	std::string mModuleName;
-	std::string mTypeName;
 	std::vector<ci::fs::path> mIncludes;
 	std::vector<ci::fs::path> mLibraryPaths;
 	std::vector<ci::fs::path> mAdditionalSources;

@@ -252,7 +252,6 @@ std::string BuildSettings::printToString() const
 	str << "intermediate path: " << mIntermediatePath << "\n";
 	str << "pdb path: " << mPdbPath << "\n";
 	str << "module name: " << mModuleName << "\n";
-	str << "type name: " << mTypeName << "\n";
 	str << "includes:\n";
 	for( const auto &include : mIncludes ) {
 		str << "\t- " << include << "\n";
@@ -394,11 +393,6 @@ BuildSettings& BuildSettings::moduleName( const std::string &name )
 	mModuleName = name;
 	return *this;
 }
-BuildSettings& BuildSettings::typeName( const std::string &typeName )
-{ 
-	mTypeName = typeName;
-	return *this;
-}
 
 BuildSettings& BuildSettings::forceInclude( const std::string &filename )
 {
@@ -425,6 +419,12 @@ BuildSettings& BuildSettings::linkObj( const ci::fs::path &path )
 BuildSettings& BuildSettings::linkAppObjs( bool link )
 {
 	mLinkAppObjs = link;
+	return *this;
+}
+
+BuildSettings& BuildSettings::moduleDef( const ci::fs::path &path )
+{
+	mModuleDefPath = path;
 	return *this;
 }
 	
