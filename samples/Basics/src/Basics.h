@@ -1,11 +1,10 @@
 #pragma once
 
 #include "runtime/Virtual.h"
-#include "runtime/ClassWatcher.h"
+#include "runtime/Factory.h"
 
 class Basics {
 public:
-	Basics();
 
 	// any function that has to be called from
 	// outside the class should be marked as virtual
@@ -15,7 +14,6 @@ public:
 	rt_virtual void draw();
 	
 protected:
-
 	// otherwise RT_DECL is the only thing
 	// needed in the class declaration to mark the class
 	// as runtime reloadable. Modifying the header is 

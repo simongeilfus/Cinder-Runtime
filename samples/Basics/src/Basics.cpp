@@ -13,13 +13,9 @@ using namespace std;
 using namespace ci;
 using namespace ci::app;
 
-Basics::Basics()
-{
-}
-
 void Basics::draw()
 {
-	gl::clear( Color::gray( 0.75f ) );
+	gl::clear( Color::gray( 0.8f ) );
 }
 
 // RT_IMPL has to be added to mark the class
