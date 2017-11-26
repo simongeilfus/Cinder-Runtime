@@ -62,11 +62,9 @@ public:
 	//! Returns the global Factory instance
 	static Factory& instance();
 
-	//! Allocates a new instance
+	//! Allocates a new instance of the latest version of the Class
 	template<class Class>
 	void* allocate();
-	//! Allocates a new instance
-	void* allocate( size_t size, const std::type_index &typeIndex );
 	
 	//! TypeFormat allows to opt-in or out from code generation and symbol exports
 	class CI_RT_API TypeFormat {
@@ -87,33 +85,31 @@ public:
 
 	//! Allocates a new instance and adds it to the Factory watch list
 	template<class Class>
-	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
+	void* allocateAndWatch( const std::string &className, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
 	//! Allocates a new instance and adds it to the Factory watch list
 	template<class Class>
-	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
+	void* allocateAndWatch( const std::string &className, const ci::fs::path &cppPath, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
 	
 	//! Adds an instance to the Factory watch list
 	template<typename T>
-	void watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
+	void watch( void* address, const std::string &className, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
 	//! Removes an instance from Factory watch list
 	void unwatch( const std::type_index &typeIndex, void* address );
 
 protected:
 	template<typename T>
-	void initType( const std::type_index &typeIndex, const std::string &name, const ci::fs::path &dllPath );
-	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
+	void initType( const std::type_index &typeIndex, const std::string &name );
+	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
 	void sourceChanged( const ci::WatchEvent &event, const std::type_index &typeIndex, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings );
 	void handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym );
 	void swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym );
 	void reconstructInstances( const std::type_index &typeIndex );
-	
-	std::string stripNamespace( const std::string &className );
-	ci::fs::path makeDllPath( const ci::fs::path &intermediatePath, const char *className );
+	void* allocate( size_t size, const std::type_index &typeIndex );
 
 	class Type {
 	public:
 		template<typename T>
-		void init( const std::string &name, const ci::fs::path &dllPath );
+		void init( const std::string &name );
 		
 		const std::function<void()>&		getNew() const { return mNew; }
 		const std::function<void(void*)>&	getPlacementNew() const { return mPlacementNew; }
@@ -127,6 +123,7 @@ protected:
 		const std::vector<void*>&	getInstances() const { return mInstances; }
 		std::vector<void*>&			getInstances() { return mInstances; }
 		
+		void setModule( rt::ModulePtr &&module ) { mModule = std::move( module ); }
 		void setNew( const std::function<void()> &fn ) { mNew = fn; }
 		void setPlacementNew( const std::function<void(void*)> &fn) { mPlacementNew = fn; }
 
@@ -196,7 +193,7 @@ protected:
 };
 
 template<typename T>
-void Factory::Type::init( const std::string &name, const ci::fs::path &dllPath )
+void Factory::Type::init( const std::string &name )
 {
 	mDestructor = [this]( void* address ) {
 		static_cast<T*>( address )->~T();
@@ -207,30 +204,30 @@ void Factory::Type::init( const std::string &name, const ci::fs::path &dllPath )
 	mPostBuild = [this]( void* address ) {
 		callPostBuildMethod<T>( static_cast<T*>( address ) );
 	};
-	mModule = std::make_unique<rt::Module>( dllPath );
 	mName = name;
 }
 
 template<typename T>
-void Factory::initType( const std::type_index &typeIndex, const std::string &name, const ci::fs::path &dllPath )
+void Factory::initType( const std::type_index &typeIndex, const std::string &name )
 {
 	if( ! mTypes.count( typeIndex ) ) {
-		mTypes[typeIndex].init<T>( name, dllPath );
+		mTypes[typeIndex].init<T>( name );
 	}
 }
 
 template<typename T>
-void Factory::watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings, const TypeFormat &format )
+void Factory::watch( void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings, const TypeFormat &format )
 {
-	initType<T>( typeIndex, name, dllPath );
-	watchImpl( typeIndex, address, name, filePaths, dllPath, settings, format );
+	const std::type_index typeIndex = std::type_index(typeid(T));
+	initType<T>( typeIndex, name );
+	watchImpl( typeIndex, address, name, filePaths, settings, format );
 }
 
 template<class Class>
-void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings, const TypeFormat &format )
+void* Factory::allocateAndWatch( const std::string &className, const ci::fs::path &header, rt::BuildSettings* settings, const TypeFormat &format )
 {
 	void* ptr = allocate<Class>();
-	auto headerPath = ci::fs::absolute( ci::fs::path( sourceFilename ) );
+	auto headerPath = ci::fs::absolute( ci::fs::path( header ) );
 	std::vector<ci::fs::path> sources;
 	if( ci::fs::exists( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) ) ) {
 		sources.push_back( headerPath.parent_path() / ( headerPath.stem().string() + ".cpp" ) );
@@ -239,25 +236,24 @@ void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const 
 
 	if( ! settings ) {
 		auto buildSettings = rt::BuildSettings().vcxproj();
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings, format );
+		watch<Class>( ptr, className, sources, buildSettings, format );
 	}
 	else {
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( settings->getIntermediatePath(), className ), *settings, format );
+		watch<Class>( ptr, className, sources, *settings, format );
 	}
 	return ptr;
 }
 
 template<class Class>
-void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format )
+void* Factory::allocateAndWatch( const std::string &className, const ci::fs::path &cppPath, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format )
 {
 	void* ptr = allocate<Class>();
-	auto cppPath = ci::fs::absolute( sourceFilename );
 	if( ! settings ) {
 		auto buildSettings = rt::BuildSettings().vcxproj();
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings, format );
+		watch<Class>( ptr, className, { ci::fs::absolute( cppPath ), ci::fs::absolute( headerPath ) }, buildSettings, format );
 	}
 	else {
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( settings->getIntermediatePath(), className ), *settings, format );
+		watch<Class>( ptr, className, { ci::fs::absolute( cppPath ), ci::fs::absolute( headerPath ) }, *settings, format );
 	}
 	return ptr;
 }
@@ -289,7 +285,7 @@ public:
 #define __RT_IMPL1( Class ) \
 void* Class::operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), nullptr );\
+	return rt::Factory::instance().allocateAndWatch<Class>( #Class, __FILE__, __rt_getHeaderPath(), nullptr );\
 } \
 void Class::operator delete( void* ptr ) \
 { \
@@ -300,7 +296,7 @@ void Class::operator delete( void* ptr ) \
 #define __RT_IMPL2( Class, Settings ) \
 void* Class::operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch<Class>( size, __FILE__, #Class, __rt_getHeaderPath(), &Settings );\
+	return rt::Factory::instance().allocateAndWatch<Class>( #Class, __FILE__, __rt_getHeaderPath(), &Settings );\
 } \
 void Class::operator delete( void* ptr ) \
 { \
@@ -312,7 +308,7 @@ void Class::operator delete( void* ptr ) \
 void* Class::operator new( size_t size ) \
 { \
 	void * ptr = ::operator new( size ); \
-	rt::Factory::instance().watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), std::string( #Class ), { Source, Header }, Dll, Settings );\
+	rt::Factory::instance().watch<Class>( ptr, std::string( #Class ), { Source, Header }, Dll, Settings );\
 	return ptr; \
 } \
 void Class::operator delete( void* ptr ) \
@@ -326,7 +322,7 @@ void Class::operator delete( void* ptr ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch( size, __FILE__, #Class, nullptr );\
+	return rt::Factory::instance().allocateAndWatch( #Class, __FILE__, nullptr );\
 } \
 void operator delete( void* ptr ) \
 { \
@@ -338,7 +334,7 @@ void operator delete( void* ptr ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch( size, __FILE__, #Class, &Settings );\
+	return rt::Factory::instance().allocateAndWatch( #Class, __FILE__, &Settings );\
 } \
 void operator delete( void* ptr ) \
 { \

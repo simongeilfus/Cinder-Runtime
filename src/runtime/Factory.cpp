@@ -75,13 +75,15 @@ void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 	return instance;
 }
 
-void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings, const TypeFormat &format )
+void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, rt::BuildSettings settings, const TypeFormat &format )
 {
-	if( ! mTypes[typeIndex].getInstances().size() ) {
-		
+	// initalize module and source watching
+	if( ! mTypes[typeIndex].getModule() ) {
+
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
 		}
+		mTypes[typeIndex].setModule( make_unique<rt::Module>( settings.getOutputPath().empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.getOutputPath() ) );
 		
 		// add precompiled header and class factory code generation as a prebuild step
 		if( format.mClassFactory ) {
@@ -93,6 +95,7 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			}
 			settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
 		}
+		
 		if( format.mPrecompiledHeader ) {
 			auto pchOptions = rt::PrecompiledHeader::Options();
 			for( const auto &path : filePaths ) {
@@ -106,6 +109,7 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			}
 			settings.preBuildStep( make_shared<rt::PrecompiledHeader>( pchOptions ) );
 		}
+
 		if( format.mExportVftable ) {
 			settings.preBuildStep( make_shared<rt::ModuleDefinition>( rt::ModuleDefinition::Options().exportVftable( name ) ) );
 		}
@@ -118,6 +122,7 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 		FileWatcher::instance().watch( filePaths, FileWatcher::Options().callOnWatch( false ), bind( &Factory::sourceChanged, this, placeholders::_1, typeIndex, filePaths, settings ) );
 	}
 
+	// add the address to the list of watched instances
 	mTypes[typeIndex].getInstances().push_back( address );
 }
 
@@ -233,22 +238,6 @@ void Factory::reconstructInstances( const std::type_index &typeIndex )
 		#endif
 		}
 	}
-}
-
-std::string Factory::stripNamespace( const std::string &className )
-{
-	auto pos = className.find_last_of( "::" );
-	if( pos == std::string::npos )
-		return className;
-
-	std::string result = className.substr( pos + 1, className.size() - pos - 1 );
-	return result;
-}
-
-ci::fs::path Factory::makeDllPath( const ci::fs::path &intermediatePath, const char *className )
-{
-	auto strippedClassName = stripNamespace( className );
-	return intermediatePath / "runtime" / strippedClassName / "build" / ( strippedClassName + ".dll" );
 }
 
 } // namespace runtime
