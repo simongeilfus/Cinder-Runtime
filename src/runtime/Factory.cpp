@@ -32,6 +32,21 @@ Factory& Factory::instance()
 	static Factory factory;
 	return factory;
 }
+Factory::TypeFormat& Factory::TypeFormat::precompiledHeader( bool generate )
+{
+	mPrecompiledHeader = generate;
+	return *this;
+}
+Factory::TypeFormat& Factory::TypeFormat::classFactory( bool generate )
+{
+	mClassFactory = generate;
+	return *this;
+}
+Factory::TypeFormat& Factory::TypeFormat::exportVftable( bool exportSymbol )
+{
+	mExportVftable = exportSymbol;
+	return *this;
+}
 
 namespace {
 
@@ -60,7 +75,7 @@ void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 	return instance;
 }
 
-void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings )
+void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, const fs::path &dllPath, rt::BuildSettings settings, const TypeFormat &format )
 {
 	if( ! mTypes[typeIndex].getInstances().size() ) {
 		
@@ -69,21 +84,31 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 		}
 		
 		// add precompiled header and class factory code generation as a prebuild step
-		auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
-		auto pchOptions = rt::PrecompiledHeader::Options();
-		for( const auto &path : filePaths ) {
-			if( path.extension() == ".h" || path.extension() == ".hpp" ) {
-				codeGenOptions.include( path.filename().string() ); // TODO: better handling of include path (ex. #include "folder/file.h" would not work)
-				pchOptions.ignore( path.filename().string() );
-				pchOptions.parseSource( path );
+		if( format.mClassFactory ) {
+			auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
+			for( const auto &path : filePaths ) {
+				if( path.extension() == ".h" || path.extension() == ".hpp" ) {
+					codeGenOptions.include( path.filename().string() ); // TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+				}
 			}
-			else if( path.extension() == ".cpp" ) {
-				pchOptions.parseSource( path );
-			}
+			settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
 		}
-		settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
-		settings.preBuildStep( make_shared<rt::PrecompiledHeader>( pchOptions ) );
-		settings.preBuildStep( make_shared<rt::ModuleDefinition>( rt::ModuleDefinition::Options().exportVftable( name ) ) );
+		if( format.mPrecompiledHeader ) {
+			auto pchOptions = rt::PrecompiledHeader::Options();
+			for( const auto &path : filePaths ) {
+				if( path.extension() == ".h" || path.extension() == ".hpp" ) {
+					pchOptions.ignore( path.filename().string() );// TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+					pchOptions.parseSource( path );
+				}
+				else if( path.extension() == ".cpp" ) {
+					pchOptions.parseSource( path );
+				}
+			}
+			settings.preBuildStep( make_shared<rt::PrecompiledHeader>( pchOptions ) );
+		}
+		if( format.mExportVftable ) {
+			settings.preBuildStep( make_shared<rt::ModuleDefinition>( rt::ModuleDefinition::Options().exportVftable( name ) ) );
+		}
 
 		if( settings.isVerboseEnabled() ) {
 			Compiler::instance().debugLog( &settings );

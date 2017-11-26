@@ -22,6 +22,7 @@
 TODO:
 	[ ] include Class.cpp in ClassFactory.cpp and only build the later
 	[ ] change module name / type name / target name?
+	[ ] cache module fn ptrs to Type std::functions
 
 */
 #pragma once
@@ -63,23 +64,40 @@ public:
 	//! Allocates a new instance
 	void* allocate( size_t size, const std::type_index &typeIndex );
 	
+	//! TypeFormat allows to opt-in or out from code generation and symbol exports
+	class CI_RT_API TypeFormat {
+	public:
+		TypeFormat() : mPrecompiledHeader( true ), mClassFactory( true ), mExportVftable( true ) {}
+		//! Adds a pre-build step to generate the precompiled header sources and build settings
+		TypeFormat& precompiledHeader( bool generate = true );
+		//! Adds a pre-build step to generate the class factory sources and build settings
+		TypeFormat& classFactory( bool generate = true );
+		//! Adds a pre-build step to generate .def file exporting the class vtable
+		TypeFormat& exportVftable( bool exportSymbol = true );
+	protected:
+		friend class Factory;
+		bool mPrecompiledHeader;
+		bool mClassFactory;
+		bool mExportVftable;
+	};
+
 	//! Allocates a new instance and adds it to the Factory watch list
 	template<class Class>
-	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings );
+	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
 	//! Allocates a new instance and adds it to the Factory watch list
 	template<class Class>
-	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings );
+	void* allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format = TypeFormat() );
 	
 	//! Adds an instance to the Factory watch list
 	template<typename T>
-	void watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj() );
+	void watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
 	//! Removes an instance from Factory watch list
 	void unwatch( const std::type_index &typeIndex, void* address );
 
 protected:
 	template<typename T>
 	void initType( const std::type_index &typeIndex, const std::string &name, const ci::fs::path &dllPath );
-	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj() );
+	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
 	void sourceChanged( const ci::WatchEvent &event, const std::type_index &typeIndex, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings );
 	void handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym );
 	void swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym );
@@ -198,14 +216,14 @@ void Factory::initType( const std::type_index &typeIndex, const std::string &nam
 }
 
 template<typename T>
-void Factory::watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings )
+void Factory::watch( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, const ci::fs::path &dllPath, rt::BuildSettings settings, const TypeFormat &format )
 {
 	initType<T>( typeIndex, name, dllPath );
-	watchImpl( typeIndex, address, name, filePaths, dllPath, settings );
+	watchImpl( typeIndex, address, name, filePaths, dllPath, settings, format );
 }
 
 template<class Class>
-void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings )
+void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, rt::BuildSettings* settings, const TypeFormat &format )
 {
 	void* ptr = allocate<Class>();
 	auto headerPath = ci::fs::absolute( ci::fs::path( sourceFilename ) );
@@ -217,25 +235,25 @@ void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const 
 
 	if( ! settings ) {
 		auto buildSettings = rt::BuildSettings().vcxproj();
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
+		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings, format );
 	}
 	else {
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( settings->getIntermediatePath(), className ), *settings );
+		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, sources, makeDllPath( settings->getIntermediatePath(), className ), *settings, format );
 	}
 	return ptr;
 }
 
 template<class Class>
-void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings )
+void* Factory::allocateAndWatch( size_t size, const char* sourceFilename, const char* className, const ci::fs::path &headerPath, rt::BuildSettings* settings, const TypeFormat &format )
 {
 	void* ptr = allocate<Class>();
 	auto cppPath = ci::fs::absolute( sourceFilename );
 	if( ! settings ) {
 		auto buildSettings = rt::BuildSettings().vcxproj();
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings );
+		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( buildSettings.getIntermediatePath(), className ), buildSettings, format );
 	}
 	else {
-		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( settings->getIntermediatePath(), className ), *settings );
+		watch<Class>( std::type_index(typeid(Class)), static_cast<Class*>( ptr ), className, { cppPath, headerPath }, makeDllPath( settings->getIntermediatePath(), className ), *settings, format );
 	}
 	return ptr;
 }
