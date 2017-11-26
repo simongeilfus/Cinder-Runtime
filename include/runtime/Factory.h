@@ -38,15 +38,19 @@ TODO:
 #include "runtime/Module.h"
 #include "runtime/CompilerMsvc.h"
 
+// If cereal is included before this file any serialization methods
+// added to a class will be used to save states between reloads
 #if defined( CEREAL_CEREAL_HPP_ )
 #include <cereal/details/traits.hpp>
 #include <cereal/archives/binary.hpp>
 #endif
 
+// This allow to change the name of the class method called before reloading happens
 #if ! defined( RT_PRE_BUILD_METHOD_NAME )
 #define RT_PRE_BUILD_METHOD_NAME cleanup
 #endif
 
+// This allow to change the name of the class method called after reloading happened
 #if ! defined( RT_POST_BUILD_METHOD_NAME )
 #define RT_POST_BUILD_METHOD_NAME setup
 #endif
