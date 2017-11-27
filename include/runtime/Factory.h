@@ -303,7 +303,7 @@ void Class::operator delete( void* ptr ) \
 	rt::Factory::instance().unwatch( std::type_index(typeid(Class)), static_cast<Class*>( ptr ) ); \
 	::operator delete( ptr ); \
 } \
-
+// TODO: Remove
 #define __RT_IMPL3( Class, Header, Source, Dll, Settings ) \
 void* Class::operator new( size_t size ) \
 { \
@@ -322,7 +322,7 @@ void Class::operator delete( void* ptr ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch( #Class, __FILE__, nullptr );\
+	return rt::Factory::instance().allocateAndWatch<Class>( #Class, __FILE__, nullptr );\
 } \
 void operator delete( void* ptr ) \
 { \
@@ -334,7 +334,7 @@ void operator delete( void* ptr ) \
 public: \
 void* operator new( size_t size ) \
 { \
-	return rt::Factory::instance().allocateAndWatch( #Class, __FILE__, &Settings );\
+	return rt::Factory::instance().allocateAndWatch<Class>( #Class, __FILE__, &Settings );\
 } \
 void operator delete( void* ptr ) \
 { \

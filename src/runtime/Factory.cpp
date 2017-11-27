@@ -65,11 +65,12 @@ namespace {
 void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 {
 	void* instance;
-	if( ! mTypes.count( typeIndex ) ) {
-		instance = ::operator new( size );
-	}
-	else if( auto newOperator = static_cast<void*(__cdecl*)(const std::string &)>( mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) ) ) {
+	if( mTypes.count( typeIndex ) && mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) ) {
+		auto newOperator = static_cast<void*(__cdecl*)(const std::string &)>( mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) );
 		instance = newOperator( mTypes[typeIndex].getName() );
+	}
+	else {
+		instance = ::operator new( size );
 	}
 
 	return instance;

@@ -25,12 +25,6 @@
     <Filter Include="Blocks\Cinder-Runtime\include\runtime">
       <UniqueIdentifier>{36292B63-4D1A-4953-84A8-17B2A5117CA6}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Cinder-Runtime\src">
-      <UniqueIdentifier>{204A6B0E-FF9D-47D1-8CDC-A0FD27FFA521}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Blocks\Cinder-Runtime\src\runtime">
-      <UniqueIdentifier>{4BED4674-9B97-4243-AF94-BBD882AD18D2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Blocks\Cinder-ImGui">
       <UniqueIdentifier>{a1ecc9c9-69cb-4e13-8e93-f85ae3b09c69}</UniqueIdentifier>
     </Filter>
@@ -107,33 +101,6 @@
     </ClCompile>
     <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_demo.cpp">
       <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\BuildSettings.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\BuildStep.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ProjectConfiguration.cpp">
-      <Filter>Blocks\Cinder-Runtime\src\runtime</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
