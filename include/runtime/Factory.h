@@ -23,6 +23,9 @@ TODO:
 	[ ] include Class.cpp in ClassFactory.cpp and only build the later
 	[ ] change module name / type name / target name?
 	[ ] cache module fn ptrs to Type std::functions
+	[ ] Factory::Notification
+	[ ] Nesting = Modify LinkAppObj to be if reloaded link import.lib otherwise class.obj
+	[ ] Add error checking to codegen?
 
 */
 #pragma once
