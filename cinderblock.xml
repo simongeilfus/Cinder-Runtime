@@ -7,9 +7,14 @@
 	summary="Runtime Compiled C++ for Cinder"
 	git="https://github.com/simongeilfus/Cinder-Runtime.git"
 	>
-	
+	<supports os="msw" />
+
 	<includePath>include</includePath>
 	<headerPattern>include/runtime/*.h</headerPattern>	
-    <sourcePattern>src/runtime/*.cpp</sourcePattern>    
+
+	<platform os="msw">
+    	<staticLibrary>lib/msw/$(PlatformTarget)/$(Configuration)/cinder_rt.lib</staticLibrary>
+    	<buildCopy>lib/msw/$(PlatformTarget)/$(Configuration)/cinder_rt.dll</buildCopy>
+    </platform>
 </block>
 </cinder>
