@@ -95,19 +95,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">
-    <OutDir>..\..\lib\msw\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetName>cinder_rt</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|Win32'">
-    <OutDir>..\..\lib\msw\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetName>cinder_rt</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">
-    <OutDir>..\..\lib\msw\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetName>cinder_rt</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|Win32'">
-    <OutDir>..\..\lib\msw\$(Platform)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
     <TargetName>cinder_rt</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|Win32'">
@@ -124,6 +124,7 @@
     <Link>
       <AdditionalLibraryDirectories>..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</AdditionalLibraryDirectories>
       <AdditionalDependencies>cinder.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">
@@ -140,6 +141,7 @@
     <Link>
       <AdditionalLibraryDirectories>..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</AdditionalLibraryDirectories>
       <AdditionalDependencies>cinder.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|Win32'">
