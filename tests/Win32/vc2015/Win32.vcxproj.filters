@@ -25,12 +25,6 @@
     <Filter Include="Blocks\Runtime\include\runtime">
       <UniqueIdentifier>{FD1D6ED7-9F97-40D2-BF38-CE53E207B088}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Runtime\src">
-      <UniqueIdentifier>{0AEB7930-BBE9-4395-AAC3-A9EA101961B0}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Blocks\Runtime\src\runtime">
-      <UniqueIdentifier>{C17708E0-5308-4D26-8B5E-8E42460FDCC9}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Win32App.cpp">
@@ -42,33 +36,6 @@
     <ClInclude Include="..\include\Resources.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClCompile Include="..\..\..\src\runtime\BuildSettings.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\BuildStep.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Module.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\Process.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\ProjectConfiguration.cpp">
-      <Filter>Blocks\Runtime\src\runtime</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
@@ -83,12 +50,6 @@
     <ClInclude Include="..\..\..\include\runtime\BuildStep.h">
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\ClassFactory.h">
-      <Filter>Blocks\Runtime\include\runtime</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
-      <Filter>Blocks\Runtime\include\runtime</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
@@ -101,9 +62,6 @@
     <ClInclude Include="..\..\..\include\runtime\Module.h">
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
-      <Filter>Blocks\Runtime\include\runtime</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Process.h">
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
@@ -111,6 +69,12 @@
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\Virtual.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Export.h">
+      <Filter>Blocks\Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Factory.h">
       <Filter>Blocks\Runtime\include\runtime</Filter>
     </ClInclude>
   </ItemGroup>

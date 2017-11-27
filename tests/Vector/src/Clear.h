@@ -2,7 +2,7 @@
 
 #include "cinder/gl/wrapper.h"
 #include "runtime/Virtual.h"
-#include "runtime/ClassWatcher.h"
+#include "runtime/Factory.h"
 
 class Clear {
 public:

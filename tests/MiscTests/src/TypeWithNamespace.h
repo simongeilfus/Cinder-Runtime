@@ -1,7 +1,7 @@
 #pragma once
 
 #include "runtime/Virtual.h"
-#include "runtime/ClassWatcher.h"
+#include "runtime/Factory.h"
 
 namespace foo { namespace bar {
 
