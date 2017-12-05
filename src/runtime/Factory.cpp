@@ -48,6 +48,12 @@ Factory::TypeFormat& Factory::TypeFormat::exportVftable( bool exportSymbol )
 	return *this;
 }
 
+Factory::TypeFormat& Factory::TypeFormat::linkAppObjs( bool link )
+{
+	mLinkAppObjs = link;
+	return *this;
+}
+
 namespace {
 
 	static std::string stripNamespace( const std::string &className )
@@ -113,6 +119,10 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 
 		if( format.mExportVftable ) {
 			settings.preBuildStep( make_shared<rt::ModuleDefinition>( rt::ModuleDefinition::Options().exportVftable( name ) ) );
+		}
+
+		if( format.mLinkAppObjs ) {
+			settings.preBuildStep( make_shared<rt::LinkAppObjs>() );
 		}
 
 		if( settings.isVerboseEnabled() ) {

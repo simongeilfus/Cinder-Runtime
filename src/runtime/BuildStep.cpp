@@ -21,6 +21,7 @@
 
 #include "runtime/BuildStep.h"
 #include "runtime/BuildSettings.h"
+#include "runtime/ProjectConfiguration.h"
 #include <fstream>
 
 #include "cinder/app/App.h"
@@ -258,6 +259,20 @@ void ModuleDefinition::execute( BuildSettings* settings ) const
 	}
 
 	settings->moduleDef( outputPath );
+}
+
+void LinkAppObjs::execute( BuildSettings* settings ) const
+{
+	for( auto it = fs::directory_iterator( settings->getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
+		if( it->path().extension() == ".obj" ) {
+			// Skip obj for current source and current app
+			if( it->path().filename().string().find( settings->getModuleName() + ".obj" ) == string::npos 
+				&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos
+				) {
+				settings->linkObj( it->path() );
+			}
+		}
+	}
 }
 
 } // namespace runtime

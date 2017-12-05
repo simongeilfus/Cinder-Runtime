@@ -72,18 +72,21 @@ public:
 	//! TypeFormat allows to opt-in or out from code generation and symbol exports
 	class CI_RT_API TypeFormat {
 	public:
-		TypeFormat() : mPrecompiledHeader( true ), mClassFactory( true ), mExportVftable( true ) {}
+		TypeFormat() : mPrecompiledHeader( true ), mClassFactory( true ), mExportVftable( true ), mLinkAppObjs( true ) {}
 		//! Adds a pre-build step to generate the precompiled header sources and build settings
 		TypeFormat& precompiledHeader( bool generate = true );
 		//! Adds a pre-build step to generate the class factory sources and build settings
 		TypeFormat& classFactory( bool generate = true );
 		//! Adds a pre-build step to generate .def file exporting the class vtable
 		TypeFormat& exportVftable( bool exportSymbol = true );
+		//! Adds the app's generated .obj files to be linked. Default to true
+		TypeFormat& linkAppObjs( bool link );
 	protected:
 		friend class Factory;
 		bool mPrecompiledHeader;
 		bool mClassFactory;
 		bool mExportVftable;
+		bool mLinkAppObjs;
 	};
 
 	//! Allocates a new instance and adds it to the Factory watch list

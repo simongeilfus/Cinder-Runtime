@@ -109,11 +109,11 @@ protected:
 	Options mOptions;
 };
 
-//class CI_RT_API LinkAppObjs : public BuildStep {
-//public:
-//	void execute( BuildSettings* settings ) const override;
-//protected:
-//};
+class CI_RT_API LinkAppObjs : public BuildStep {
+public:
+	void execute( BuildSettings* settings ) const override;
+protected:
+};
 
 //class CI_RT_API CleanupBuildFolder : public BuildStep {
 //public:
