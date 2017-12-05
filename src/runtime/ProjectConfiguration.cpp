@@ -71,7 +71,7 @@ ProjectConfiguration::ProjectConfiguration( const ci::fs::path &path )
 	mConfiguration = "Release";
 #endif
 
-#if defined( CINDER_SHARED )
+#if defined( CINDER_SHARED ) || defined( CINDER_RT_SHARED_BUILD )
 	mConfiguration += "_Shared";
 #endif
 		

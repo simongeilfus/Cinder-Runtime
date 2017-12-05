@@ -21,7 +21,7 @@ public:
 void CompilerRewriteApp::setup()
 {
 	mClear = make_unique<Clear>();
-	for( size_t i = 0; i < 1000; ++i ) {
+	for( size_t i = 0; i < 100; ++i ) {
 		mTest.push_back( make_unique<Test2>() );
 	}
 }

@@ -30,9 +30,10 @@ using namespace ci;
 namespace runtime {
 
 BuildSettings::BuildSettings()
-: mVerbose( false ), mLinkAppObjs( true ), mGenerateFactory( true ), mGeneratePch( false ), mUsePch( true )
+: mVerbose( false ), mCreatePch( false ), mUsePch( false )
 {
 }
+
 namespace {
 
 	// http://stackoverflow.com/questions/5343190/how-do-i-replace-all-instances-of-a-string-with-another-string
@@ -246,13 +247,12 @@ std::string BuildSettings::printToString() const
 {
 	stringstream str;
 
-	str << "link app objs: " << mLinkAppObjs << ", generate factory: " << mGenerateFactory << ", generate pch: " << mGeneratePch << ", use pch: " << mUsePch << "\n";
+	str << "create pch: " << mCreatePch << ", use pch: " << mUsePch << "\n";
 	str << "precompiled header: " << mPrecompiledHeader << "\n";
 	str << "output path: " << mOutputPath << "\n";
 	str << "intermediate path: " << mIntermediatePath << "\n";
 	str << "pdb path: " << mPdbPath << "\n";
 	str << "module name: " << mModuleName << "\n";
-	str << "type name: " << mTypeName << "\n";
 	str << "includes:\n";
 	for( const auto &include : mIncludes ) {
 		str << "\t- " << include << "\n";
@@ -327,7 +327,7 @@ BuildSettings& BuildSettings::usePrecompiledHeader( bool use /*const ci::fs::pat
 		
 BuildSettings& BuildSettings::createPrecompiledHeader( bool create /*const ci::fs::path &path*/ )
 {
-	mGeneratePch = create;
+	mCreatePch = create;
 	//mPrecompiledHeader = path;
 	return *this;
 }
@@ -394,11 +394,6 @@ BuildSettings& BuildSettings::moduleName( const std::string &name )
 	mModuleName = name;
 	return *this;
 }
-BuildSettings& BuildSettings::typeName( const std::string &typeName )
-{ 
-	mTypeName = typeName;
-	return *this;
-}
 
 BuildSettings& BuildSettings::forceInclude( const std::string &filename )
 {
@@ -422,15 +417,22 @@ BuildSettings& BuildSettings::linkObj( const ci::fs::path &path )
 	mObjPaths.push_back( path );
 	return *this;
 }
-BuildSettings& BuildSettings::linkAppObjs( bool link )
+
+BuildSettings& BuildSettings::moduleDef( const ci::fs::path &path )
 {
-	mLinkAppObjs = link;
+	mModuleDefPath = path;
+	return *this;
+}
+	
+BuildSettings& BuildSettings::preBuildStep( const BuildStepRef &customStep ) 
+{
+	mPreBuildSteps.push_back( customStep );
 	return *this;
 }
 
-BuildSettings& BuildSettings::generateFactory( bool generate )
+BuildSettings& BuildSettings::postBuildStep( const BuildStepRef &customStep ) 
 {
-	mGenerateFactory = generate;
+	mPostBuildSteps.push_back( customStep );
 	return *this;
 }
 

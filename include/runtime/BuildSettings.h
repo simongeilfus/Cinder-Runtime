@@ -21,49 +21,42 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <functional>
 
-#include "BuildStep.h"
+#include "runtime/Export.h"
+#include "runtime/BuildStep.h"
 #include "cinder/Filesystem.h"
 
 namespace runtime {
 
 //! Describes the list of Options and arguments available when building a file
-class BuildSettings {
+class CI_RT_API BuildSettings {
 public:
 	BuildSettings();
 	
 #if defined( CINDER_MSW )
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for compiler and linker settings. Will use the default project file if null.
 	BuildSettings& vcxproj( const ci::fs::path &path = ci::fs::path() );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for compiler settings. Will use the default project file if null.
 	BuildSettings& vcxprojCpp( const ci::fs::path &path = ci::fs::path() );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for linker settings. Will use the default project file if null.
 	BuildSettings& vcxprojLinker( const ci::fs::path &path = ci::fs::path() );
 #endif
 	
 	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& preBuildStep( const BuildStep &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& preBuildStep( const std::function<BuildStep*> &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& postBuildStep( const BuildStep &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
-	BuildSettings& postBuildStep( const std::function<BuildStep*> &customStep );
-
-	//! Adds an extra include folder to the compiler BuildSettings
 	BuildSettings& include( const ci::fs::path &path );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds an a library search path to the linker BuildSettings
 	BuildSettings& libraryPath( const ci::fs::path &path );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds a library to the linker BuildSettings
 	BuildSettings& library( const std::string &library );
 		
 	//! Adds a preprocessor definition to the compiler BuildSettings
 	BuildSettings& define( const std::string &definition );
 		
-	//! Specifies the path to the precompiled header.
+	//! Specifies whether a precompiled header need to be used.
 	BuildSettings& usePrecompiledHeader( bool use = true /*const ci::fs::path &path*/ );
-	//! Specifies the path to the precompiled header.
+	//! Specifies whether a precompiled header need to be created.
 	BuildSettings& createPrecompiledHeader( bool create = true /*const ci::fs::path &path*/ );
 	//! Adds a forced include as the first lined of the compiled file (If you use multiple /FI options, files are included in the order they are processed by CL.)
 	BuildSettings& forceInclude( const std::string &filename );
@@ -91,16 +84,16 @@ public:
 				
 	//! Specifies the name of the module (.dll). Also used for path generation.
 	BuildSettings& moduleName( const std::string &name );
-	//! Specifies the typename of something that is reloadable
-	BuildSettings& typeName( const std::string &typeName );
 
 	//! Adds an obj files to be linked
 	BuildSettings& linkObj( const ci::fs::path &path );
-	//! Adds the app's generated .obj files to be linked. Default to true
-	BuildSettings& linkAppObjs( bool link );
-		
-	//! Generates a class Factory source. Default to true
-	BuildSettings& generateFactory( bool generate );
+	//! Specifies a module definition file to be used by the linker
+	BuildSettings& moduleDef( const ci::fs::path &path );
+
+	//! Adds a custom operation to be executed before the build
+	BuildSettings& preBuildStep( const BuildStepRef &customStep );
+	//! Adds a custom operation to be executed after the build
+	BuildSettings& postBuildStep( const BuildStepRef &customStep );
 		
 	//! Adds an additional compiler option
 	BuildSettings& compilerOption( const std::string &option );
@@ -121,7 +114,6 @@ public:
 	const std::string&		getPlatform() const { return mPlatform; }
 	const std::string&		getPlatformToolset() const { return mPlatformToolset; }
 	const std::string&		getModuleName() const { return mModuleName; }
-	const std::string&		getTypeName() const { return mTypeName; }
 
 	const std::vector<ci::fs::path>& 	getIncludes() const { return mIncludes; }
 	const std::vector<ci::fs::path>& 	getLibraryPaths() const { return mLibraryPaths; }
@@ -143,20 +135,18 @@ public:
 protected:
 	friend class CompilerMsvc;
 	bool mVerbose;
-	bool mLinkAppObjs;
-	bool mGenerateFactory;
-	bool mGeneratePch;
+	bool mCreatePch;
 	bool mUsePch;
 	ci::fs::path mPrecompiledHeader;
 	ci::fs::path mOutputPath;
 	ci::fs::path mIntermediatePath;
 	ci::fs::path mObjectFilePath;
 	ci::fs::path mPdbPath;
+	ci::fs::path mModuleDefPath;
 	std::string	mConfiguration;
 	std::string	mPlatform;
 	std::string	mPlatformToolset;
 	std::string mModuleName;
-	std::string mTypeName;
 	std::vector<ci::fs::path> mIncludes;
 	std::vector<ci::fs::path> mLibraryPaths;
 	std::vector<ci::fs::path> mAdditionalSources;
@@ -167,6 +157,9 @@ protected:
 	std::vector<std::string> mLinkerOptions;
 	std::vector<ci::fs::path> mObjPaths;
 	std::map<std::string, std::string>	mUserMacros;
+	
+	std::vector<BuildStepRef> mPreBuildSteps;
+	std::vector<BuildStepRef> mPostBuildSteps;
 };
 
 } // namespace runtime

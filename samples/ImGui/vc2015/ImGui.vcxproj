@@ -104,8 +104,8 @@
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;cinder_rt.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib\msw\$(PlatformTarget)\$(Configuration);..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -134,8 +134,8 @@
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;Cinder-ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;cinder_rt.lib;OpenGL32.lib;Cinder-ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib\msw\$(PlatformTarget)\$(Configuration);..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -144,8 +144,9 @@
       <IgnoreSpecificDefaultLibraries>LIBCMT;LIBCPMT</IgnoreSpecificDefaultLibraries>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"
-xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Cinder-ImGui.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y /d "..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"
+xcopy /y /d "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Cinder-ImGui.dll" "$(OutDir)"
+xcopy /y /d "..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\cinder_rt.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -165,8 +166,8 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;cinder_rt.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib\msw\$(PlatformTarget)\$(Configuration);..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
@@ -198,8 +199,8 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       <AdditionalIncludeDirectories>"..\..\..\..\..\include";..\include</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>cinder.lib;OpenGL32.lib;Cinder-ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cinder.lib;cinder_rt.lib;OpenGL32.lib;Cinder-ImGui.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\..\..\lib\msw\$(PlatformTarget)\;..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\;..\..\..\lib\msw\$(PlatformTarget)\$(Configuration);..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <GenerateMapFile>true</GenerateMapFile>
       <SubSystem>Windows</SubSystem>
@@ -211,8 +212,7 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       </DataExecutionPrevention>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy /y "..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"
-xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Cinder-ImGui.dll" "$(OutDir)"</Command>
+      <Command>xcopy /y /d "..\..\..\..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\cinder.dll" "$(OutDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -237,15 +237,6 @@ xcopy /y "..\..\..\..\Cinder-ImGui\lib\msw\$(PlatformTarget)\$(Configuration)\Ci
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\..\src\runtime\BuildSettings.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\BuildStep.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\ClassFactory.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\CompilerBase.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\CompilerMSVC.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\Module.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\PrecompiledHeader.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\Process.cpp" />
-    <ClCompile Include="..\..\..\src\runtime\ProjectConfiguration.cpp" />
     <ClCompile Include="..\src\ImGuiApp.cpp" />
     <ClCompile Include="..\src\Test.cpp" />
   </ItemGroup>

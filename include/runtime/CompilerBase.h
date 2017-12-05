@@ -27,19 +27,21 @@
 #include "cinder/Filesystem.h"
 #include "cinder/signals.h"
 
+#include "runtime/BuildOutput.h"
+
 using ProcessPtr = std::unique_ptr<class Process>;
 
 namespace runtime {
 
-class CompilationResult;
+class CI_RT_API BuildOutput;
 
-class CompilerBase {
+class CI_RT_API CompilerBase {
 public:
 	CompilerBase();
 	virtual ~CompilerBase();
 	
 	//! Compiles and links the file at path. A callback can be specified to get the compilation results.
-	virtual void build( const std::string &arguments, const std::function<void(const CompilationResult&)> &onBuildFinish = nullptr ) {}
+	virtual void build( const std::string &arguments, const std::function<void(const BuildOutput&)> &onBuildFinish = nullptr ) {}
 	
 protected:
 	virtual std::string		getCLInitCommand() const = 0;
@@ -57,48 +59,7 @@ protected:
 	std::vector<std::string>				mWarnings;
 };
 
-class CompilationResult {
-public:
-	//! Returns the path of the compilation output
-	ci::fs::path getOutputPath() const;
-	//! Returns the path of the file that has been compiled
-	const std::vector<ci::fs::path>&	getFilePaths() const;
-	//! Returns the path of the file that has been compiled
-	std::vector<ci::fs::path>&			getFilePaths();
-	//! Returns the path of the file that has been compiled
-	const std::vector<ci::fs::path>&	getObjectFilePaths() const;	
-	//! Returns the path of the file that has been compiled
-	std::vector<ci::fs::path>&			getObjectFilePaths();	
-	//! Returns the path of the file that has been compiled
-	ci::fs::path getPdbFilePath() const;
-	//! Returns whether the compilation ended with errors
-	bool hasErrors() const;
-	//! Returns the list of errors 
-	const std::vector<std::string>&	getErrors() const;
-	//! Returns the list of errors 
-	std::vector<std::string>&		getErrors();
-	//! Returns the list of warnings
-	const std::vector<std::string>& getWarnings() const;
-	//! Returns the list of warnings
-	std::vector<std::string>&		getWarnings();
-	
-	//! Returns the path of the compilation output
-	void setOutputPath( const ci::fs::path &path );
-	//! Returns the path of the file that has been compiled
-	void setPdbFilePath( const ci::fs::path &path );
-
-	CompilationResult();
-
-protected:
-	ci::fs::path mOutputPath;
-	ci::fs::path mPdbFilePath;
-	std::vector<ci::fs::path> mFilePaths;
-	std::vector<ci::fs::path> mObjectFilePaths;
-	std::vector<std::string> mErrors;
-	std::vector<std::string> mWarnings;
-};
-
-class CompilerException : public ci::Exception {
+class CI_RT_API CompilerException : public ci::Exception {
 public:
 	CompilerException( const std::string &message ) : ci::Exception( message ) {}
 };

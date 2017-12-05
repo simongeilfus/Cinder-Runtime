@@ -1,6 +1,4 @@
 #include "runtime/CompilerMsvc.h"
-#include "runtime/ClassFactory.h"
-#include "runtime/PrecompiledHeader.h"
 #include "runtime/Process.h"
 #include "runtime/ProjectConfiguration.h"
 
@@ -70,7 +68,7 @@ CompilerMsvc& CompilerMsvc::instance()
 	return *compiler.get();
 }
 
-void CompilerMsvc::build( const std::string &arguments, const std::function<void( const CompilationResult& )> &onBuildFinish )
+void CompilerMsvc::build( const std::string &arguments, const std::function<void( const BuildOutput& )> &onBuildFinish )
 {
 	if( ! mProcess ) {
 		throw CompilerException( "Compiler Process not initialized" );
@@ -113,48 +111,38 @@ std::string CompilerMsvc::getCompilerInitArgs() const
 #endif
 }
 
-std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
+std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const
 {
 	string command;
 
 	// generate precompile header
-	if( settings.mUsePch ) {
-		
-		bool createPch = generatePrecompiledHeader( sourcePath, 
-			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.h" ),
-			settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ), false ) || settings.mGeneratePch;
+	// TODO: This should ideally be handled in a separate build
+	if( settings.mCreatePch ) {
+		command += "cl /c ";
 
-		auto outputPchFilePath = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ); 
-		if( ! fs::exists( outputPchFilePath ) )
-			createPch = true;
-
-		if( createPch ) {
-			command += "cl /c ";
-
-			for( const auto &define : settings.mPpDefinitions ) {
-				command += "/D " + define + " ";
-			}
-			for( const auto &include : settings.mIncludes ) {
-				command += "/I" + include.generic_string() + " ";
-			}
-			for( const auto &include : settings.mForcedIncludes ) {
-				command += "/FI " + include + " ";
-			}
-			for( const auto &compilerArg : settings.mCompilerOptions ) {
-				command += compilerArg + " ";
-			}
-			
-			command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
-			command += "/Fp" + outputPchFilePath.string() + " ";
-		#if defined( _DEBUG )
-			command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
-		#endif
-
-			command += "/Yc" + settings.getModuleName() + "Pch.h ";
-
-			command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ) ).generic_string();
-			command += "\n";
+		for( const auto &define : settings.mPpDefinitions ) {
+			command += "/D " + define + " ";
 		}
+		for( const auto &include : settings.mIncludes ) {
+			command += "/I" + include.generic_string() + " ";
+		}
+		for( const auto &include : settings.mForcedIncludes ) {
+			command += "/FI " + include + " ";
+		}
+		for( const auto &compilerArg : settings.mCompilerOptions ) {
+			command += compilerArg + " ";
+		}
+			
+		command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
+		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
+	#if defined( _DEBUG )
+		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
+	#endif
+
+		command += "/Yc" + settings.getModuleName() + "Pch.h ";
+
+		command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + "Pch.cpp" ) ).generic_string();
+		command += "\n";
 	}
 
 	command += "cl ";
@@ -181,7 +169,6 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	if( settings.mUsePch ) {
 		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
 		command += "/Yu" + settings.getModuleName() + "Pch.h ";
-		command += "/FI" + settings.getModuleName() + "Pch.h ";
 	}
 
 	// main source file
@@ -189,16 +176,12 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 	// additional files to compile
 	for( const auto &path : settings.mAdditionalSources ) {
 		command += path.generic_string() + " ";
-		result->getFilePaths().push_back( path );
-	}
-
-	if( settings.isVerboseEnabled() ) {
-		CI_LOG_I( "command:\n" << command );
+		output->getFilePaths().push_back( path );
 	}
 
 	return command;
 }
-std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
+std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const
 {
 	string command = "/link ";
 	
@@ -212,21 +195,12 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += linkerArg + " ";
 	}
 	
-	// TODO: Make this optional
-	// vtable symbol export
-	// https://social.msdn.microsoft.com/Forums/vstudio/en-US/0cb15e28-4852-4cba-b63d-8a0de6e88d5f/accessing-the-vftable-vfptr-without-constructing-the-object?forum=vclanguage
-	// https://www.gamedev.net/forums/topic/392971-c-compile-time-retrival-of-a-classs-vtable-solved/?page=2
-	// https://www.gamedev.net/forums/topic/460569-c-compile-time-retrival-of-a-classs-vtable-solution-2/
-	if( ! fs::exists( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ) ) {
-		// create a .def file with the symbol of the vtable to be able to find it with GetProcAddress	
-		std::ofstream outputFile( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) );		
-		outputFile << "EXPORTS" << endl;
-		outputFile << "\t" << getSymbolForVTable( settings.getTypeName() ) << "\t\tDATA" << endl;
+	if( ! settings.mModuleDefPath.empty() ) {
+		command += "/DEF:" + settings.mModuleDefPath.string() + " ";
 	}
-	command += "/DEF:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / ( settings.getModuleName() + ".def" ) ).string() + " ";
 	
 	auto outputPath = settings.mOutputPath.empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.mOutputPath;
-	result->setOutputPath( outputPath );
+	output->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
 	command += "/DEBUG:FASTLINK ";
@@ -235,40 +209,23 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";
+	
+	// main source file obj
+	output->getObjectFilePaths().push_back( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".obj" ) );
 
-	result->getObjectFilePaths().push_back( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".obj" ) );
+	// additional objs to link
 	for( const auto &obj : settings.mObjPaths ) {
 		command += obj.generic_string() + " ";
-		result->getObjectFilePaths().push_back( obj );
-	}
-	
-	command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Pch.obj" ) ).generic_string() + " ";
-
-	if( settings.mGenerateFactory ) { 
-		command += ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "Factory.obj" ) ).generic_string() + " ";
-	}
-
-	if( settings.mLinkAppObjs ) {
-		for( auto it = fs::directory_iterator( settings.getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
-			if( it->path().extension() == ".obj" ) {
-				// Skip obj for current source and current app
-				if( it->path().filename().string().find( settings.getModuleName() + ".obj" ) == string::npos 
-					&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos
-					) {
-					command += it->path().generic_string() + " ";
-					result->getObjectFilePaths().push_back( it->path() );
-				}
-			}
-		}
+		output->getObjectFilePaths().push_back( obj );
 	}
 
 	return command;
 }
 
-std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, CompilationResult* result ) const
+std::string CompilerMsvc::generateBuildCommand( const ci::fs::path &sourcePath, const BuildSettings &settings, BuildOutput* output ) const
 {
-	auto compilerCommand = generateCompilerCommand( sourcePath, settings, result );
-	auto linkerCommand = generateLinkerCommand( sourcePath, settings, result );
+	auto compilerCommand = generateCompilerCommand( sourcePath, settings, output );
+	auto linkerCommand = generateLinkerCommand( sourcePath, settings, output );
 
 	if( settings.isVerboseEnabled() ) {
 		CI_LOG_I( "compiler command:\n" << compilerCommand );
@@ -293,21 +250,19 @@ namespace {
 } // anonymous namespace
 
 
-void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const CompilationResult&)> &onBuildFinish )
+void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &settings, const std::function<void(const BuildOutput&)> &onBuildFinish )
 {
 	if( ! mProcess ) {
 		throw CompilerException( "Compiler Process not initialized" );
 	}
-	
-    std::chrono::steady_clock::time_point timePoint = std::chrono::steady_clock::now();
 
 	// clear the error and warning vectors
 	mErrors.clear();
 	mWarnings.clear();
 
 	// prepare compilation results
-	CompilationResult result;
-	result.getFilePaths().push_back( sourcePath );
+	BuildOutput output;
+	output.getFilePaths().push_back( sourcePath );
 
 	auto buildDir = settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build";
 	if( ! fs::exists( buildDir ) ) {
@@ -323,35 +278,25 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 			fs::rename( pdb, newName );
 		} catch( const std::exception & ) {}
 	}
-	result.setPdbFilePath( pdb );
+	output.setPdbFilePath( pdb );
 #endif
 
-	// generate factor if needed and add it to the compiler list
+	// execute pre build steps
 	auto buildSettings = settings;
-	if( settings.mGenerateFactory ) {
-		auto factoryPath = buildDir.parent_path() / ( settings.getModuleName() + "Factory.cpp" );
-		if( ! fs::exists( factoryPath ) ) {
-			string headerName = settings.getModuleName() + ".h";
-			generateClassFactory( factoryPath, settings.getTypeName(), headerName );
-		}
-		auto factoryObjPath = buildDir / ( settings.getModuleName() + "Factory.obj" );
-		//if( ! fs::exists( factoryObjPath ) ) {
-			buildSettings.additionalSource( factoryPath );
-		//}
-		//else {
-		//	buildSettings.linkObj( factoryObjPath );
-		//}
+	for( const auto &buildStep : settings.mPreBuildSteps ) {
+		buildStep->execute( &buildSettings );
 	}
 		
 	// issue the build command with a completion token
-	auto command = generateBuildCommand( sourcePath, buildSettings, &result );
-	mBuilds.insert( make_pair( sourcePath.filename(), make_tuple( result, onBuildFinish, timePoint ) ) );
+	auto command = generateBuildCommand( sourcePath, buildSettings, &output );
+	output.setBuildSettings( buildSettings );
+	mBuilds.insert( { sourcePath.filename(), { output, onBuildFinish } } );
 	app::console() << endl << "1>------ Runtime Compiler Build started: Project: " << ProjectConfiguration::instance().getProjectPath().stem() << ", Configuration: " << ProjectConfiguration::instance().getConfiguration() << " " << ProjectConfiguration::instance().getPlatform() << " ------" << endl;
 	app::console() << "1>  " << sourcePath.filename() << endl;
 	mProcess << command << endl << ( "CI_BUILD " + sourcePath.filename().string() ) << endl;
 }
 
-void CompilerMsvc::build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void( const CompilationResult& )> &onBuildFinish )
+void CompilerMsvc::build( const std::vector<ci::fs::path> &sourcesPaths, const BuildSettings &settings, const std::function<void( const BuildOutput& )> &onBuildFinish )
 {
 	if( sourcesPaths.size() > 1 ) {
 		BuildSettings buildSettings = settings;
@@ -414,13 +359,20 @@ void CompilerMsvc::parseProcessOutput()
 			app::console() << "1>" + warning << endl;
 		}	
 		if( mErrors.empty() ) {
+
+			// execute post build steps
 			const Build &build = buildIt->second;
-			app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getOutputPath() << endl;
-			if( ! std::get<0>( build ).getPdbFilePath().empty() ) {
-				app::console() << "1>  " << std::get<0>( build ).getFilePaths().front().filename() << " -> " << std::get<0>( build ).getPdbFilePath() << endl;
+			for( const auto &buildStep : build.first.getBuildSettings().mPostBuildSteps ) {
+				buildStep->execute( nullptr );
+			}
+
+			// print results
+			app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getOutputPath() << endl;
+			if( ! build.first.getPdbFilePath().empty() ) {
+				app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getPdbFilePath() << endl;
 			}
 			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
-			auto elapsed = std::chrono::steady_clock::now() - std::get<2>( build );
+			auto elapsed = std::chrono::steady_clock::now() - build.first.getTimePoint();
 			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
 			auto elapsedMinutes = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
 			auto elapsedHours = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
@@ -428,7 +380,9 @@ void CompilerMsvc::parseProcessOutput()
 			oss << std::setfill('0') << std::setw(2) << elapsedHours << ":" << std::setw(2) << elapsedMinutes << ":"
 				<< std::setw(2) << ( elapsedMicro % 1000000000 ) / 1000000 << "." << std::setw(3) << ( elapsedMicro % 1000000 ) / 1000;
 			app::console() << endl << "Time Elapsed " << oss.str() << endl << endl;
-			std::get<1>( build )( std::get<0>( build ) );
+
+			// call the build finish callback
+			build.second( build.first );
 		}
 		else {
 			for( auto error : mErrors ) {
