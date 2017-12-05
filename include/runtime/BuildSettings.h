@@ -36,27 +36,27 @@ public:
 	BuildSettings();
 	
 #if defined( CINDER_MSW )
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for compiler and linker settings. Will use the default project file if null.
 	BuildSettings& vcxproj( const ci::fs::path &path = ci::fs::path() );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for compiler settings. Will use the default project file if null.
 	BuildSettings& vcxprojCpp( const ci::fs::path &path = ci::fs::path() );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Specifies a vcxproj to be parsed for linker settings. Will use the default project file if null.
 	BuildSettings& vcxprojLinker( const ci::fs::path &path = ci::fs::path() );
 #endif
 	
 	//! Adds an extra include folder to the compiler BuildSettings
 	BuildSettings& include( const ci::fs::path &path );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds an a library search path to the linker BuildSettings
 	BuildSettings& libraryPath( const ci::fs::path &path );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds a library to the linker BuildSettings
 	BuildSettings& library( const std::string &library );
 		
 	//! Adds a preprocessor definition to the compiler BuildSettings
 	BuildSettings& define( const std::string &definition );
 		
-	//! Specifies the path to the precompiled header.
+	//! Specifies whether a precompiled header need to be used.
 	BuildSettings& usePrecompiledHeader( bool use = true /*const ci::fs::path &path*/ );
-	//! Specifies the path to the precompiled header.
+	//! Specifies whether a precompiled header need to be created.
 	BuildSettings& createPrecompiledHeader( bool create = true /*const ci::fs::path &path*/ );
 	//! Adds a forced include as the first lined of the compiled file (If you use multiple /FI options, files are included in the order they are processed by CL.)
 	BuildSettings& forceInclude( const std::string &filename );
@@ -87,14 +87,12 @@ public:
 
 	//! Adds an obj files to be linked
 	BuildSettings& linkObj( const ci::fs::path &path );
-	//! Adds the app's generated .obj files to be linked. Default to true
-	BuildSettings& linkAppObjs( bool link );
 	//! Specifies a module definition file to be used by the linker
 	BuildSettings& moduleDef( const ci::fs::path &path );
 
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds a custom operation to be executed before the build
 	BuildSettings& preBuildStep( const BuildStepRef &customStep );
-	//! Adds an extra include folder to the compiler BuildSettings
+	//! Adds a custom operation to be executed after the build
 	BuildSettings& postBuildStep( const BuildStepRef &customStep );
 		
 	//! Adds an additional compiler option
@@ -137,7 +135,6 @@ public:
 protected:
 	friend class CompilerMsvc;
 	bool mVerbose;
-	bool mLinkAppObjs;
 	bool mCreatePch;
 	bool mUsePch;
 	ci::fs::path mPrecompiledHeader;

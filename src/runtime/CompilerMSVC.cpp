@@ -218,20 +218,6 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 		command += obj.generic_string() + " ";
 		output->getObjectFilePaths().push_back( obj );
 	}
-	
-	if( settings.mLinkAppObjs ) {
-		for( auto it = fs::directory_iterator( settings.getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
-			if( it->path().extension() == ".obj" ) {
-				// Skip obj for current source and current app
-				if( it->path().filename().string().find( settings.getModuleName() + ".obj" ) == string::npos 
-					&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos
-					) {
-					command += it->path().generic_string() + " ";
-					output->getObjectFilePaths().push_back( it->path() );
-				}
-			}
-		}
-	}
 
 	return command;
 }

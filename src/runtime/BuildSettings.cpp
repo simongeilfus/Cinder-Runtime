@@ -30,9 +30,10 @@ using namespace ci;
 namespace runtime {
 
 BuildSettings::BuildSettings()
-: mVerbose( false ), mLinkAppObjs( true ), mCreatePch( false ), mUsePch( false )
+: mVerbose( false ), mCreatePch( false ), mUsePch( false )
 {
 }
+
 namespace {
 
 	// http://stackoverflow.com/questions/5343190/how-do-i-replace-all-instances-of-a-string-with-another-string
@@ -246,7 +247,7 @@ std::string BuildSettings::printToString() const
 {
 	stringstream str;
 
-	str << "link app objs: " << mLinkAppObjs << ", create pch: " << mCreatePch << ", use pch: " << mUsePch << "\n";
+	str << "create pch: " << mCreatePch << ", use pch: " << mUsePch << "\n";
 	str << "precompiled header: " << mPrecompiledHeader << "\n";
 	str << "output path: " << mOutputPath << "\n";
 	str << "intermediate path: " << mIntermediatePath << "\n";
@@ -414,11 +415,6 @@ BuildSettings& BuildSettings::additionalSources( const std::vector<ci::fs::path>
 BuildSettings& BuildSettings::linkObj( const ci::fs::path &path )
 {
 	mObjPaths.push_back( path );
-	return *this;
-}
-BuildSettings& BuildSettings::linkAppObjs( bool link )
-{
-	mLinkAppObjs = link;
 	return *this;
 }
 
