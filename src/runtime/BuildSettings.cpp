@@ -79,6 +79,8 @@ namespace {
 		replaceAll( output, "$(PlatformTarget)", config.getPlatformTarget() );
 		replaceAll( output, "$(PlatformToolset)", config.getPlatformToolset() );
 		replaceAll( output, "$(ProjectDir)", config.getProjectDir().string() + "/" );
+		#pragma warning(suppress: 4996)
+		replaceAll( output, "$(CINDER_PATH)", std::getenv( "CINDER_PATH" ) );
 
 		// replace user macros
 		for( const auto &macro : settings->getUserMacros() ) {
