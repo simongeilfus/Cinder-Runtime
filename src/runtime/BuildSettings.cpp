@@ -80,7 +80,9 @@ namespace {
 		replaceAll( output, "$(PlatformToolset)", config.getPlatformToolset() );
 		replaceAll( output, "$(ProjectDir)", config.getProjectDir().string() + "/" );
 		#pragma warning(suppress: 4996)
-		replaceAll( output, "$(CINDER_PATH)", std::getenv( "CINDER_PATH" ) );
+		if( auto cinderPath = std::getenv( "CINDER_PATH" ) ) {
+			replaceAll( output, "$(CINDER_PATH)", cinderPath );
+		}
 
 		// replace user macros
 		for( const auto &macro : settings->getUserMacros() ) {
