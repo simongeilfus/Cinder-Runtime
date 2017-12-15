@@ -21,6 +21,7 @@
 
 #include "runtime/BuildStep.h"
 #include "runtime/BuildSettings.h"
+#include "runtime/BuildOutput.h"
 #include "runtime/ProjectConfiguration.h"
 #include <fstream>
 
@@ -57,7 +58,7 @@ CodeGeneration::CodeGeneration( const Options &options )
 {
 }
 
-void CodeGeneration::execute( BuildSettings* settings ) const
+void CodeGeneration::execute( BuildSettings* settings, BuildOutput* output ) const
 {
 	fs::path outputPath = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Factory.cpp" );
 	bool generate = true;
@@ -163,7 +164,7 @@ PrecompiledHeader::PrecompiledHeader( const Options &options )
 {
 }
 
-void PrecompiledHeader::execute( BuildSettings* settings ) const
+void PrecompiledHeader::execute( BuildSettings* settings, BuildOutput* output ) const
 {
 	auto outputHeader = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.h" ); 
 	auto outputCpp = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.cpp" ); 
@@ -241,7 +242,7 @@ ModuleDefinition::ModuleDefinition( const Options &options )
 {
 }
 
-void ModuleDefinition::execute( BuildSettings* settings ) const
+void ModuleDefinition::execute( BuildSettings* settings, BuildOutput* output ) const
 {
 	// TODO: Make this optional
 	// vtable symbol export
@@ -261,7 +262,7 @@ void ModuleDefinition::execute( BuildSettings* settings ) const
 	settings->moduleDef( outputPath );
 }
 
-void LinkAppObjs::execute( BuildSettings* settings ) const
+void LinkAppObjs::execute( BuildSettings* settings, BuildOutput* output ) const
 {
 	for( auto it = fs::directory_iterator( settings->getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
 		if( it->path().extension() == ".obj" ) {
@@ -272,6 +273,29 @@ void LinkAppObjs::execute( BuildSettings* settings ) const
 				settings->linkObj( it->path() );
 			}
 		}
+	}
+}
+
+void CopyBuildOutput::execute( BuildSettings* settings, BuildOutput* output ) const
+{
+	if( output ) {
+		
+		/*std::error_code copyError;
+
+		if( ! fs::exists( output->getOutputPath().parent_path() / "rev_0001" ) ) {
+			fs::create_directories( output->getOutputPath().parent_path() / "rev_0001" );
+		}
+		if( fs::exists( output->getOutputPath() ) ) {
+			fs::copy( output->getOutputPath(), output->getOutputPath().parent_path() / "rev_0001" / output->getOutputPath().filename(), copyError );
+		}
+		if( fs::exists( output->getPdbFilePath() ) ) {
+			fs::copy( output->getPdbFilePath(), output->getPdbFilePath().parent_path() / "rev_0001" / output->getPdbFilePath().filename(), copyError );
+		}
+		for( const auto &objPath : output->getObjectFilePaths() ) {
+			if( fs::exists( objPath ) ) {
+				fs::copy( objPath, objPath.parent_path() / "rev_0001" / objPath.filename(), copyError );
+			}
+		}*/
 	}
 }
 

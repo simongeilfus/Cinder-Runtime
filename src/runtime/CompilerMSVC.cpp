@@ -384,25 +384,6 @@ void CompilerMsvc::parseProcessOutput()
 				<< std::setw(2) << ( elapsedMicro % 1000000000 ) / 1000000 << "." << std::setw(3) << ( elapsedMicro % 1000000 ) / 1000;
 			app::console() << endl << "Time Elapsed " << oss.str() << endl << endl;
 
-#if TEST_WIP_REVISION_SYSTEM_AND_FIX_FOR_PDB_OBJ_LOCKING
-			std::error_code copyError;
-
-			if( ! fs::exists( buildOutput.getOutputPath().parent_path() / "rev_0001" ) ) {
-				fs::create_directories( buildOutput.getOutputPath().parent_path() / "rev_0001" );
-			}
-			if( fs::exists( buildOutput.getOutputPath() ) ) {
-				fs::copy( buildOutput.getOutputPath(), buildOutput.getOutputPath().parent_path() / "rev_0001" / buildOutput.getOutputPath().filename(), copyError );
-			}
-			if( fs::exists( buildOutput.getPdbFilePath() ) ) {
-				fs::copy( buildOutput.getPdbFilePath(), buildOutput.getPdbFilePath().parent_path() / "rev_0001" / buildOutput.getPdbFilePath().filename(), copyError );
-			}
-			for( const auto &objPath : buildOutput.getObjectFilePaths() ) {
-				if( fs::exists( objPath ) ) {
-					fs::copy( objPath, objPath.parent_path() / "rev_0001" / objPath.filename(), copyError );
-				}
-			}
-#endif
-
 			// call the build finish callback
 			build.second( buildOutput );
 		}
