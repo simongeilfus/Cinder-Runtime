@@ -340,10 +340,12 @@ void CompilerMsvc::parseProcessOutput()
 	while( mProcess->isOutputAvailable() ) {
 		auto output = removeEndline( mProcess->getOutputAsync() );
 		if( output.find( "error" ) != string::npos ) { 
-			mErrors.push_back( trimProjectDir( output ) );	
+			//mErrors.push_back( trimProjectDir( output ) );	
+			mErrors.push_back( output );	
 		}
 		else if( output.find( "warning" ) != string::npos ) {
-			mWarnings.push_back( trimProjectDir( output ) );
+			// mWarnings.push_back( trimProjectDir( output ) );
+			mWarnings.push_back( output );
 		}
 		if( output.find( "CI_BUILD" ) != string::npos ) {
 			buildIt = mBuilds.find( output.substr( output.find_first_of( " " ) + 1 ) );
@@ -362,17 +364,18 @@ void CompilerMsvc::parseProcessOutput()
 
 			// execute post build steps
 			const Build &build = buildIt->second;
-			for( const auto &buildStep : build.first.getBuildSettings().mPostBuildSteps ) {
+			const BuildOutput &buildOutput = build.first;
+			for( const auto &buildStep : buildOutput.getBuildSettings().mPostBuildSteps ) {
 				buildStep->execute( nullptr );
 			}
 
 			// print results
-			app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getOutputPath() << endl;
-			if( ! build.first.getPdbFilePath().empty() ) {
-				app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getPdbFilePath() << endl;
+			app::console() << "1>  " << buildOutput.getFilePaths().front().filename() << " -> " << buildOutput.getOutputPath() << endl;
+			if( ! buildOutput.getPdbFilePath().empty() ) {
+				app::console() << "1>  " << buildOutput.getFilePaths().front().filename() << " -> " << buildOutput.getPdbFilePath() << endl;
 			}
 			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
-			auto elapsed = std::chrono::steady_clock::now() - build.first.getTimePoint();
+			auto elapsed = std::chrono::steady_clock::now() - buildOutput.getTimePoint();
 			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
 			auto elapsedMinutes = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
 			auto elapsedHours = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
@@ -381,8 +384,27 @@ void CompilerMsvc::parseProcessOutput()
 				<< std::setw(2) << ( elapsedMicro % 1000000000 ) / 1000000 << "." << std::setw(3) << ( elapsedMicro % 1000000 ) / 1000;
 			app::console() << endl << "Time Elapsed " << oss.str() << endl << endl;
 
+#if TEST_WIP_REVISION_SYSTEM_AND_FIX_FOR_PDB_OBJ_LOCKING
+			std::error_code copyError;
+
+			if( ! fs::exists( buildOutput.getOutputPath().parent_path() / "rev_0001" ) ) {
+				fs::create_directories( buildOutput.getOutputPath().parent_path() / "rev_0001" );
+			}
+			if( fs::exists( buildOutput.getOutputPath() ) ) {
+				fs::copy( buildOutput.getOutputPath(), buildOutput.getOutputPath().parent_path() / "rev_0001" / buildOutput.getOutputPath().filename(), copyError );
+			}
+			if( fs::exists( buildOutput.getPdbFilePath() ) ) {
+				fs::copy( buildOutput.getPdbFilePath(), buildOutput.getPdbFilePath().parent_path() / "rev_0001" / buildOutput.getPdbFilePath().filename(), copyError );
+			}
+			for( const auto &objPath : buildOutput.getObjectFilePaths() ) {
+				if( fs::exists( objPath ) ) {
+					fs::copy( objPath, objPath.parent_path() / "rev_0001" / objPath.filename(), copyError );
+				}
+			}
+#endif
+
 			// call the build finish callback
-			build.second( build.first );
+			build.second( buildOutput );
 		}
 		else {
 			for( auto error : mErrors ) {
