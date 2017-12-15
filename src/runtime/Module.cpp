@@ -70,8 +70,12 @@ Module::~Module()
 	}
 }
 
-void Module::updateHandle()
+void Module::updateHandle( const ci::fs::path &path )
 {
+	if( ! path.empty() ) {
+		mPath = path;
+	}
+
 	if( fs::exists( mPath ) ) {
 		if( mHandle != nullptr ) {
 			FreeLibrary( static_cast<HINSTANCE>( mHandle ) );

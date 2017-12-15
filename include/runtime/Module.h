@@ -38,7 +38,7 @@ public:
 	~Module();
 
 	//! Updates the module with a new handle
-	void updateHandle();
+	void updateHandle( const ci::fs::path &path = ci::fs::path() );
 	//! Changes the disk name of the current module to enable writing a new one 
 	void unlockHandle();
 	

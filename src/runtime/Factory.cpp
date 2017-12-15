@@ -125,6 +125,9 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			settings.preBuildStep( make_shared<rt::LinkAppObjs>() );
 		}
 
+		auto copyBuild = make_shared<rt::CopyBuildOutput>();
+		settings.postBuildStep( copyBuild ).preBuildStep( copyBuild );
+
 		if( settings.isVerboseEnabled() ) {
 			Compiler::instance().debugLog( &settings );
 		}
@@ -148,8 +151,8 @@ void Factory::unwatch( const std::type_index &typeIndex, void* address )
 void Factory::sourceChanged( const WatchEvent &event, const std::type_index &typeIndex, const std::vector<fs::path> &filePaths, const rt::BuildSettings &settings )
 {
 	// unlock the dll-handle before building
-	const auto &module = mTypes[typeIndex].getModule();
-	module->unlockHandle();
+	//const auto &module = mTypes[typeIndex].getModule();
+	//module->unlockHandle();
 				
 	// force precompiled-header re-generation on header change
 	rt::BuildSettings buildSettings = settings;
@@ -167,7 +170,7 @@ void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index 
 {
 	// if a new dll exists update the handle
 	const auto &type = mTypes[typeIndex];
-	if( fs::exists( type.getModule()->getPath() ) ) {
+	if( fs::exists( output.getOutputPath() ) ) {
 
 		// call cleanup / pre-build callbacks
 		type.getModule()->getCleanupSignal().emit( *type.getModule() );
@@ -179,7 +182,7 @@ void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index 
 		}
 
 		// swap module's dll
-		type.getModule()->updateHandle();
+		type.getModule()->updateHandle( output.getOutputPath() );
 
 		// update the instances or swap vtables depending on which file has been modified
 		if( ! vtableSym.empty() ) {

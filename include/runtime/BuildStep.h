@@ -37,7 +37,10 @@ using BuildStepRef = std::shared_ptr<class BuildStep>;
 class CI_RT_API BuildStep {
 public:
 	virtual ~BuildStep();
-	virtual void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const = 0;
+	//! Executes BuildStep before the actual Build, allowing to modify the BuildSettings
+	virtual void execute( BuildSettings* settings ) const {}
+	//! Executes BuildStep after the actual Build, allowing to modify the BuildOutput
+	virtual void execute( BuildOutput* output ) const {}
 };
 
 //! BuildStep used to generate the factory source
@@ -60,7 +63,7 @@ public:
 	};
 
 	CodeGeneration( const Options &options );
-	void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const override;
+	void execute( BuildSettings* settings ) const override;
 protected:
 	Options mOptions;
 };
@@ -83,7 +86,7 @@ public:
 	};
 	
 	PrecompiledHeader( const Options &options );
-	void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const override;
+	void execute( BuildSettings* settings ) const override;
 protected:
 	Options mOptions;
 };
@@ -105,20 +108,21 @@ public:
 	static std::string getVftableSymbol( const std::string &typeName );
 	
 	ModuleDefinition( const Options &options );
-	void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const override;
+	void execute( BuildSettings* settings ) const override;
 protected:
 	Options mOptions;
 };
 
 class CI_RT_API LinkAppObjs : public BuildStep {
 public:
-	void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const override;
+	void execute( BuildSettings* settings ) const override;
 protected:
 };
 
 class CI_RT_API CopyBuildOutput : public BuildStep {
 public:
-	void execute( BuildSettings* settings, BuildOutput* output = nullptr ) const override;
+	void execute( BuildSettings* settings ) const override;
+	void execute( BuildOutput* output ) const override;
 };
 
 //class CI_RT_API CleanupBuildFolder : public BuildStep {

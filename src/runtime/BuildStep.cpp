@@ -58,7 +58,7 @@ CodeGeneration::CodeGeneration( const Options &options )
 {
 }
 
-void CodeGeneration::execute( BuildSettings* settings, BuildOutput* output ) const
+void CodeGeneration::execute( BuildSettings* settings ) const
 {
 	fs::path outputPath = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Factory.cpp" );
 	bool generate = true;
@@ -164,7 +164,7 @@ PrecompiledHeader::PrecompiledHeader( const Options &options )
 {
 }
 
-void PrecompiledHeader::execute( BuildSettings* settings, BuildOutput* output ) const
+void PrecompiledHeader::execute( BuildSettings* settings ) const
 {
 	auto outputHeader = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.h" ); 
 	auto outputCpp = settings->getIntermediatePath() / "runtime" / settings->getModuleName() / ( settings->getModuleName() + "Pch.cpp" ); 
@@ -242,7 +242,7 @@ ModuleDefinition::ModuleDefinition( const Options &options )
 {
 }
 
-void ModuleDefinition::execute( BuildSettings* settings, BuildOutput* output ) const
+void ModuleDefinition::execute( BuildSettings* settings ) const
 {
 	// TODO: Make this optional
 	// vtable symbol export
@@ -262,7 +262,7 @@ void ModuleDefinition::execute( BuildSettings* settings, BuildOutput* output ) c
 	settings->moduleDef( outputPath );
 }
 
-void LinkAppObjs::execute( BuildSettings* settings, BuildOutput* output ) const
+void LinkAppObjs::execute( BuildSettings* settings ) const
 {
 	for( auto it = fs::directory_iterator( settings->getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
 		if( it->path().extension() == ".obj" ) {
@@ -276,26 +276,78 @@ void LinkAppObjs::execute( BuildSettings* settings, BuildOutput* output ) const
 	}
 }
 
-void CopyBuildOutput::execute( BuildSettings* settings, BuildOutput* output ) const
-{
-	if( output ) {
-		
-		/*std::error_code copyError;
-
-		if( ! fs::exists( output->getOutputPath().parent_path() / "rev_0001" ) ) {
-			fs::create_directories( output->getOutputPath().parent_path() / "rev_0001" );
-		}
-		if( fs::exists( output->getOutputPath() ) ) {
-			fs::copy( output->getOutputPath(), output->getOutputPath().parent_path() / "rev_0001" / output->getOutputPath().filename(), copyError );
-		}
-		if( fs::exists( output->getPdbFilePath() ) ) {
-			fs::copy( output->getPdbFilePath(), output->getPdbFilePath().parent_path() / "rev_0001" / output->getPdbFilePath().filename(), copyError );
-		}
-		for( const auto &objPath : output->getObjectFilePaths() ) {
-			if( fs::exists( objPath ) ) {
-				fs::copy( objPath, objPath.parent_path() / "rev_0001" / objPath.filename(), copyError );
+namespace {
+	fs::path getNextRevisionPath( const ci::fs::path &path ) 
+	{
+		auto parent = path.parent_path().parent_path();
+	
+		// find the most recent revision folder
+		std::time_t latestTime = 0;
+		const string prefix = "rev_";
+		fs::path latest;
+		for( auto p : fs::directory_iterator( parent ) ) {
+			if( fs::is_directory( p.path() ) && ! p.path().stem().string().compare( 0, prefix.length(), prefix ) ) {
+				auto lastWriteTime = fs::last_write_time( p.path() );
+				std::time_t lastWriteTimeT = decltype( lastWriteTime )::clock::to_time_t( lastWriteTime ); // assuming system_clock
+				if( lastWriteTimeT > latestTime ) {
+					latestTime = lastWriteTimeT;
+					latest = p.path();
+				}
 			}
-		}*/
+		}
+
+		// increment path
+		int nextRev = 0;
+		if( ! latest.empty() ) {
+			try {
+				nextRev = std::stoi( latest.stem().string().substr( prefix.length() ) ) + 1;
+			}
+			catch( const std::exception &exc ) {}
+		}
+
+		// format output path
+		std::ostringstream ss;
+		ss << std::setw(4) << std::setfill('0') << nextRev;
+		return parent / ( "rev_" + ss.str() );
+	}
+} // anonymous namespace
+
+
+void CopyBuildOutput::execute( BuildSettings* settings ) const
+{
+	fs::path destFolder = getNextRevisionPath( output->getOutputPath() );
+}
+
+void CopyBuildOutput::execute( BuildOutput* output ) const
+{
+	// find and create the destination folder
+	fs::path destFolder = getNextRevisionPath( output->getOutputPath() );
+	if( ! fs::exists( destFolder ) ) {
+		fs::create_directories( destFolder );
+	}
+		
+	// copy build files to destination folder and edit BuildOutput
+	std::error_code copyError;
+	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ) ) ) {
+		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ), destFolder / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ), copyError );
+	}
+	if( fs::exists( output->getOutputPath() ) ) {
+		fs::copy( output->getOutputPath(), destFolder / output->getOutputPath().filename(), copyError );
+		output->setOutputPath( destFolder / output->getOutputPath().filename() );
+	}
+	if( fs::exists( output->getPdbFilePath() ) ) {
+		fs::copy( output->getPdbFilePath(), destFolder / output->getPdbFilePath().filename(), copyError );
+		output->setPdbFilePath( destFolder / output->getPdbFilePath().filename() );
+	}
+	vector<fs::path> objs;
+	for( const auto &objPath : output->getObjectFilePaths() ) {
+		if( fs::exists( objPath ) ) {
+			fs::copy( objPath, destFolder / objPath.filename(), copyError );
+			objs.push_back( destFolder / objPath.filename() );
+		}
+	}
+	if( objs.size() ) {
+		output->getObjectFilePaths().swap( objs );
 	}
 }
 
