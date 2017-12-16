@@ -136,7 +136,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
 	#if defined( _DEBUG )
-		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "_vc140.pdb" ) ).string() + " ";
+		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " ";
 	#endif
 
 		command += "/Yc" + settings.getModuleName() + "Pch.h ";
@@ -163,7 +163,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 
 	command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 #if defined( _DEBUG )
-	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "_vc140.pdb" ) ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
 #endif
 	
 	if( settings.mUsePch ) {
@@ -203,9 +203,10 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	output->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
-	command += "/DEBUG:FASTLINK ";
+	command += "/DEBUG ";
+	//command += "/DEBUG:FASTLINK ";
 	command += settings.mPdbPath.empty() ? "/PDB:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
-	command += settings.mPdbAltPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + "_vc140.pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbAltPath.generic_string() + " ";
+	command += settings.mPdbAltPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbAltPath.generic_string() + " ";
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";

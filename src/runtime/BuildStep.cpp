@@ -315,35 +315,35 @@ namespace {
 
 void CopyBuildOutput::execute( BuildSettings* settings ) const
 {
-	fs::path destFolder = getNextRevisionPath( output->getOutputPath() );
+	fs::path outputPath = settings->getOutputPath().empty() ? ( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + ".dll" ) ) : settings->getOutputPath();
+	// find and create the destination folder
+	mDestFolder = getNextRevisionPath( outputPath );
+	if( ! fs::exists( mDestFolder ) ) {
+		fs::create_directories( mDestFolder );
+	}
+	settings->programDatabaseAltPath( mDestFolder / ( settings->getModuleName() + ".pdb" ) );
 }
 
 void CopyBuildOutput::execute( BuildOutput* output ) const
 {
-	// find and create the destination folder
-	fs::path destFolder = getNextRevisionPath( output->getOutputPath() );
-	if( ! fs::exists( destFolder ) ) {
-		fs::create_directories( destFolder );
-	}
-		
 	// copy build files to destination folder and edit BuildOutput
 	std::error_code copyError;
-	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ) ) ) {
-		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ), destFolder / ( output->getBuildSettings().getModuleName() + "_vc140.pdb" ), copyError );
+	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ) ) ) {
+		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ), mDestFolder / ( output->getBuildSettings().getModuleName() + ".pdb" ), copyError );
 	}
 	if( fs::exists( output->getOutputPath() ) ) {
-		fs::copy( output->getOutputPath(), destFolder / output->getOutputPath().filename(), copyError );
-		output->setOutputPath( destFolder / output->getOutputPath().filename() );
+		fs::copy( output->getOutputPath(), mDestFolder / output->getOutputPath().filename(), copyError );
+		output->setOutputPath( mDestFolder / output->getOutputPath().filename() );
 	}
 	if( fs::exists( output->getPdbFilePath() ) ) {
-		fs::copy( output->getPdbFilePath(), destFolder / output->getPdbFilePath().filename(), copyError );
-		output->setPdbFilePath( destFolder / output->getPdbFilePath().filename() );
+		fs::copy( output->getPdbFilePath(), mDestFolder / output->getPdbFilePath().filename(), copyError );
+		output->setPdbFilePath( mDestFolder / output->getPdbFilePath().filename() );
 	}
 	vector<fs::path> objs;
 	for( const auto &objPath : output->getObjectFilePaths() ) {
 		if( fs::exists( objPath ) ) {
-			fs::copy( objPath, destFolder / objPath.filename(), copyError );
-			objs.push_back( destFolder / objPath.filename() );
+			fs::copy( objPath, mDestFolder / objPath.filename(), copyError );
+			objs.push_back( mDestFolder / objPath.filename() );
 		}
 	}
 	if( objs.size() ) {

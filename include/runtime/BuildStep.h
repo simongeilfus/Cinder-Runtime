@@ -123,6 +123,8 @@ class CI_RT_API CopyBuildOutput : public BuildStep {
 public:
 	void execute( BuildSettings* settings ) const override;
 	void execute( BuildOutput* output ) const override;
+protected:
+	mutable ci::fs::path mDestFolder;
 };
 
 //class CI_RT_API CleanupBuildFolder : public BuildStep {

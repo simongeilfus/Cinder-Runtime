@@ -90,7 +90,8 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
 		}
-		mTypes[typeIndex].setModule( make_unique<rt::Module>( settings.getOutputPath().empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.getOutputPath() ) );
+		// initialize module with empty path
+		mTypes[typeIndex].setModule( make_unique<rt::Module>( "" ) );// settings.getOutputPath().empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.getOutputPath() ) );
 		
 		// add precompiled header and class factory code generation as a prebuild step
 		if( format.mClassFactory ) {
@@ -251,6 +252,17 @@ void Factory::reconstructInstances( const std::type_index &typeIndex )
 			serialize( inputArchive, instances[i] );
 		#endif
 		}
+	}
+}
+
+
+Factory::Type* Factory::getType( const std::type_index &typeIndex )
+{
+	if( mTypes.count( typeIndex ) ) {
+		return &mTypes[typeIndex];
+	}
+	else {
+		return nullptr;
 	}
 }
 
