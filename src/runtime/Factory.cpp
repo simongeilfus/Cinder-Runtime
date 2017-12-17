@@ -20,6 +20,7 @@
 */
 
 #include "runtime/Factory.h"
+#include "cinder/app/App.h"
 #include "cinder/Log.h"
 
 using namespace std;
@@ -85,13 +86,24 @@ void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, rt::BuildSettings settings, const TypeFormat &format )
 {
 	// initalize module and source watching
-	if( ! mTypes[typeIndex].getModule() ) {
+	auto &type = mTypes[typeIndex];
+	if( ! type.getModule() ) {
 
 		if( settings.getModuleName().empty() ) {
 			settings.moduleName( stripNamespace( name ) );
 		}
 		// initialize module with empty path
-		mTypes[typeIndex].setModule( make_unique<rt::Module>( "" ) );// settings.getOutputPath().empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".dll" ) ) : settings.getOutputPath() ) );
+		type.setModule( make_unique<rt::Module>( "" ) );
+
+		// see if there's older versions to be added to the list of Type resivions
+		const auto outputPath = ( settings.getOutputPath().empty() ? ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() ) : settings.getOutputPath().parent_path().parent_path() );
+		const string prefix = "ver_";
+		type.getVersions().clear();
+		for( auto p : fs::directory_iterator( outputPath ) ) {
+			if( fs::is_directory( p.path() ) && ! p.path().stem().string().compare( 0, prefix.length(), prefix ) ) {
+				type.getVersions().push_back( Type::Version( type.getVersions().size(), p ) );
+			}
+		}
 		
 		// add precompiled header and class factory code generation as a prebuild step
 		if( format.mClassFactory ) {
@@ -138,7 +150,7 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 	}
 
 	// add the address to the list of watched instances
-	mTypes[typeIndex].getInstances().push_back( address );
+	type.getInstances().push_back( address );
 }
 
 void Factory::unwatch( const std::type_index &typeIndex, void* address )
@@ -170,7 +182,7 @@ void Factory::sourceChanged( const WatchEvent &event, const std::type_index &typ
 void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym )
 {
 	// if a new dll exists update the handle
-	const auto &type = mTypes[typeIndex];
+	auto &type = mTypes[typeIndex];
 	if( fs::exists( output.getOutputPath() ) ) {
 
 		// call cleanup / pre-build callbacks
@@ -181,6 +193,9 @@ void Factory::handleBuild( const rt::BuildOutput &output, const std::type_index 
 				type.getPreBuild()( instances[i] );
 			}
 		}
+		
+		// add this new version to the type versions list
+		type.getVersions().push_back( Type::Version( type.getVersions().size(), output.getOutputPath().parent_path() ) );
 
 		// swap module's dll
 		type.getModule()->updateHandle( output.getOutputPath() );
@@ -226,6 +241,7 @@ void Factory::swapInstancesVtables( const std::type_index &typeIndex, const std:
 		}
 	}
 }
+
 void Factory::reconstructInstances( const std::type_index &typeIndex )
 {
 	const auto &type = mTypes[typeIndex];
@@ -256,14 +272,50 @@ void Factory::reconstructInstances( const std::type_index &typeIndex )
 }
 
 
+void Factory::loadTypeVersion( const std::type_index &typeIndex, const Type::Version &version )
+{
+	auto &type = mTypes[typeIndex];
+	if( fs::exists( version.getPath() / ( type.getName() + ".dll" ) ) ) {
+			
+		// call cleanup / pre-build callbacks
+		type.getModule()->getCleanupSignal().emit( *type.getModule() );
+		const auto &instances = type.getInstances();
+		for( size_t i = 0; i < instances.size(); ++i ) {
+			if( type.getPreBuild() ) {
+				type.getPreBuild()(instances[i]);
+			}
+		}
+
+		// swap module's dll
+		type.getModule()->updateHandle( version.getPath() / ( type.getName() + ".dll" ) );
+
+		// update the instances or swap vtables depending on which file has been modified
+		auto vtableSym = rt::ModuleDefinition::getVftableSymbol( type.getName() );
+		if( ! vtableSym.empty() ) {
+			swapInstancesVtables( typeIndex, vtableSym );
+		}
+		else {
+			reconstructInstances( typeIndex );
+		}
+
+		type.getModule()->getChangedSignal().emit( *type.getModule() );
+	}
+}
+
 Factory::Type* Factory::getType( const std::type_index &typeIndex )
 {
-	if( mTypes.count( typeIndex ) ) {
-		return &mTypes[typeIndex];
+	auto it = mTypes.find( typeIndex );
+	if( it != mTypes.end() ) {
+		return &(it->second);
 	}
 	else {
 		return nullptr;
 	}
+}
+
+Factory::Type::Version::Version( size_t id, const ci::fs::path &path )
+	: mId( id ), mPath( path ), mTimePoint( std::chrono::system_clock::from_time_t( fs::file_time_type::clock::to_time_t( fs::last_write_time( path ) ) ) )
+{
 }
 
 } // namespace runtime

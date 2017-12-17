@@ -52,7 +52,7 @@ public:
 	//! Returns the settings used to execute that build
 	const BuildSettings& getBuildSettings() const;
 	//! Returns when this build started
-	std::chrono::steady_clock::time_point getTimePoint() const;
+	std::chrono::system_clock::time_point getTimePoint() const;
 
 	//! Sets the path of the compilation output
 	void setOutputPath( const ci::fs::path &path );
@@ -71,7 +71,7 @@ protected:
 	std::vector<std::string> mErrors;
 	std::vector<std::string> mWarnings;
 	BuildSettings mBuildSettings;
-	std::chrono::steady_clock::time_point mTimePoint;
+	std::chrono::system_clock::time_point mTimePoint;
 };
 
 } // namespace runtime

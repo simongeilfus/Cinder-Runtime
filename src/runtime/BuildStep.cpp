@@ -277,13 +277,13 @@ void LinkAppObjs::execute( BuildSettings* settings ) const
 }
 
 namespace {
-	fs::path getNextRevisionPath( const ci::fs::path &path ) 
+	fs::path getNextVersionPath( const ci::fs::path &path ) 
 	{
 		auto parent = path.parent_path().parent_path();
 	
-		// find the most recent revision folder
+		// find the most recent Version folder
 		std::time_t latestTime = 0;
-		const string prefix = "rev_";
+		const string prefix = "ver_";
 		fs::path latest;
 		for( auto p : fs::directory_iterator( parent ) ) {
 			if( fs::is_directory( p.path() ) && ! p.path().stem().string().compare( 0, prefix.length(), prefix ) ) {
@@ -308,7 +308,7 @@ namespace {
 		// format output path
 		std::ostringstream ss;
 		ss << std::setw(4) << std::setfill('0') << nextRev;
-		return parent / ( "rev_" + ss.str() );
+		return parent / ( "ver_" + ss.str() );
 	}
 } // anonymous namespace
 
@@ -317,7 +317,7 @@ void CopyBuildOutput::execute( BuildSettings* settings ) const
 {
 	fs::path outputPath = settings->getOutputPath().empty() ? ( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + ".dll" ) ) : settings->getOutputPath();
 	// find and create the destination folder
-	mDestFolder = getNextRevisionPath( outputPath );
+	mDestFolder = getNextVersionPath( outputPath );
 	if( ! fs::exists( mDestFolder ) ) {
 		fs::create_directories( mDestFolder );
 	}

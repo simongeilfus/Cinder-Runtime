@@ -104,7 +104,7 @@ public:
 
 	class CI_RT_API Type;
 	Type* getType( const std::type_index &typeIndex );
-	template<typename T> Type* getType() { return std::type_index(typeid(T)); }
+	template<typename T> Type* getType() { return getType( std::type_index(typeid(T)) ); }
 
 	const std::map<std::type_index,Type>&	getTypes() const { return mTypes; }
 	std::map<std::type_index,Type>&			getTypes() { return mTypes; }
@@ -129,6 +129,25 @@ public:
 		void setModule( rt::ModulePtr &&module ) { mModule = std::move( module ); }
 		void setNew( const std::function<void()> &fn ) { mNew = fn; }
 		void setPlacementNew( const std::function<void(void*)> &fn) { mPlacementNew = fn; }
+
+		const std::type_index& getTypeIndex() const { return *mTypeIndex.get(); }
+
+		class CI_RT_API Version {
+		public:
+			Version( size_t id, const ci::fs::path &path );
+
+			size_t			getId() const { return mId; }
+			ci::fs::path	getPath() const { return mPath; }
+
+			std::chrono::system_clock::time_point getTimePoint() const { return mTimePoint; }
+		protected:
+			size_t			mId;
+			ci::fs::path	mPath;
+			std::chrono::system_clock::time_point mTimePoint;
+		};
+
+		const std::vector<Version>&	getVersions() const { return mVersions; }
+		std::vector<Version>&		getVersions() { return mVersions; }
 
 	protected:
 
@@ -190,7 +209,12 @@ public:
 		std::function<void(void*)>	mDestructor;
 		std::function<void(void*)>	mPreBuild;
 		std::function<void(void*)>	mPostBuild;
+
+		std::vector<Version>		mVersions;
+		std::unique_ptr<std::type_index> mTypeIndex;
 	};
+
+	void loadTypeVersion( const std::type_index &typeIndex, const Type::Version &version );
 
 protected:
 	template<typename T>
@@ -218,6 +242,8 @@ void Factory::Type::init( const std::string &name )
 		callPostBuildMethod<T>( static_cast<T*>( address ) );
 	};
 	mName = name;
+
+	mTypeIndex = std::make_unique<std::type_index>( typeid(T) );
 }
 
 template<typename T>

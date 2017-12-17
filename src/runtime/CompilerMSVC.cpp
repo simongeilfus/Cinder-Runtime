@@ -376,7 +376,7 @@ void CompilerMsvc::parseProcessOutput()
 				app::console() << "1>  " << buildOutput.getFilePaths().front().filename() << " -> " << buildOutput.getPdbFilePath() << endl;
 			}
 			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
-			auto elapsed = std::chrono::steady_clock::now() - buildOutput.getTimePoint();
+			auto elapsed = std::chrono::system_clock::now() - buildOutput.getTimePoint();
 			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
 			auto elapsedMinutes = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
 			auto elapsedHours = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
