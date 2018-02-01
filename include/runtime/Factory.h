@@ -102,39 +102,55 @@ public:
 	//! Removes an instance from Factory watch list
 	void unwatch( const std::type_index &typeIndex, void* address );
 
-protected:
-	template<typename T>
-	void initType( const std::type_index &typeIndex, const std::string &name );
-	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
-	void sourceChanged( const ci::WatchEvent &event, const std::type_index &typeIndex, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings );
-	void handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym );
-	void swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym );
-	void reconstructInstances( const std::type_index &typeIndex );
-	void* allocate( size_t size, const std::type_index &typeIndex );
+	class CI_RT_API Type;
+	Type* getType( const std::type_index &typeIndex );
+	template<typename T> Type* getType() { return getType( std::type_index(typeid(T)) ); }
 
-	class Type {
+	const std::map<std::type_index,Type>&	getTypes() const { return mTypes; }
+	std::map<std::type_index,Type>&			getTypes() { return mTypes; }
+
+	class CI_RT_API Type {
 	public:
 		template<typename T>
 		void init( const std::string &name );
-		
+
 		const std::function<void()>&		getNew() const { return mNew; }
 		const std::function<void(void*)>&	getPlacementNew() const { return mPlacementNew; }
 		const std::function<void(void*)>&	getDestructor() const { return mDestructor; }
 		const std::function<void(void*)>&	getPreBuild() const { return mPreBuild; }
 		const std::function<void(void*)>&	getPostBuild() const { return mPostBuild; }
-		
+
 		const rt::ModulePtr&	getModule() const { return mModule; }
 		std::string				getName() const { return mName; }
 
 		const std::vector<void*>&	getInstances() const { return mInstances; }
 		std::vector<void*>&			getInstances() { return mInstances; }
-		
+
 		void setModule( rt::ModulePtr &&module ) { mModule = std::move( module ); }
 		void setNew( const std::function<void()> &fn ) { mNew = fn; }
 		void setPlacementNew( const std::function<void(void*)> &fn) { mPlacementNew = fn; }
 
+		const std::type_index& getTypeIndex() const { return *mTypeIndex.get(); }
+
+		class CI_RT_API Version {
+		public:
+			Version( size_t id, const ci::fs::path &path );
+
+			size_t			getId() const { return mId; }
+			ci::fs::path	getPath() const { return mPath; }
+
+			std::chrono::system_clock::time_point getTimePoint() const { return mTimePoint; }
+		protected:
+			size_t			mId;
+			ci::fs::path	mPath;
+			std::chrono::system_clock::time_point mTimePoint;
+		};
+
+		const std::vector<Version>&	getVersions() const { return mVersions; }
+		std::vector<Version>&		getVersions() { return mVersions; }
+
 	protected:
-		
+
 		// prebuild detection / snifae
 		template<typename, typename C>
 		struct hasPreBuildMethod {
@@ -152,8 +168,8 @@ protected:
 
 		template<typename U,std::enable_if_t<hasPreBuildMethod<U,void()>::value,int> = 0> void callPreBuildMethod( U* t ) { t->RT_PRE_BUILD_METHOD_NAME(); }
 		template<typename U,std::enable_if_t<!hasPreBuildMethod<U,void()>::value,int> = 0> void callPreBuildMethod( U* t ) {} // no-op
-		
-		// postbuild detection / snifae	
+
+																															  // postbuild detection / snifae	
 		template<typename, typename C>
 		struct hasPostBuildMethod {
 			static_assert( std::integral_constant<C, false>::value, "Second template parameter needs to be of function type." );
@@ -170,9 +186,9 @@ protected:
 
 		template<typename U,std::enable_if_t<hasPostBuildMethod<U,void()>::value,int> = 0> void callPostBuildMethod( U* t ) { t->RT_POST_BUILD_METHOD_NAME(); }
 		template<typename U,std::enable_if_t<!hasPostBuildMethod<U,void()>::value,int> = 0> void callPostBuildMethod( U* t ) {} // no-op
-	
-		// cereal detection / snifae
-	#if defined( CEREAL_CEREAL_HPP_ )
+
+																																// cereal detection / snifae
+#if defined( CEREAL_CEREAL_HPP_ )
 		template<typename Archive, typename U,std::enable_if_t<(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> 
 		void serialize( Archive &archive, void* address ) 
 		{ 
@@ -182,8 +198,8 @@ protected:
 			catch( const std::exception &exc ) {}
 		}
 		template<typename Archive, typename U,std::enable_if_t<!(cereal::traits::is_output_serializable<U,Archive>::value&&cereal::traits::is_input_serializable<U,Archive>::value),int> = 0> void serialize( Archive &archive, U* t ) {} // no-op
-	#endif
-		
+#endif
+
 		rt::ModulePtr				mModule;
 		std::vector<void*>			mInstances;
 		std::string					mName;
@@ -193,7 +209,22 @@ protected:
 		std::function<void(void*)>	mDestructor;
 		std::function<void(void*)>	mPreBuild;
 		std::function<void(void*)>	mPostBuild;
+
+		std::vector<Version>		mVersions;
+		std::unique_ptr<std::type_index> mTypeIndex;
 	};
+
+	void loadTypeVersion( const std::type_index &typeIndex, const Type::Version &version );
+
+protected:
+	template<typename T>
+	void initType( const std::type_index &typeIndex, const std::string &name );
+	void watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<ci::fs::path> &filePaths, rt::BuildSettings settings = rt::BuildSettings().vcxproj(), const TypeFormat &format = TypeFormat() );
+	void sourceChanged( const ci::WatchEvent &event, const std::type_index &typeIndex, const std::vector<ci::fs::path> &filePaths, const rt::BuildSettings &settings );
+	void handleBuild( const rt::BuildOutput &output, const std::type_index &typeIndex, const std::string &vtableSym );
+	void swapInstancesVtables( const std::type_index &typeIndex, const std::string &vtableSym );
+	void reconstructInstances( const std::type_index &typeIndex );
+	void* allocate( size_t size, const std::type_index &typeIndex );
 
 	std::map<std::type_index,Type> mTypes;
 };
@@ -211,6 +242,8 @@ void Factory::Type::init( const std::string &name )
 		callPostBuildMethod<T>( static_cast<T*>( address ) );
 	};
 	mName = name;
+
+	mTypeIndex = std::make_unique<std::type_index>( typeid(T) );
 }
 
 template<typename T>

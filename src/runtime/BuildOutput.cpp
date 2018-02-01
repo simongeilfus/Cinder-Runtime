@@ -24,7 +24,7 @@
 namespace runtime {
 
 BuildOutput::BuildOutput()
-: mTimePoint( std::chrono::steady_clock::now() )
+: mTimePoint( std::chrono::system_clock::now() )
 {
 }
 
@@ -77,7 +77,7 @@ const BuildSettings& BuildOutput::getBuildSettings() const
 {
 	return mBuildSettings;
 }
-std::chrono::steady_clock::time_point BuildOutput::getTimePoint() const
+std::chrono::system_clock::time_point BuildOutput::getTimePoint() const
 {
 	return mTimePoint;
 }

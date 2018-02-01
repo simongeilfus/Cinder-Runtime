@@ -69,6 +69,8 @@ public:
 	BuildSettings& objectFile( const ci::fs::path &path );
 	//! Specifies a file name for the program database (PDB) file created by /Z7, /Zi, /ZI (Debug Information Format).
 	BuildSettings& programDatabase( const ci::fs::path &path );
+	//! Specifies an alternate location for the Program Database (.pdb) file in a compiled binary file. Normally, the linker records the location of the .pdb file in the binaries that it produces. You can use this option to provide a different path and file name for the .pdb file. The information provided with /PDBALTPATH does not change the location or name of the actual .pdb file; it changes the information that the linker writes in the binary file. This enables you to provide a path that is independent of the file structure of the build computer.
+	BuildSettings& programDatabaseAltPath( const ci::fs::path &path );
 		
 	//! Sets the output directory path
 	BuildSettings& outputPath( const ci::fs::path &path );
@@ -110,6 +112,7 @@ public:
 	const ci::fs::path& 	getIntermediatePath() const { return mIntermediatePath; }
 	const ci::fs::path& 	getObjectFilePath() const { return mObjectFilePath; }
 	const ci::fs::path& 	getPdbPath() const { return mPdbPath; }
+	const ci::fs::path& 	getPdbAltPath() const { return mPdbAltPath; }
 	const std::string&		getConfiguration() const { return mConfiguration; }
 	const std::string&		getPlatform() const { return mPlatform; }
 	const std::string&		getPlatformToolset() const { return mPlatformToolset; }
@@ -142,6 +145,7 @@ protected:
 	ci::fs::path mIntermediatePath;
 	ci::fs::path mObjectFilePath;
 	ci::fs::path mPdbPath;
+	ci::fs::path mPdbAltPath;
 	ci::fs::path mModuleDefPath;
 	std::string	mConfiguration;
 	std::string	mPlatform;

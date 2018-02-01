@@ -29,6 +29,7 @@
 namespace runtime {
 
 class CI_RT_API BuildSettings;
+class CI_RT_API BuildOutput;
 
 using BuildStepRef = std::shared_ptr<class BuildStep>;
 
@@ -36,7 +37,10 @@ using BuildStepRef = std::shared_ptr<class BuildStep>;
 class CI_RT_API BuildStep {
 public:
 	virtual ~BuildStep();
-	virtual void execute( BuildSettings* settings ) const = 0;
+	//! Executes BuildStep before the actual Build, allowing to modify the BuildSettings
+	virtual void execute( BuildSettings* settings ) const {}
+	//! Executes BuildStep after the actual Build, allowing to modify the BuildOutput
+	virtual void execute( BuildOutput* output ) const {}
 };
 
 //! BuildStep used to generate the factory source
@@ -113,6 +117,14 @@ class CI_RT_API LinkAppObjs : public BuildStep {
 public:
 	void execute( BuildSettings* settings ) const override;
 protected:
+};
+
+class CI_RT_API CopyBuildOutput : public BuildStep {
+public:
+	void execute( BuildSettings* settings ) const override;
+	void execute( BuildOutput* output ) const override;
+protected:
+	mutable ci::fs::path mDestFolder;
 };
 
 //class CI_RT_API CleanupBuildFolder : public BuildStep {

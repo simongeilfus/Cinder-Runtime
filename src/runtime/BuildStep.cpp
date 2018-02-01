@@ -21,6 +21,7 @@
 
 #include "runtime/BuildStep.h"
 #include "runtime/BuildSettings.h"
+#include "runtime/BuildOutput.h"
 #include "runtime/ProjectConfiguration.h"
 #include <fstream>
 
@@ -272,6 +273,81 @@ void LinkAppObjs::execute( BuildSettings* settings ) const
 				settings->linkObj( it->path() );
 			}
 		}
+	}
+}
+
+namespace {
+	fs::path getNextVersionPath( const ci::fs::path &path ) 
+	{
+		auto parent = path.parent_path().parent_path();
+	
+		// find the most recent Version folder
+		std::time_t latestTime = 0;
+		const string prefix = "ver_";
+		fs::path latest;
+		for( auto p : fs::directory_iterator( parent ) ) {
+			if( fs::is_directory( p.path() ) && ! p.path().stem().string().compare( 0, prefix.length(), prefix ) ) {
+				auto lastWriteTime = fs::last_write_time( p.path() );
+				std::time_t lastWriteTimeT = decltype( lastWriteTime )::clock::to_time_t( lastWriteTime ); // assuming system_clock
+				if( lastWriteTimeT > latestTime ) {
+					latestTime = lastWriteTimeT;
+					latest = p.path();
+				}
+			}
+		}
+
+		// increment path
+		int nextRev = 0;
+		if( ! latest.empty() ) {
+			try {
+				nextRev = std::stoi( latest.stem().string().substr( prefix.length() ) ) + 1;
+			}
+			catch( const std::exception &exc ) {}
+		}
+
+		// format output path
+		std::ostringstream ss;
+		ss << std::setw(4) << std::setfill('0') << nextRev;
+		return parent / ( "ver_" + ss.str() );
+	}
+} // anonymous namespace
+
+
+void CopyBuildOutput::execute( BuildSettings* settings ) const
+{
+	fs::path outputPath = settings->getOutputPath().empty() ? ( settings->getIntermediatePath() / "runtime" / settings->getModuleName() / "build" / ( settings->getModuleName() + ".dll" ) ) : settings->getOutputPath();
+	// find and create the destination folder
+	mDestFolder = getNextVersionPath( outputPath );
+	if( ! fs::exists( mDestFolder ) ) {
+		fs::create_directories( mDestFolder );
+	}
+	settings->programDatabaseAltPath( mDestFolder / ( settings->getModuleName() + ".pdb" ) );
+}
+
+void CopyBuildOutput::execute( BuildOutput* output ) const
+{
+	// copy build files to destination folder and edit BuildOutput
+	std::error_code copyError;
+	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ) ) ) {
+		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ), mDestFolder / ( output->getBuildSettings().getModuleName() + ".pdb" ), copyError );
+	}
+	if( fs::exists( output->getOutputPath() ) ) {
+		fs::copy( output->getOutputPath(), mDestFolder / output->getOutputPath().filename(), copyError );
+		output->setOutputPath( mDestFolder / output->getOutputPath().filename() );
+	}
+	if( fs::exists( output->getPdbFilePath() ) ) {
+		fs::copy( output->getPdbFilePath(), mDestFolder / output->getPdbFilePath().filename(), copyError );
+		output->setPdbFilePath( mDestFolder / output->getPdbFilePath().filename() );
+	}
+	vector<fs::path> objs;
+	for( const auto &objPath : output->getObjectFilePaths() ) {
+		if( fs::exists( objPath ) ) {
+			fs::copy( objPath, mDestFolder / objPath.filename(), copyError );
+			objs.push_back( mDestFolder / objPath.filename() );
+		}
+	}
+	if( objs.size() ) {
+		output->getObjectFilePaths().swap( objs );
 	}
 }
 

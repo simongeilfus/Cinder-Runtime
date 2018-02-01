@@ -1,0 +1,134 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+    <Filter Include="Blocks">
+      <UniqueIdentifier>{C4347E09-81C0-4740-8BEE-37014B1C717A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-Runtime">
+      <UniqueIdentifier>{42465A72-FD39-48B4-BF4A-B3D567497411}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-Runtime\include">
+      <UniqueIdentifier>{A79B7AF7-2276-4003-A537-C82EE695F655}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-Runtime\include\runtime">
+      <UniqueIdentifier>{36292B63-4D1A-4953-84A8-17B2A5117CA6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-ImGui">
+      <UniqueIdentifier>{b4175018-0d1f-44c9-904a-1e98d5bf6029}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-ImGui\src">
+      <UniqueIdentifier>{d02af814-16c8-4aeb-9e5f-bc21c704cd81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-ImGui\include">
+      <UniqueIdentifier>{70126637-d826-4b22-adb2-d3cd8a4afdfc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Blocks\Cinder-ImGui\lib">
+      <UniqueIdentifier>{30f143ae-1cec-42e9-ae0b-17e02157afd7}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\ImGuiApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ImGuiApp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClCompile Include="..\src\Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Cinder-ImGui\src\CinderImGui.cpp">
+      <Filter>Blocks\Cinder-ImGui\src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_demo.cpp">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_draw.cpp">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.cpp">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\Resources.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Test.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Cinder-ImGui\include\CinderImGui.h">
+      <Filter>Blocks\Cinder-ImGui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Cinder-ImGui\include\CinderImGuiExports.h">
+      <Filter>Blocks\Cinder-ImGui\include</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.h">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_internal.h">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imconfig.h">
+      <Filter>Blocks\Cinder-ImGui\lib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\App.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\BuildSettings.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\BuildStep.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ClassFactory.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ClassWatcher.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerBase.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\CompilerMSVC.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\make_shared.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Module.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\PrecompiledHeader.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Process.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\ProjectConfiguration.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\include\runtime\Virtual.h">
+      <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resources.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

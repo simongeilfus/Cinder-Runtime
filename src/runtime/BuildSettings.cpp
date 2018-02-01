@@ -346,6 +346,11 @@ BuildSettings& BuildSettings::programDatabase( const ci::fs::path &path )
 	mPdbPath = path;
 	return *this;
 }
+BuildSettings& BuildSettings::programDatabaseAltPath( const ci::fs::path &path )
+{
+	mPdbAltPath = path;
+	return *this;
+}
 
 BuildSettings& BuildSettings::compilerOption( const std::string &option )
 {

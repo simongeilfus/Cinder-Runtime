@@ -136,7 +136,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 		command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 		command += "/Fp" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pch" ) ).string() + " ";
 	#if defined( _DEBUG )
-		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " ";
+		command += "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " ";
 	#endif
 
 		command += "/Yc" + settings.getModuleName() + "Pch.h ";
@@ -163,7 +163,7 @@ std::string CompilerMsvc::generateCompilerCommand( const ci::fs::path &sourcePat
 
 	command += settings.mObjectFilePath.empty() ? "/Fo" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fo" + settings.mObjectFilePath.generic_string() + " ";
 #if defined( _DEBUG )
-	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / "/" ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbPath.empty() ? "/Fd" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/Fd" + settings.mPdbPath.generic_string() + " ";
 #endif
 	
 	if( settings.mUsePch ) {
@@ -203,9 +203,10 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	output->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
-	command += "/DEBUG:FASTLINK ";
+	command += "/DEBUG ";
+	//command += "/DEBUG:FASTLINK ";
 	command += settings.mPdbPath.empty() ? "/PDB:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";
-	command += settings.mPdbPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbPath.generic_string() + " ";
+	command += settings.mPdbAltPath.empty() ? "/PDBALTPATH:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDBALTPATH:" + settings.mPdbAltPath.generic_string() + " ";
 #endif
 	command += "/INCREMENTAL ";
 	command += "/DLL ";
@@ -272,12 +273,12 @@ void CompilerMsvc::build( const ci::fs::path &sourcePath, const BuildSettings &s
 #if defined( _DEBUG ) && 1
 	// try renaming previous pdb files to prevent errors
 	auto pdb = settings.mPdbPath.empty() ? ( buildDir / ( settings.getModuleName() + ".pdb" ) ) : settings.mPdbPath;
-	if( fs::exists( pdb ) ) {
+	/*if( fs::exists( pdb ) ) {
 		auto newName = getNextAvailableName( pdb );
 		try {
 			fs::rename( pdb, newName );
 		} catch( const std::exception & ) {}
-	}
+	}*/
 	output.setPdbFilePath( pdb );
 #endif
 
@@ -340,10 +341,12 @@ void CompilerMsvc::parseProcessOutput()
 	while( mProcess->isOutputAvailable() ) {
 		auto output = removeEndline( mProcess->getOutputAsync() );
 		if( output.find( "error" ) != string::npos ) { 
-			mErrors.push_back( trimProjectDir( output ) );	
+			//mErrors.push_back( trimProjectDir( output ) );	
+			mErrors.push_back( output );	
 		}
 		else if( output.find( "warning" ) != string::npos ) {
-			mWarnings.push_back( trimProjectDir( output ) );
+			// mWarnings.push_back( trimProjectDir( output ) );
+			mWarnings.push_back( output );
 		}
 		if( output.find( "CI_BUILD" ) != string::npos ) {
 			buildIt = mBuilds.find( output.substr( output.find_first_of( " " ) + 1 ) );
@@ -362,17 +365,18 @@ void CompilerMsvc::parseProcessOutput()
 
 			// execute post build steps
 			const Build &build = buildIt->second;
-			for( const auto &buildStep : build.first.getBuildSettings().mPostBuildSteps ) {
-				buildStep->execute( nullptr );
+			BuildOutput buildOutput = build.first;
+			for( const auto &buildStep : buildOutput.getBuildSettings().mPostBuildSteps ) {
+				buildStep->execute( &buildOutput );
 			}
 
 			// print results
-			app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getOutputPath() << endl;
-			if( ! build.first.getPdbFilePath().empty() ) {
-				app::console() << "1>  " << build.first.getFilePaths().front().filename() << " -> " << build.first.getPdbFilePath() << endl;
+			app::console() << "1>  " << buildOutput.getFilePaths().front().filename() << " -> " << buildOutput.getOutputPath() << endl;
+			if( ! buildOutput.getPdbFilePath().empty() ) {
+				app::console() << "1>  " << buildOutput.getFilePaths().front().filename() << " -> " << buildOutput.getPdbFilePath() << endl;
 			}
 			app::console() << "========== Runtime Compiler Build: 1 succeeded, 0 failed, 0 up-to-date, 0 skipped ==========" << endl;
-			auto elapsed = std::chrono::steady_clock::now() - build.first.getTimePoint();
+			auto elapsed = std::chrono::system_clock::now() - buildOutput.getTimePoint();
 			auto elapsedMicro = std::chrono::duration_cast<std::chrono::microseconds>( elapsed ).count();
 			auto elapsedMinutes = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
 			auto elapsedHours = std::chrono::duration_cast<std::chrono::hours>( elapsed ).count();
@@ -382,7 +386,7 @@ void CompilerMsvc::parseProcessOutput()
 			app::console() << endl << "Time Elapsed " << oss.str() << endl << endl;
 
 			// call the build finish callback
-			build.second( build.first );
+			build.second( buildOutput );
 		}
 		else {
 			for( auto error : mErrors ) {
