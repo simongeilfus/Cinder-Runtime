@@ -49,8 +49,6 @@ void CompilerMsvc::debugLog( BuildSettings *settings ) const
 
 CompilerMsvc::CompilerMsvc()
 {
-	CI_LOG_V( "Tools / Options / Debugging / General / Enable Edit and Continue should be disabled! (And if file locking issues persist try enabling Use Native Compatibility Mode)" );
-	
 	if( mVerbose ) {
 		CI_LOG_I( "Compiler Settings: \n" << printToString() );
 	}
@@ -83,7 +81,13 @@ void CompilerMsvc::build( const std::string &arguments, const std::function<void
 
 std::string CompilerMsvc::getCLInitCommand() const
 {
-	return "cmd /k prompt 1$g\n";
+	// fix for vs2017 pre 15.6 Preview 2
+	// https://developercommunity.visualstudio.com/content/problem/26780/vsdevcmdbat-changes-the-current-working-directory.html
+#if _MSC_VER >= 1910	
+	return "cmd /k prompt 1$g & set VSCMD_START_DIR=%CD%";
+#else
+	return "cmd /k prompt 1$g";
+#endif
 }
 
 ci::fs::path CompilerMsvc::getCLInitPath() const
@@ -105,7 +109,11 @@ ci::fs::path CompilerMsvc::getCompilerPath() const
 std::string CompilerMsvc::getCompilerInitArgs() const
 {
 #ifdef _WIN64
+#if _MSC_VER >= 1910
+	return " x64 -vcvars_ver=14.0";
+#else
 	return " x64";
+#endif
 #else
 	return " x86";
 #endif
@@ -203,6 +211,7 @@ std::string CompilerMsvc::generateLinkerCommand( const ci::fs::path &sourcePath,
 	output->setOutputPath( outputPath );
 	command += "/OUT:" + outputPath.string() + " ";
 #if defined( _DEBUG )
+	// TODO: Use project settings
 	command += "/DEBUG ";
 	//command += "/DEBUG:FASTLINK ";
 	command += settings.mPdbPath.empty() ? "/PDB:" + ( settings.getIntermediatePath() / "runtime" / settings.getModuleName() / "build" / ( settings.getModuleName() + ".pdb" ) ).string() + " " : "/PDB:" + settings.mPdbPath.generic_string() + " ";

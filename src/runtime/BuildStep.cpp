@@ -22,6 +22,7 @@
 #include "runtime/BuildStep.h"
 #include "runtime/BuildSettings.h"
 #include "runtime/BuildOutput.h"
+#include "runtime/Factory.h"
 #include "runtime/ProjectConfiguration.h"
 #include <fstream>
 
@@ -85,7 +86,7 @@ void CodeGeneration::execute( BuildSettings* settings ) const
 		outputFile << endl;
 	
 		if( mOptions.mNewOperators.size() ) {
-			outputFile << "extern \"C\" __declspec(dllexport) void* __cdecl rt_new_operator( const std::string &className )" << endl;
+			outputFile << "extern \"C\" __declspec(dllexport) void* __cdecl rt_" << settings->getModuleName() << "_new_operator( const std::string &className )" << endl;
 			outputFile << "{" << endl;
 			outputFile << "\tvoid* ptr;" << endl;
 			for( size_t i = 0; i < mOptions.mNewOperators.size(); ++i ) {
@@ -99,7 +100,7 @@ void CodeGeneration::execute( BuildSettings* settings ) const
 		}
 	
 		if( mOptions.mPlacementNewOperators.size() ) {
-			outputFile << "extern \"C\" __declspec(dllexport) void* __cdecl rt_placement_new_operator( const std::string &className, void* address )" << endl;
+			outputFile << "extern \"C\" __declspec(dllexport) void* __cdecl rt_" << settings->getModuleName() << "_placement_new_operator( const std::string &className, void* address )" << endl;
 			outputFile << "{" << endl;
 			outputFile << "\tvoid* ptr;" << endl;
 			for( size_t i = 0; i < mOptions.mPlacementNewOperators.size(); ++i ) {
@@ -266,11 +267,29 @@ void LinkAppObjs::execute( BuildSettings* settings ) const
 {
 	for( auto it = fs::directory_iterator( settings->getIntermediatePath() ), end = fs::directory_iterator(); it != end; it++ ) {
 		if( it->path().extension() == ".obj" ) {
-			// Skip obj for current source and current app
+			// Skip obj for current source or current app
 			if( it->path().filename().string().find( settings->getModuleName() + ".obj" ) == string::npos 
-				&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos
-				) {
-				settings->linkObj( it->path() );
+				&& it->path().filename().string().find( ProjectConfiguration::instance().getProjectPath().stem().string() + "App.obj" ) == string::npos ) {
+				const Factory::Type* moduleType = nullptr;
+				for( const auto &type : Factory::instance().getTypes() ) {
+					if( it->path().stem().string().find( type.second.getName() ) != string::npos ) {
+						moduleType = &(type.second);
+						break;
+					}
+				}
+
+				// check whether a more recent version exists
+				if( moduleType && moduleType->getModule() && moduleType->getModule()->getHandle() && ! moduleType->getVersions().empty() ) {
+					auto version = moduleType->getVersions().back();
+					settings->linkObj( version.getPath() / ( moduleType->getName() + ".obj" ) );
+					if( fs::exists( version.getPath() / ( moduleType->getName() + "Pch.obj" ) ) ) {
+						settings->linkObj( version.getPath() / ( moduleType->getName() + "Pch.obj" ) );
+					}
+				}
+				// otherwise load the app version
+				else {
+					settings->linkObj( it->path() );
+				}
 			}
 		}
 	}
@@ -297,17 +316,17 @@ namespace {
 		}
 
 		// increment path
-		int nextRev = 0;
+		int nextVer = 0;
 		if( ! latest.empty() ) {
 			try {
-				nextRev = std::stoi( latest.stem().string().substr( prefix.length() ) ) + 1;
+				nextVer = std::stoi( latest.stem().string().substr( prefix.length() ) ) + 1;
 			}
 			catch( const std::exception &exc ) {}
 		}
 
 		// format output path
 		std::ostringstream ss;
-		ss << std::setw(4) << std::setfill('0') << nextRev;
+		ss << std::setw(4) << std::setfill('0') << nextVer;
 		return parent / ( "ver_" + ss.str() );
 	}
 } // anonymous namespace
@@ -330,6 +349,9 @@ void CopyBuildOutput::execute( BuildOutput* output ) const
 	std::error_code copyError;
 	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ) ) ) {
 		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".pdb" ), mDestFolder / ( output->getBuildSettings().getModuleName() + ".pdb" ), copyError );
+	}
+	if( fs::exists( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".lib" ) ) ) {
+		fs::copy( output->getOutputPath().parent_path() / ( output->getBuildSettings().getModuleName() + ".lib" ), mDestFolder / ( output->getBuildSettings().getModuleName() + ".lib" ), copyError );
 	}
 	if( fs::exists( output->getOutputPath() ) ) {
 		fs::copy( output->getOutputPath(), mDestFolder / output->getOutputPath().filename(), copyError );

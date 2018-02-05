@@ -37,7 +37,7 @@ using namespace ci;
 namespace runtime {
 
 Module::Module( const ci::fs::path &path )
-: mPath( path )
+: mPath( path ), mName( path.stem().string() )
 #if defined( CINDER_MSW )
 , mHandle( nullptr )
 #endif
@@ -74,6 +74,7 @@ void Module::updateHandle( const ci::fs::path &path )
 {
 	if( ! path.empty() ) {
 		mPath = path;
+		mName = mPath.stem().string();
 	}
 
 	if( fs::exists( mPath ) ) {
@@ -119,6 +120,10 @@ ci::fs::path Module::getPath() const
 ci::fs::path Module::getTempPath() const
 {
 	return mTempPath;
+}
+std::string Module::getName() const
+{
+	return mName;
 }
 
 bool Module::isValid() const

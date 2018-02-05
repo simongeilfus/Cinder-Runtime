@@ -71,16 +71,16 @@ namespace {
 
 void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 {
-	void* instance;
-	if( mTypes.count( typeIndex ) && mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) ) {
-		auto newOperator = static_cast<void*(__cdecl*)(const std::string &)>( mTypes[typeIndex].getModule()->getSymbolAddress( "rt_new_operator" ) );
-		instance = newOperator( mTypes[typeIndex].getName() );
-	}
-	else {
-		instance = ::operator new( size );
+	if( mTypes.count( typeIndex ) ) { 
+		const auto &type = mTypes[typeIndex];
+		const auto &module = type.getModule();
+		if( module && module->getSymbolAddress( "rt_" + module->getName() + "_new_operator" ) ) {
+			auto newOperator = static_cast<void*(__cdecl*)(const std::string &)>( module->getSymbolAddress( "rt_" + module->getName() + "_new_operator" ) );
+			return newOperator( type.getName() );
+		}
 	}
 
-	return instance;
+	return ::operator new( size );
 }
 
 void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, rt::BuildSettings settings, const TypeFormat &format )
@@ -247,8 +247,7 @@ void Factory::reconstructInstances( const std::type_index &typeIndex )
 	const auto &type = mTypes[typeIndex];
 	const auto &module = type.getModule();
 	const auto &instances = type.getInstances();
-
-	if( auto placementNewOperator = static_cast<void*(__cdecl*)(const std::string&,void*)>( module->getSymbolAddress( "rt_placement_new_operator" ) ) ) {
+	if( auto placementNewOperator = static_cast<void*(__cdecl*)(const std::string&,void*)>( module->getSymbolAddress( "rt" + module->getName() + "_placement_new_operator()" ) ) ) {
 		// use placement new to construct new instances at the current instances addresses
 		for( size_t i = 0; i < instances.size(); ++i ) {
 		#if defined( CEREAL_CEREAL_HPP_ )
