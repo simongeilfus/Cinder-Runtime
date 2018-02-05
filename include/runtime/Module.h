@@ -54,6 +54,8 @@ public:
 	ci::fs::path getPath() const;
 	//! Returns the temporary path to the module
 	ci::fs::path getTempPath() const;
+	//! Returns the name of the module
+	std::string getName() const;
 	//! Returns whether the current Handle is valid
 	bool isValid() const;
 
@@ -67,6 +69,7 @@ public:
 protected:
 	Handle			mHandle;
 	ci::fs::path	mPath, mTempPath;
+	std::string		mName;
 	
 	ci::signals::Signal<void(const Module&)> mChangedSignal;
 	ci::signals::Signal<void(const Module&)> mCleanupSignal;
