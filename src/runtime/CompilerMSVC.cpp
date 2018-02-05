@@ -84,9 +84,9 @@ std::string CompilerMsvc::getCLInitCommand() const
 	// fix for vs2017 pre 15.6 Preview 2
 	// https://developercommunity.visualstudio.com/content/problem/26780/vsdevcmdbat-changes-the-current-working-directory.html
 #if _MSC_VER >= 1910	
-	return "cmd /k prompt 1$g & set VSCMD_START_DIR=%CD%";
+	return "cmd /k prompt 1$g & set VSCMD_START_DIR=%CD%\n";
 #else
-	return "cmd /k prompt 1$g";
+	return "cmd /k prompt 1$g\n";
 #endif
 }
 
@@ -109,11 +109,7 @@ ci::fs::path CompilerMsvc::getCompilerPath() const
 std::string CompilerMsvc::getCompilerInitArgs() const
 {
 #ifdef _WIN64
-#if _MSC_VER >= 1910
-	return " x64 -vcvars_ver=14.0";
-#else
-	return " x64";
-#endif
+	return " amd64";
 #else
 	return " x86";
 #endif
