@@ -149,42 +149,42 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|x64'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_Shared|Win32'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|x64'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_Shared|Win32'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\</OutDir>
+    <OutDir>..\..\lib\msw\$(PlatformTarget)\$(Configuration)\$(PlatformToolset)\</OutDir>
     <TargetName>cinder_rt</TargetName>
     <IntDir>build\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
