@@ -28,9 +28,6 @@
     <Filter Include="Blocks\Cinder-ImGui">
       <UniqueIdentifier>{a1ecc9c9-69cb-4e13-8e93-f85ae3b09c69}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Cinder-ImGui\src">
-      <UniqueIdentifier>{7359f4f2-e0a2-4a5d-92c0-80f8b4e8a992}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
@@ -93,18 +90,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\src\CinderImGui.cpp">
-      <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_draw.cpp">
-      <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.cpp">
-      <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_demo.cpp">
-      <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Nested.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

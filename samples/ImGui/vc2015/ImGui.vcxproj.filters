@@ -28,14 +28,8 @@
     <Filter Include="Blocks\Cinder-ImGui">
       <UniqueIdentifier>{b4175018-0d1f-44c9-904a-1e98d5bf6029}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Blocks\Cinder-ImGui\src">
-      <UniqueIdentifier>{d02af814-16c8-4aeb-9e5f-bc21c704cd81}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Blocks\Cinder-ImGui\include">
       <UniqueIdentifier>{70126637-d826-4b22-adb2-d3cd8a4afdfc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Blocks\Cinder-ImGui\lib">
-      <UniqueIdentifier>{30f143ae-1cec-42e9-ae0b-17e02157afd7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -51,18 +45,6 @@
     <ClCompile Include="..\src\Test.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\src\CinderImGui.cpp">
-      <Filter>Blocks\Cinder-ImGui\src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_demo.cpp">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_draw.cpp">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.cpp">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\include\Resources.h">
@@ -76,15 +58,6 @@
     </ClInclude>
     <ClInclude Include="..\..\..\..\Cinder-ImGui\include\CinderImGuiExports.h">
       <Filter>Blocks\Cinder-ImGui\include</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui.h">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imgui_internal.h">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\..\..\Cinder-ImGui\lib\imgui\imconfig.h">
-      <Filter>Blocks\Cinder-ImGui\lib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\..\include\runtime\App.h">
       <Filter>Blocks\Cinder-Runtime\include\runtime</Filter>
