@@ -83,6 +83,26 @@ void* Factory::allocate( size_t size, const std::type_index &typeIndex )
 	return ::operator new( size );
 }
 
+bool extractIncludePath( const fs::path &path, const std::vector<fs::path> &includes, std::string *pathString )
+{
+	fs::path parentPath = path.parent_path();
+	fs::path diffPath;
+	//Walk path backwards, stop if we hit the root folder
+	while( !fs::equivalent( parentPath, parentPath.root_directory() ) ) {
+		for( auto& include : includes ) {
+			if( fs::equivalent( parentPath, include ) ) {
+				*pathString = ( diffPath / path.filename() ).generic_string();
+				return true;
+			}
+		}
+		// Accumulate the parent folder names, if the header file is in subfolder(s)
+		diffPath = parentPath.stem() / diffPath;
+		parentPath = parentPath.parent_path();
+	}
+	CI_LOG_E( "Failed to extract valid include path for " + path.string() );
+	return false;
+}
+
 void Factory::watchImpl( const std::type_index &typeIndex, void* address, const std::string &name, const std::vector<fs::path> &filePaths, rt::BuildSettings settings, const TypeFormat &format )
 {
 	// initalize module and source watching
@@ -110,7 +130,10 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			auto codeGenOptions = rt::CodeGeneration::Options().newOperator( name ).placementNewOperator( name );
 			for( const auto &path : filePaths ) {
 				if( path.extension() == ".h" || path.extension() == ".hpp" ) {
-					codeGenOptions.include( path.filename().string() ); // TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+					std::string includeStr;
+					if( extractIncludePath( path, settings.getIncludes(), &includeStr ) ) {
+						codeGenOptions.include( includeStr );
+					}
 				}
 			}
 			settings.preBuildStep( make_shared<rt::CodeGeneration>( codeGenOptions ) );
@@ -120,7 +143,10 @@ void Factory::watchImpl( const std::type_index &typeIndex, void* address, const 
 			auto pchOptions = rt::PrecompiledHeader::Options();
 			for( const auto &path : filePaths ) {
 				if( path.extension() == ".h" || path.extension() == ".hpp" ) {
-					pchOptions.ignore( path.filename().string() );// TODO: better handling of include path (ex. #include "folder/file.h" would not work)
+					std::string includeStr;
+					if( extractIncludePath( path, settings.getIncludes(), &includeStr ) ) {
+						pchOptions.ignore( includeStr );
+					}
 					pchOptions.parseSource( path );
 				}
 				else if( path.extension() == ".cpp" ) {
